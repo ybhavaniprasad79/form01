@@ -1,0 +1,163 @@
+#root {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background: #1f2937;
+  color: #f3f4f6;
+  font-family: "Space Grotesk", "Sora", sans-serif;
+}
+
+.intro-logo {
+  position: relative;
+  height: 180px;
+  width: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.intro-video-container {
+  position: relative;
+  width: 640px;
+  max-width: 90vw;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(107, 114, 128, 0.2);
+}
+
+.intro-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  animation: videoFadeIn 0.8s ease-out;
+}
+
+@keyframes videoFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.intro-logo-frame {
+  position: absolute;
+  inset: 22px;
+  border-radius: 28px;
+  border: 1px dashed rgba(107, 114, 128, 0.4);
+  box-shadow: 0 0 0 8px rgba(107, 114, 128, 0.08);
+}
+
+.intro-piece {
+  position: absolute;
+  height: 52px;
+  width: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.95), rgba(156, 163, 175, 0.85));
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3), 0 0 40px rgba(107, 114, 128, 0.15);
+  opacity: 0;
+  animation: assemble 1.4s ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+.intro-piece--1 {
+  top: 26px;
+  left: 26px;
+}
+
+.intro-piece--2 {
+  top: 26px;
+  left: 102px;
+}
+
+.intro-piece--3 {
+  top: 64px;
+  left: 64px;
+}
+
+.intro-piece--4 {
+  top: 64px;
+  left: 140px;
+}
+
+.intro-piece--5 {
+  top: 102px;
+  left: 26px;
+}
+
+.intro-piece--6 {
+  top: 102px;
+  left: 102px;
+}
+
+.intro-bar {
+  height: 4px;
+  width: 220px;
+  border-radius: 999px;
+  background: rgba(107, 114, 128, 0.25);
+  overflow: hidden;
+  position: relative;
+}
+
+.intro-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, rgba(156, 163, 175, 0.5), rgba(209, 213, 219, 0.9));
+  border-radius: inherit;
+  animation: progress 4.5s ease-in-out infinite;
+}
+
+.text-reveal {
+  animation: reveal 0.9s ease-out both;
+}
+
+@keyframes assemble {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(0.2) rotate(-12deg);
+    filter: blur(6px);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.02) rotate(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-piece,
+  .intro-bar::after,
+  .text-reveal {
+    animation: none;
+  }
+}
