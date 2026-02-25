@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import introVideo from '../assets/PixVerse_V5.6_Image_Text_360P_Video_Generation.mp4'
+import dotenv from 'dotenv'
+dotenv.config()
 
 const INTRO_DURATION_MS = 5000
 
 const Animation = () => {
   const [isIntroDone, setIsIntroDone] = useState(false)
   const [teamCount, setTeamCount] = useState(0)
-  const [maxTeams] = useState(50)
+  const [maxTeams] = useState(parseInt(process.env.maxTeams))
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -18,7 +20,7 @@ const Animation = () => {
   useEffect(() => {
     const fetchTeamCount = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/teams/count')
+        const response = await fetch(`${process.env.backendurl}/api/teams/count`)
         const data = await response.json()
         if (data.success) {
           setTeamCount(data.count)
