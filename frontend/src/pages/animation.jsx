@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import introVideo from '../assets/PixVerse_V5.6_Image_Text_360P_Video_Generation.mp4'
-import dotenv from 'dotenv'
-dotenv.config()
 
 const INTRO_DURATION_MS = 5000
 

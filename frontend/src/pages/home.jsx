@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import dotenv from 'dotenv'
-dotenv.config()
 
 const Home = () => {
   const initialFormState = {
