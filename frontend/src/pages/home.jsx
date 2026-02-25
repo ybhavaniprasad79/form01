@@ -40,7 +40,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [teamCount, setTeamCount] = useState(0);
-  const [maxTeams] = useState(parseInt(process.env.maxTeams));
+  const [maxTeams] = useState(parseInt(import.meta.env.VITE_MAX_TEAMS) || 50);
 
   useEffect(() => {
     localStorage.setItem('teamRegistrationForm', JSON.stringify(formData));
@@ -49,7 +49,7 @@ const Home = () => {
   useEffect(() => {
     const fetchTeamCount = async () => {
       try {
-        const response = await fetch(`${process.env.backendurl}/api/teams/count`);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/teams/count`);
         const data = await response.json();
         if (data.success) {
           setTeamCount(data.count);
@@ -87,7 +87,7 @@ const Home = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${process.env.backendurl}/api/register`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ const Home = () => {
       
       // Refresh team count to show accurate count if registration closed
       try {
-        const countResponse = await fetch(`${process.env.backendurl}/api/teams/count`);
+        const countResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/teams/count`);
         const countData = await countResponse.json();
         if (countData.success) {
           setTeamCount(countData.count);

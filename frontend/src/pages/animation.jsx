@@ -9,7 +9,7 @@ const INTRO_DURATION_MS = 5000
 const Animation = () => {
   const [isIntroDone, setIsIntroDone] = useState(false)
   const [teamCount, setTeamCount] = useState(0)
-  const [maxTeams] = useState(parseInt(process.env.maxTeams))
+  const [maxTeams] = useState(parseInt(import.meta.env.VITE_MAX_TEAMS) || 50)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const Animation = () => {
   useEffect(() => {
     const fetchTeamCount = async () => {
       try {
-        const response = await fetch(`${process.env.backendurl}/api/teams/count`)
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/teams/count`)
         const data = await response.json()
         if (data.success) {
           setTeamCount(data.count)
