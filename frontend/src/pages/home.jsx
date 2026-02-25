@@ -38,7 +38,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [teamCount, setTeamCount] = useState(0);
-  const [maxTeams] = useState(5);
+  const [maxTeams] = useState(50);
 
   useEffect(() => {
     localStorage.setItem('teamRegistrationForm', JSON.stringify(formData));

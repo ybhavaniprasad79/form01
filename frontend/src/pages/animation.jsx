@@ -7,7 +7,7 @@ const INTRO_DURATION_MS = 5000
 const Animation = () => {
   const [isIntroDone, setIsIntroDone] = useState(false)
   const [teamCount, setTeamCount] = useState(0)
-  const [maxTeams] = useState(5)
+  const [maxTeams] = useState(50)
   const navigate = useNavigate()
 
   useEffect(() => {
