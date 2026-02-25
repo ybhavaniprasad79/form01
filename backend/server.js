@@ -7,7 +7,7 @@ const app=express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://form01-iota.vercel.app/',
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
