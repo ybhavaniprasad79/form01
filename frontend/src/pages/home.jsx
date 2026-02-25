@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 
 const Home = () => {
   const initialFormState = {
+    teamName: '',
     teamLeader: {
       name: '',
       regNo: '',
@@ -33,9 +34,31 @@ const Home = () => {
     return savedData ? JSON.parse(savedData) : initialFormState;
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [teamCount, setTeamCount] = useState(0);
+  const [maxTeams] = useState(5);
+
   useEffect(() => {
     localStorage.setItem('teamRegistrationForm', JSON.stringify(formData));
   }, [formData]);
+
+  useEffect(() => {
+    const fetchTeamCount = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/teams/count');
+        const data = await response.json();
+        if (data.success) {
+          setTeamCount(data.count);
+        }
+      } catch (error) {
+        console.error('Failed to fetch team count:', error);
+      }
+    };
+
+    fetchTeamCount();
+  }, []);
 
   const handleChange = (e, memberType) => {
     const { name, value } = e.target;
@@ -48,12 +71,64 @@ const Home = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleTeamNameChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      teamName: e.target.value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Clear localStorage after successful submission if needed
-    // localStorage.removeItem('teamRegistrationForm');
-    // Add your form submission logic here
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit registration');
+      }
+
+      setSuccess('Team registration submitted successfully!');
+      localStorage.removeItem('teamRegistrationForm');
+      setFormData(initialFormState);
+      setTeamCount(prev => prev + 1); // Update team count
+      
+      // Scroll to top
+      window.scrollTo(0, 0);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message || 'An error occurred while submitting the form');
+      console.error('Submission error:', err);
+      
+      // Refresh team count to show accurate count if registration closed
+      try {
+        const countResponse = await fetch('http://localhost:5000/api/teams/count');
+        const countData = await countResponse.json();
+        if (countData.success) {
+          setTeamCount(countData.count);
+        }
+      } catch (countError) {
+        console.error('Failed to refresh team count:', countError);
+      }
+      
+      // Scroll to top to show error message
+      window.scrollTo(0, 0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearMember = (memberType) => {
@@ -198,8 +273,38 @@ const Home = () => {
           <h2 className="text-2xl font-bold text-center text-white mb-6">
             Team Registration Form
           </h2>
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-4 p-4 bg-green-900/30 border border-green-600/50 rounded-lg text-green-300 text-sm text-center">
+              {success}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-900/30 border border-red-600/50 rounded-lg text-red-300 text-sm text-center">
+              {error}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Team Name */}
+            <div className="bg-gray-700/50 p-5 rounded-xl border border-gray-600/50 backdrop-blur-sm flex flex-col items-center">
+              <label className="block text-xs font-medium text-gray-400 mb-2 text-center">
+                Team Name
+              </label>
+              <input
+                type="text"
+                name="teamName"
+                value={formData.teamName}
+                onChange={handleTeamNameChange}
+                className="w-full max-w-lg px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+                placeholder="Enter team name"
+                required
+              />
+            </div>
+
             {/* Team Leader */}
             {renderMemberForm('teamLeader', '👨‍💼 Team Leader')}
 
@@ -213,9 +318,18 @@ const Home = () => {
             <div className="pt-3 flex justify-center">
               <button
                 type="submit"
-                className="w-full max-w-lg bg-gray-700/80 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all shadow-lg hover:shadow-xl"
+                disabled={loading || teamCount >= maxTeams}
+                className={`w-full max-w-lg bg-gray-700/80 text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                  loading || teamCount >= maxTeams
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-gray-600 hover:shadow-xl'
+                }`}
               >
-                Submit Team Registration
+                {teamCount >= maxTeams 
+                  ? 'Registration Closed' 
+                  : loading 
+                    ? 'Submitting...' 
+                    : 'Submit Team Registration'}
               </button>
             </div>
           </form>

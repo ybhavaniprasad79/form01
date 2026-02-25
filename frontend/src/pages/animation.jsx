@@ -6,11 +6,29 @@ const INTRO_DURATION_MS = 5000
 
 const Animation = () => {
   const [isIntroDone, setIsIntroDone] = useState(false)
+  const [teamCount, setTeamCount] = useState(0)
+  const [maxTeams] = useState(5)
   const navigate = useNavigate()
 
   useEffect(() => {
     const timer = setTimeout(() => setIsIntroDone(true), INTRO_DURATION_MS)
     return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    const fetchTeamCount = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/teams/count')
+        const data = await response.json()
+        if (data.success) {
+          setTeamCount(data.count)
+        }
+      } catch (error) {
+        console.error('Failed to fetch team count:', error)
+      }
+    }
+
+    fetchTeamCount()
   }, [])
 
   const handleRegister = () => {
@@ -60,12 +78,37 @@ const Animation = () => {
               <p className="mt-4 text-lg text-gray-300">
                 Step into the spotlight and register your team for the big event.
               </p>
+              
+              {/* Registration Progress Bar */}
+              <div className="mt-6 w-full max-w-md mx-auto">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-400">Teams Registered</span>
+                  <span className="text-sm font-semibold text-white">{teamCount} / {maxTeams}</span>
+                </div>
+                <div className="w-full bg-gray-700/50 rounded-full h-3 overflow-hidden border border-gray-600/50">
+                  <div 
+                    className="progress-bar-fill h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(teamCount / maxTeams) * 100}%` }}
+                  />
+                </div>
+                {teamCount >= maxTeams && (
+                  <p className="mt-2 text-sm text-red-400 font-medium text-center">
+                    Registration is now closed
+                  </p>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handleRegister}
-                className="mt-8 inline-flex items-center justify-center rounded-full bg-gray-700 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-gray-900/50 transition hover:-translate-y-0.5 hover:bg-gray-600"
+                disabled={teamCount >= maxTeams}
+                className={`mt-8 inline-flex items-center justify-center rounded-full px-8 py-3 text-base font-semibold text-white shadow-lg shadow-gray-900/50 transition ${
+                  teamCount >= maxTeams
+                    ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                    : 'bg-gray-700 hover:-translate-y-0.5 hover:bg-gray-600'
+                }`}
               >
-                Register for Event
+                {teamCount >= maxTeams ? 'Registration Closed' : 'Register for Event'}
               </button>
             </div>
           </div>
