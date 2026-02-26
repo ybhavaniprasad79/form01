@@ -37,29 +37,83 @@ const Animation = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <style>{`
+        @keyframes shadowExpand {
+          0% {
+            filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+            opacity: 0;
+            transform: translate(0, calc(50vh - 50%)) scale(0.8);
+          }
+          50% {
+            filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.8));
+            opacity: 0.7;
+            transform: translate(0, calc(25vh - 25%)) scale(1.05);
+          }
+          100% {
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .logo-reveal {
+          animation: shadowExpand 2s ease-out forwards;
+        }
+        
+        .fade-in-up-1 {
+          opacity: 0;
+          animation: fadeInUp 0.8s ease-out 2s forwards;
+        }
+        
+        .fade-in-up-2 {
+          opacity: 0;
+          animation: fadeInUp 0.8s ease-out 2.3s forwards;
+        }
+        
+        .fade-in-up-3 {
+          opacity: 0;
+          animation: fadeInUp 0.8s ease-out 2.6s forwards;
+        }
+        
+        .fade-in-up-4 {
+          opacity: 0;
+          animation: fadeInUp 0.8s ease-out 2.9s forwards;
+        }
+      `}</style>
       <div className="relative min-h-screen overflow-hidden">
         <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-gray-500/15 blur-3xl" />
         <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-gray-400/15 blur-3xl" />
 
         
           <div className="min-h-screen flex items-center justify-center px-6">
-            <div className="text-center max-w-2xl text-reveal">
-              <div className="mx-auto h-48 w-48 flex items-center justify-center">
+            <div className="text-center max-w-2xl">
+              <div className="mx-auto h-48 w-48 flex items-center justify-center logo-reveal">
                 <img
                   src="/club_logo.png"
                   alt="Club logo"
                   className="h-48 w-48 object-contain"
                 />
               </div>
-              <h1 className="mt-8 text-5xl font-semibold text-white">
+              <h1 className="mt-8 text-5xl font-semibold text-white fade-in-up-1">
                 Creative Verse Registration
               </h1>
-              <p className="mt-4 text-lg text-gray-300">
+              <p className="mt-4 text-lg text-gray-300 fade-in-up-2">
                 Step into the spotlight and register your team for the big event.
               </p>
               
               {/* Registration Progress Bar */}
-              <div className="mt-6 w-full max-w-md mx-auto">
+              <div className="mt-6 w-full max-w-md mx-auto fade-in-up-3">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-400">Teams Registered</span>
                   <span className="text-sm font-semibold text-white">{teamCount} / {maxTeams}</span>
@@ -81,7 +135,7 @@ const Animation = () => {
                 type="button"
                 onClick={handleRegister}
                 disabled={teamCount >= maxTeams}
-                className={`mt-8 inline-flex items-center justify-center rounded-full px-8 py-3 text-base font-semibold text-white shadow-lg shadow-gray-900/50 transition ${
+                className={`fade-in-up-4 mt-8 inline-flex items-center justify-center rounded-full px-8 py-3 text-base font-semibold text-white shadow-lg shadow-gray-900/50 transition ${
                   teamCount >= maxTeams
                     ? 'bg-gray-600 cursor-not-allowed opacity-50'
                     : 'bg-gray-700 hover:-translate-y-0.5 hover:bg-gray-600'
