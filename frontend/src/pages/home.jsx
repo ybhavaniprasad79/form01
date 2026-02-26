@@ -148,7 +148,7 @@ const Home = () => {
   const renderMemberForm = (memberType, title) => (
     <div className="bg-gray-700/50 p-5 rounded-xl border border-gray-600/50 backdrop-blur-sm flex flex-col items-center">
       <div className="flex justify-between items-center w-full mb-5">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <h3 className="text-xl font-semibold text-white">{title}</h3>
         <button
           type="button"
           onClick={() => handleClearMember(memberType)}
@@ -162,7 +162,7 @@ const Home = () => {
       
       {/* Name */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
           Name
         </label>
         <input
@@ -170,7 +170,7 @@ const Home = () => {
           name="name"
           value={formData[memberType].name}
           onChange={(e) => handleChange(e, memberType)}
-          className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
           placeholder="Enter full name"
           required
         />
@@ -178,7 +178,7 @@ const Home = () => {
 
       {/* Registration Number */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
           Registration Number
         </label>
         <input
@@ -188,7 +188,7 @@ const Home = () => {
           onChange={(e) => handleChange(e, memberType)}
           maxLength="11"
           pattern="[0-9]{11}"
-          className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
           placeholder="Enter registration number"
           required
         />
@@ -196,7 +196,7 @@ const Home = () => {
 
       {/* Phone Number */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
           Phone Number
         </label>
         <input
@@ -206,7 +206,7 @@ const Home = () => {
           onChange={(e) => handleChange(e, memberType)}
           maxLength="10"
           pattern="[0-9]{10}"
-          className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
           placeholder="Enter phone number"
           required
         />
@@ -215,14 +215,14 @@ const Home = () => {
       {/* Year, Branch and Section side by side */}
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
             Year
           </label>
           <select
             name="year"
             value={formData[memberType].year}
             onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition"
+            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition"
             required
           >
             <option value="">Select year</option>
@@ -232,7 +232,7 @@ const Home = () => {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
             Branch
           </label>
           <input
@@ -240,13 +240,13 @@ const Home = () => {
             name="branch"
             value={formData[memberType].branch}
             onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
             placeholder="CSE, ECE..."
             required
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5 text-center">
+          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
             Section
           </label>
           <input
@@ -254,7 +254,7 @@ const Home = () => {
             name="section"
             value={formData[memberType].section}
             onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
             placeholder="A, B, C..."
             required
           />
@@ -270,7 +270,7 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-6 border border-gray-700/50">
-          <h2 className="text-2xl font-bold text-center text-white mb-6">
+          <h2 className="text-3xl font-bold text-center text-white mb-6">
             Team Registration Form
           </h2>
 
@@ -291,7 +291,7 @@ const Home = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Team Name */}
             <div className="bg-gray-700/50 p-5 rounded-xl border border-gray-600/50 backdrop-blur-sm flex flex-col items-center">
-              <label className="block text-xs font-medium text-gray-400 mb-2 text-center">
+              <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
                 Team Name
               </label>
               <input
@@ -299,7 +299,7 @@ const Home = () => {
                 name="teamName"
                 value={formData.teamName}
                 onChange={handleTeamNameChange}
-                className="w-full max-w-lg px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+                className="w-full max-w-lg px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
                 placeholder="Enter team name"
                 required
               />
@@ -319,7 +319,7 @@ const Home = () => {
               <button
                 type="submit"
                 disabled={loading || teamCount >= maxTeams}
-                className={`w-full max-w-lg bg-gray-700/80 text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                className={`w-full max-w-lg bg-gray-700/80 text-white py-2.5 px-4 rounded-lg text-base font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
                   loading || teamCount >= maxTeams
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:bg-gray-600 hover:shadow-xl'

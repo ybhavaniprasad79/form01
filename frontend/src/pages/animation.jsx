@@ -41,28 +41,7 @@ const Animation = () => {
         <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-gray-500/15 blur-3xl" />
         <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-gray-400/15 blur-3xl" />
 
-        {!isIntroDone ? (
-          <div className="min-h-screen flex items-center justify-center px-6">
-            <div className="relative flex flex-col items-center gap-6">
-              <div className="intro-video-container">
-                <video
-                  autoPlay
-                  muted
-                  playsInline
-                  className="intro-video"
-                >
-                  <source src={introVideo} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              <div className="text-center">
-                <p className="text-lg uppercase tracking-[0.3em] text-gray-400">
-                  Loading
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
+        
           <div className="min-h-screen flex items-center justify-center px-6">
             <div className="text-center max-w-2xl text-reveal">
               <div className="mx-auto h-48 w-48 flex items-center justify-center">
@@ -112,7 +91,7 @@ const Animation = () => {
               </button>
             </div>
           </div>
-        )}
+      
       </div>
     </div>
   )
