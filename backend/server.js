@@ -182,7 +182,7 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamLeader.year,
                 'Branch': team.teamLeader.branch,
                 'Section': team.teamLeader.section,
-                'Registered On': team.createdAt ? new Date(team.createdAt).toLocaleString() : 'N/A'
+                // 'Registered On': team.createdAt ? new Date(team.createdAt).toLocaleString() : 'N/A'
             });
             
             // Add team member 1
@@ -197,7 +197,7 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamMember1.year,
                 'Branch': team.teamMember1.branch,
                 'Section': team.teamMember1.section,
-                'Registered On': ''
+                // 'Registered On': ''
             });
             
             // Add team member 2
@@ -212,7 +212,7 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamMember2.year,
                 'Branch': team.teamMember2.branch,
                 'Section': team.teamMember2.section,
-                'Registered On': ''
+                // 'Registered On': ''
             });
         });
 
