@@ -62,6 +62,7 @@ const Home = () => {
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [completedTeamName, setCompletedTeamName] = useState('');
+  const [teamNameStatus, setTeamNameStatus] = useState({ checking: false, available: null, message: '' });
 
   useEffect(() => {
     localStorage.setItem('teamRegistrationForm', JSON.stringify(formData));
@@ -179,10 +180,40 @@ const Home = () => {
   };
 
   const handleTeamNameChange = (e) => {
+    const newTeamName = e.target.value;
     setFormData(prev => ({
       ...prev,
-      teamName: e.target.value
+      teamName: newTeamName
     }));
+    
+    // Reset status and start checking
+    setTeamNameStatus({ checking: true, available: null, message: '' });
+    
+    // Debounce the API call
+    if (window.teamNameCheckTimeout) {
+      clearTimeout(window.teamNameCheckTimeout);
+    }
+    
+    if (!newTeamName.trim()) {
+      setTeamNameStatus({ checking: false, available: null, message: '' });
+      return;
+    }
+    
+    window.teamNameCheckTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/check-team-name/${encodeURIComponent(newTeamName)}`
+        );
+        const data = await response.json();
+        setTeamNameStatus({
+          checking: false,
+          available: data.available,
+          message: data.message
+        });
+      } catch (error) {
+        setTeamNameStatus({ checking: false, available: null, message: '' });
+      }
+    }, 500);
   };
 
   const handleProceedToPayment = (e) => {
@@ -192,6 +223,13 @@ const Home = () => {
     // Validate team name
     if (!formData.teamName.trim()) {
       setError('Please enter the team name');
+      window.scrollTo(0, 0);
+      return;
+    }
+    
+    // Check if team name is available
+    if (teamNameStatus.available === false) {
+      setError('Team name already exists. Please choose a different team name');
       window.scrollTo(0, 0);
       return;
     }
@@ -471,7 +509,7 @@ const Home = () => {
           Registration Number
         </label>
         <input
-          type="text"
+          type="tel"
           name="regNo"
           value={formData[memberType].regNo}
           onChange={(e) => handleChange(e, memberType)}
@@ -599,6 +637,15 @@ const Home = () => {
                     placeholder="Enter team name"
                     required
                   />
+                  {teamNameStatus.checking && formData.teamName.trim() && (
+                    <p className="text-sm text-gray-400 mt-2">Checking availability...</p>
+                  )}
+                  {!teamNameStatus.checking && teamNameStatus.available === true && formData.teamName.trim() && (
+                    <p className="text-sm text-green-400 mt-2">✓ {teamNameStatus.message}</p>
+                  )}
+                  {!teamNameStatus.checking && teamNameStatus.available === false && formData.teamName.trim() && (
+                    <p className="text-sm text-red-400 mt-2">✗ {teamNameStatus.message}</p>
+                  )}
                 </div>
 
                 {/* Team Leader */}

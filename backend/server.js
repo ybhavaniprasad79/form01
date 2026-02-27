@@ -108,6 +108,42 @@ app.post('/api/upload-receipt', upload.single('receipt'), async (req, res) => {
     }
 });
 
+// GET endpoint to check team name availability
+app.get('/api/check-team-name/:teamName', async (req, res) => {
+    try {
+        const { teamName } = req.params;
+        
+        if (!teamName || !teamName.trim()) {
+            return res.json({
+                available: true,
+                message: ''
+            });
+        }
+
+        const existingTeam = await TeamRegistration.findOne({ 
+            teamName: { $regex: new RegExp(`^${teamName}$`, 'i') } 
+        });
+        
+        if (existingTeam) {
+            return res.json({
+                available: false,
+                message: 'Team name already exists'
+            });
+        }
+        
+        res.json({
+            available: true,
+            message: 'Team name is available'
+        });
+    } catch (error) {
+        console.error('Team name check error:', error);
+        res.status(500).json({
+            available: true,
+            message: ''
+        });
+    }
+});
+
 // PUT endpoint for team registration form submission
 app.put('/api/register', async (req, res) => {
     try {
