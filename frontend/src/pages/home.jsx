@@ -215,8 +215,8 @@ const Home = () => {
         window.scrollTo(0, 0);
         return;
       }
-      if (member.data.regNo.length !== 11 || !/^[0-9]+$/.test(member.data.regNo)) {
-        setError(`Registration number for ${member.name} must be 11 digits`);
+      if (!/^[0-9]+$/.test(member.data.regNo)) {
+        setError(`Registration number for ${member.name} must be a valid number`);
         window.scrollTo(0, 0);
         return;
       }
@@ -475,8 +475,7 @@ const Home = () => {
           name="regNo"
           value={formData[memberType].regNo}
           onChange={(e) => handleChange(e, memberType)}
-          maxLength="11"
-          pattern="[0-9]{11}"
+          pattern="[0-9]"
           className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
           placeholder="Enter registration number"
           required
@@ -703,6 +702,9 @@ const Home = () => {
                   </label>
                   <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
                     only jpg, jpeg, png, pdf, webp formats are allowed
+                  </label>
+                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
+                    max "file size" only "5MB" is allowed
                   </label>
                   <div className="flex items-center justify-center">
                     <label className="w-full flex flex-col items-center px-4 py-6 bg-gray-800/70 text-gray-400 rounded-lg border-2 border-dashed border-gray-600/50 cursor-pointer hover:bg-gray-800 transition">

@@ -381,7 +381,7 @@ const Download = () => {
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={closeImageModal}
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
+          <div className="relative max-w-2xl w-full">
             <button
               onClick={closeImageModal}
               className="absolute -top-12 right-0 text-white bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
@@ -391,7 +391,7 @@ const Download = () => {
             <img
               src={modalImage}
               alt="Receipt full view"
-              className="w-full h-full object-contain rounded-lg shadow-2xl"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl mx-auto"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

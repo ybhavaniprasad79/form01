@@ -9,9 +9,8 @@ const memberSchema = new mongoose.Schema({
     minlength: [2, 'Name must be at least 2 characters']
   },
   regNo: {
-    type: String,
+    type: Number,
     required: [true, 'Registration number is required'],
-    match: [/^[0-9]{11}$/, 'Registration number must be exactly 11 digits']
   },
   phoneNo: {
     type: String,
