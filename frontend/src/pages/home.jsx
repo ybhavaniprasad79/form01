@@ -65,8 +65,12 @@ const Home = () => {
   const [teamNameStatus, setTeamNameStatus] = useState({ checking: false, available: null, message: '' });
 
   useEffect(() => {
+    if (registrationComplete) {
+      localStorage.removeItem('teamRegistrationForm');
+      return;
+    }
     localStorage.setItem('teamRegistrationForm', JSON.stringify(formData));
-  }, [formData]);
+  }, [formData, registrationComplete]);
 
   useEffect(() => {
     const fetchTeamCount = async () => {
