@@ -105,7 +105,7 @@ const appSettingsSchema = new mongoose.Schema({
   key: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, 
     enum: ['registrationStatus', 'maxTeams']
   },
   enabled: {
