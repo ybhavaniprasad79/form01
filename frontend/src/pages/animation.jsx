@@ -7,7 +7,8 @@ const INTRO_DURATION_MS = 5000
 const Animation = () => {
   const [isIntroDone, setIsIntroDone] = useState(false)
   const [teamCount, setTeamCount] = useState(0)
-  const [maxTeams] = useState(parseInt(import.meta.env.VITE_MAX_TEAMS) || 50)
+  const [maxTeams, setMaxTeams] = useState(50)
+  const [registrationEnabled, setRegistrationEnabled] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -28,7 +29,33 @@ const Animation = () => {
       }
     }
 
+    const fetchRegistrationStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/registration-status`)
+        const data = await response.json()
+        if (data.success) {
+          setRegistrationEnabled(data.enabled)
+        }
+      } catch (error) {
+        console.error('Failed to fetch registration status:', error)
+      }
+    }
+
+    const fetchMaxTeams = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/max-teams`)
+        const data = await response.json()
+        if (data.success) {
+          setMaxTeams(data.maxTeams)
+        }
+      } catch (error) {
+        console.error('Failed to fetch max teams:', error)
+      }
+    }
+
     fetchTeamCount()
+    fetchRegistrationStatus()
+    fetchMaxTeams()
   }, [])
 
   const handleRegister = () => {
@@ -129,19 +156,28 @@ const Animation = () => {
                     Registration is now closed
                   </p>
                 )}
+                {!registrationEnabled && teamCount < maxTeams && (
+                  <p className="mt-2 text-sm text-yellow-400 font-medium text-center">
+                    Registration is temporarily closed
+                  </p>
+                )}
               </div>
 
               <button
                 type="button"
                 onClick={handleRegister}
-                disabled={teamCount >= maxTeams}
+                disabled={teamCount >= maxTeams || !registrationEnabled}
                 className={`fade-in-up-4 mt-8 inline-flex items-center justify-center rounded-full px-8 py-3 text-base font-semibold text-white shadow-lg shadow-gray-900/50 transition ${
-                  teamCount >= maxTeams
+                  teamCount >= maxTeams || !registrationEnabled
                     ? 'bg-gray-600 cursor-not-allowed opacity-50'
                     : 'bg-gray-700 hover:-translate-y-0.5 hover:bg-gray-600'
                 }`}
               >
-                {teamCount >= maxTeams ? 'Registration Closed' : 'Register for Event'}
+                {!registrationEnabled
+                  ? 'Registration Temporarily Closed'
+                  : teamCount >= maxTeams
+                    ? 'Registration Closed'
+                    : 'Register for Event'}
               </button>
             </div>
           </div>

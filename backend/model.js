@@ -22,8 +22,8 @@ const memberSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Year is required'],
     enum: {
-      values: ['1', '2', '3'],
-      message: 'Year must be 1st, 2nd, or 3rd year'
+      values: ['1', '2', '3','4'],
+      message: 'Year must be 1st, 2nd, 3rd or 4th year'
     }
   },
   branch: {
@@ -62,6 +62,35 @@ const teamRegistrationSchema = new mongoose.Schema({
     type: memberSchema,
     required: [true, 'Team member 2 information is required']
   },
+  teamMember3: {
+    type: memberSchema,
+    required: [true, 'Team member 3 information is required']
+  },
+  payment: {
+    transactionId: {
+      type: String,
+      required: [true, 'Transaction ID is required'],
+      trim: true,
+      unique: true
+    },
+    receiptUrl: {
+      type: String,
+      required: [true, 'Receipt URL is required']
+    },
+    receiptFileName: {
+      type: String,
+      default: ''
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
+    },
+    verifiedAt: {
+      type: Date,
+      default: null
+    }
+  },
   submittedAt: {
     type: Date,
     default: Date.now
@@ -71,4 +100,28 @@ const teamRegistrationSchema = new mongoose.Schema({
 // Create and export the model
 const TeamRegistration = mongoose.model('TeamRegistration', teamRegistrationSchema);
 
-module.exports = TeamRegistration;
+// Define app settings schema for storing configuration
+const appSettingsSchema = new mongoose.Schema({
+  key: {
+    type: String,
+    required: true,
+    unique: true,
+    enum: ['registrationStatus', 'maxTeams']
+  },
+  enabled: {
+    type: Boolean,
+    default: true
+  },
+  maxTeams: {
+    type: Number,
+    default: 50
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const AppSettings = mongoose.model('AppSettings', appSettingsSchema);
+
+module.exports = { TeamRegistration, AppSettings };

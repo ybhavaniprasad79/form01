@@ -3,7 +3,8 @@ const cors=require('cors')
 const xlsx = require('xlsx');
 require('dotenv').config()
 const {connect}=require('./connect')
-const TeamRegistration = require('./model')
+const { TeamRegistration, AppSettings } = require('./model')
+const { cloudinary, upload } = require('./cloudinary')
 const app=express();
 
 // Middleware
@@ -20,11 +21,22 @@ app.get('/',(req,res)=>{
 // GET endpoint to fetch team registration count
 app.get('/api/teams/count', async (req, res) => {
     try {
+        let settings = await AppSettings.findOne({ key: 'maxTeams' });
+        
+        // If no settings exist, create default
+        if (!settings) {
+            settings = await AppSettings.create({
+                key: 'maxTeams',
+                maxTeams: 50,
+                updatedAt: new Date()
+            });
+        }
+        
         const count = await TeamRegistration.countDocuments();
         res.status(200).json({
             success: true,
             count,
-            maxTeams: parseInt(process.env.maxTeams)
+            maxTeams: settings.maxTeams
         });
     } catch (error) {
         res.status(500).json({
@@ -35,16 +47,99 @@ app.get('/api/teams/count', async (req, res) => {
     }
 });
 
+// POST endpoint to upload receipt to Cloudinary
+app.post('/api/upload-receipt', upload.single('receipt'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded'
+            });
+        }
+
+        // Use promise-based upload with timeout
+        const uploadPromise = new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'team-registrations/receipts',
+                    resource_type: 'auto',
+                    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
+                    timeout: 60000
+                },
+                (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+
+            // Convert buffer to stream and pipe to Cloudinary
+            const streamifier = require('streamifier');
+            const stream = streamifier.createReadStream(req.file.buffer);
+            
+            stream.on('error', (error) => {
+                uploadStream.destroy();
+                reject(error);
+            });
+
+            stream.pipe(uploadStream);
+        });
+
+        const result = await uploadPromise;
+
+        res.status(200).json({
+            success: true,
+            message: 'File uploaded successfully',
+            data: {
+                url: result.secure_url,
+                publicId: result.public_id,
+                format: result.format
+            }
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during file upload',
+            error: error.message || 'Unknown error'
+        });
+    }
+});
+
 // PUT endpoint for team registration form submission
 app.put('/api/register', async (req, res) => {
     try {
-        const { teamName, teamLeader, teamMember1, teamMember2 } = req.body;
+        const { teamName, teamLeader, teamMember1, teamMember2, teamMember3, payment } = req.body;
 
         // Validate required fields
-        if (!teamName || !teamLeader || !teamMember1 || !teamMember2) {
+        if (!teamName || !teamLeader || !teamMember1 || !teamMember2 || !teamMember3) {
             return res.status(400).json({
                 success: false,
                 message: 'Team name and all team members information are required'
+            });
+        }
+
+        // Validate payment fields
+        if (!payment || !payment.transactionId || !payment.receiptUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment information (transaction ID and receipt) is required'
+            });
+        }
+
+        if (!payment.transactionId.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Transaction ID cannot be empty'
+            });
+        }
+
+        if (!payment.receiptUrl.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Receipt upload is required'
             });
         }
 
@@ -57,12 +152,32 @@ app.put('/api/register', async (req, res) => {
             });
         }
 
-        // Check if registration limit reached
-        const teamCount = await TeamRegistration.countDocuments();
-        if (teamCount >= parseInt(process.env.maxTeams)) {
+        // Check if transaction ID already exists
+        const existingTransaction = await TeamRegistration.findOne({ 'payment.transactionId': payment.transactionId });
+        if (existingTransaction) {
             return res.status(400).json({
                 success: false,
-                message: `Registration closed. Maximum limit of ${process.env.maxTeams} teams has been reached`
+                message: 'Transaction ID already registered. Please use a different transaction ID'
+            });
+        }
+
+        // Check if registration limit reached
+        let settings = await AppSettings.findOne({ key: 'maxTeams' });
+        
+        // If no settings exist, create default
+        if (!settings) {
+            settings = await AppSettings.create({
+                key: 'maxTeams',
+                maxTeams: 50,
+                updatedAt: new Date()
+            });
+        }
+        
+        const teamCount = await TeamRegistration.countDocuments();
+        if (teamCount >= settings.maxTeams) {
+            return res.status(400).json({
+                success: false,
+                message: `Registration closed. Maximum limit of ${settings.maxTeams} teams has been reached`
             });
         }
 
@@ -70,7 +185,8 @@ app.put('/api/register', async (req, res) => {
         const regNos = [
             teamLeader.regNo,
             teamMember1.regNo,
-            teamMember2.regNo
+            teamMember2.regNo,
+            teamMember3.regNo
         ];
 
         // Check for duplicates within the same team
@@ -87,7 +203,8 @@ app.put('/api/register', async (req, res) => {
             $or: [
                 { 'teamLeader.regNo': { $in: regNos } },
                 { 'teamMember1.regNo': { $in: regNos } },
-                { 'teamMember2.regNo': { $in: regNos } }
+                { 'teamMember2.regNo': { $in: regNos } },
+                { 'teamMember3.regNo': { $in: regNos } }
             ]
         });
 
@@ -98,12 +215,19 @@ app.put('/api/register', async (req, res) => {
             });
         }
 
-        // Create new team registration document
+        // Create new team registration document with payment
         const teamRegistration = new TeamRegistration({
             teamName,
             teamLeader,
             teamMember1,
-            teamMember2
+            teamMember2,
+            teamMember3,
+            payment: {
+                transactionId: payment.transactionId.trim(),
+                receiptUrl: payment.receiptUrl,
+                receiptFileName: payment.receiptFileName || '',
+                status: 'pending'
+            }
         });
 
         // Save to database
@@ -111,7 +235,7 @@ app.put('/api/register', async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Team registration submitted successfully',
+            message: 'Team registration and payment submitted successfully',
             data: teamRegistration
         });
     } catch (error) {
@@ -127,7 +251,9 @@ app.put('/api/register', async (req, res) => {
 
         // Handle duplicate key error
         if (error.code === 11000) {
-            const field = error.keyPattern?.teamName ? 'Team name' : 'Registration number';
+            const field = error.keyPattern?.teamName ? 'Team name' 
+                        : error.keyPattern?.['payment.transactionId'] ? 'Transaction ID'
+                        : 'Registration number';
             return res.status(400).json({
                 success: false,
                 message: `${field} already exists in the system`
@@ -182,7 +308,10 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamLeader.year,
                 'Branch': team.teamLeader.branch,
                 'Section': team.teamLeader.section,
-                // 'Registered On': team.createdAt ? new Date(team.createdAt).toLocaleString() : 'N/A'
+                'Transaction ID': team.payment.transactionId,
+                'Payment Status': team.payment.status,
+                'Receipt URL': team.payment.receiptUrl,
+                'Registered On': team.submittedAt ? new Date(team.submittedAt).toLocaleString() : 'N/A'
             });
             
             // Add team member 1
@@ -197,7 +326,9 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamMember1.year,
                 'Branch': team.teamMember1.branch,
                 'Section': team.teamMember1.section,
-                // 'Registered On': ''
+                'Transaction ID': '',
+                'Payment Status': '',
+                'Registered On': ''
             });
             
             // Add team member 2
@@ -212,7 +343,26 @@ app.post('/api/download-teams', async (req, res) => {
                 'Year': team.teamMember2.year,
                 'Branch': team.teamMember2.branch,
                 'Section': team.teamMember2.section,
-                // 'Registered On': ''
+                'Transaction ID': '',
+                'Payment Status': '',
+                'Registered On': ''
+            });
+            
+            // Add team member 3
+            excelData.push({
+                'S.No': '',
+                'Team Name': '',
+                'Member Type': 'Team Member 3',
+                'Name': team.teamMember3.name,
+                'Reg No': team.teamMember3.regNo,
+                'Phone No': team.teamMember3.phoneNo,
+                'email': team.teamMember3.regNo + '@klu.ac.in',
+                'Year': team.teamMember3.year,
+                'Branch': team.teamMember3.branch,
+                'Section': team.teamMember3.section,
+                'Transaction ID': '',
+                'Payment Status': '',
+                'Registered On': ''
             });
         });
 
@@ -238,6 +388,289 @@ app.post('/api/download-teams', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error while generating Excel file',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to check payment status of a team
+app.get('/api/payment-status/:transactionId', async (req, res) => {
+    try {
+        const { transactionId } = req.params;
+
+        const team = await TeamRegistration.findOne({ 'payment.transactionId': transactionId });
+
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found with this transaction ID'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                teamName: team.teamName,
+                paymentStatus: team.payment.status,
+                transactionId: team.payment.transactionId,
+                submittedAt: team.submittedAt,
+                verifiedAt: team.payment.verifiedAt
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// POST endpoint to verify payment (admin only - password protected)
+app.post('/api/verify-payment', async (req, res) => {
+    try {
+        const { password, transactionId, status } = req.body;
+
+        // Check password (use environment variable for security)
+        if (password !== process.env.adminPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid password'
+            });
+        }
+
+        // Validate fields
+        if (!transactionId || !status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Transaction ID and status are required'
+            });
+        }
+
+        if (!['verified', 'rejected', 'pending'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status. Must be verified, rejected, or pending'
+            });
+        }
+
+        // Find and update the team
+        const team = await TeamRegistration.findOneAndUpdate(
+            { 'payment.transactionId': transactionId },
+            { 
+                'payment.status': status,
+                'payment.verifiedAt': status === 'verified' ? new Date() : null
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found with this transaction ID'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Payment status updated to ${status}`,
+            data: {
+                teamName: team.teamName,
+                paymentStatus: team.payment.status,
+                transactionId: team.payment.transactionId
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to fetch all payments with status (admin only - password protected)
+app.get('/api/all-payments', async (req, res) => {
+    try {
+        const { password } = req.query;
+
+        // Check password (use environment variable for security)
+        if (password !== process.env.adminPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid password'
+            });
+        }
+
+        const teams = await TeamRegistration.find({}, {
+            teamName: 1,
+            'payment.transactionId': 1,
+            'payment.status': 1,
+            'payment.receiptUrl': 1,
+            'payment.receiptFileName': 1,
+            submittedAt: 1,
+            'payment.verifiedAt': 1
+        }).sort({ submittedAt: -1 });
+
+        // Count payments by status
+        const statusCounts = {
+            pending: teams.filter(t => t.payment.status === 'pending').length,
+            verified: teams.filter(t => t.payment.status === 'verified').length,
+            rejected: teams.filter(t => t.payment.status === 'rejected').length
+        };
+
+        res.status(200).json({
+            success: true,
+            statusCounts,
+            totalPayments: teams.length,
+            data: teams
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to check registration status (public)
+app.get('/api/registration-status', async (req, res) => {
+    try {
+        let settings = await AppSettings.findOne({ key: 'registrationStatus' });
+        
+        // If no settings exist, create default
+        if (!settings) {
+            settings = await AppSettings.create({
+                key: 'registrationStatus',
+                enabled: true,
+                updatedAt: new Date()
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            enabled: settings.enabled
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// POST endpoint to toggle registration status (admin only - password protected)
+app.post('/api/toggle-registration', async (req, res) => {
+    try {
+        const { password, enabled } = req.body;
+
+        // Check password (use environment variable for security)
+        if (password !== process.env.adminPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid password'
+            });
+        }
+
+        if (typeof enabled !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: 'enabled field must be a boolean'
+            });
+        }
+
+        // Update or create settings
+        const settings = await AppSettings.findOneAndUpdate(
+            { key: 'registrationStatus' },
+            { 
+                enabled,
+                updatedAt: new Date()
+            },
+            { upsert: true, new: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            enabled: settings.enabled,
+            message: `Registrations ${settings.enabled ? 'enabled' : 'disabled'} successfully`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to get max teams limit
+app.get('/api/max-teams', async (req, res) => {
+    try {
+        let settings = await AppSettings.findOne({ key: 'maxTeams' });
+        
+        // If no settings exist, create default
+        if (!settings) {
+            settings = await AppSettings.create({
+                key: 'maxTeams',
+                maxTeams: 50,
+                updatedAt: new Date()
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            maxTeams: settings.maxTeams
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+});
+
+// POST endpoint to update max teams limit (admin only - password protected)
+app.post('/api/update-max-teams', async (req, res) => {
+    try {
+        const { password, maxTeams } = req.body;
+
+        // Check password (use environment variable for security)
+        if (password !== process.env.adminPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid password'
+            });
+        }
+
+        if (!maxTeams || typeof maxTeams !== 'number' || maxTeams < 1) {
+            return res.status(400).json({
+                success: false,
+                message: 'maxTeams must be a positive number'
+            });
+        }
+
+        // Update or create settings
+        const settings = await AppSettings.findOneAndUpdate(
+            { key: 'maxTeams' },
+            { 
+                maxTeams,
+                updatedAt: new Date()
+            },
+            { upsert: true, new: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            maxTeams: settings.maxTeams,
+            message: `Maximum teams updated to ${settings.maxTeams}`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
             error: error.message
         });
     }
