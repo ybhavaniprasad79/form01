@@ -123,4 +123,36 @@ const appSettingsSchema = new mongoose.Schema({
 
 const AppSettings = mongoose.model('AppSettings', appSettingsSchema);
 
-module.exports = { TeamRegistration, AppSettings };
+// Define round marks schema for scoring system
+const roundMarksSchema = new mongoose.Schema({
+  roundName: {
+    type: String,
+    required: [true, 'Round name is required'],
+    trim: true,
+    unique: true
+  },
+  outOf: {
+    type: Number,
+    required: [true, 'Out of mark is required'],
+    min: [1, 'Out of mark must be at least 1'],
+    default: 100
+  },
+  teamMarks: [{
+    teamName: {
+      type: String,
+      required: true
+    },
+    mark: {
+      type: Number,
+      default: 0
+    }
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const RoundMarks = mongoose.model('RoundMarks', roundMarksSchema);
+
+module.exports = { TeamRegistration, AppSettings, RoundMarks };
