@@ -12,6 +12,14 @@ const MAX_TEAMS_PER_PROBLEM = 7;
 
 const escapeRegex = (value) =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const express=require('express');
+const cors=require('cors')
+const xlsx = require('xlsx');
+require('dotenv').config()
+const {connect}=require('./connect')
+const { TeamRegistration, AppSettings, RoundMarks } = require('./model')
+const { cloudinary, upload } = require('./cloudinary')
+const app=express();
 
 // Middleware
 app.use(
@@ -459,6 +467,29 @@ app.get("/api/admin/teams/selected", async (req, res) => {
   }
 });
 
+app.post('/api/verify-admin', (req, res) => {
+    const { password } = req.body;
+
+    if (!password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Password is required'
+        });
+    }
+
+    if (password !== process.env.adminPassword) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid password'
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: 'Authenticated'
+    });
+})
+
 // GET endpoint to fetch team registration count
 app.get("/api/teams/count", async (req, res) => {
   try {
@@ -486,6 +517,321 @@ app.get("/api/teams/count", async (req, res) => {
       error: error.message,
     });
   }
+});
+
+// GET endpoint to fetch all registered team names
+app.get('/api/teams', async (req, res) => {
+    try {
+        const teams = await TeamRegistration.find({}, { teamName: 1, _id: 1 }).sort({ submittedAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: teams.length,
+            data: teams
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch teams',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to fetch marks board with all rounds and team scores
+app.get('/api/marks-board', async (req, res) => {
+    try {
+        const teams = await TeamRegistration.find({}, { teamName: 1 }).sort({ submittedAt: -1 });
+        const rounds = await RoundMarks.find().sort({ createdAt: 1 });
+        const outOfByRound = {};
+
+        const teamsWithMarks = teams.map((team) => {
+            const roundMarks = {};
+            let total = 0;
+
+            rounds.forEach((round) => {
+                const teamMark = round.teamMarks.find((tm) => tm.teamName === team.teamName);
+                const mark = teamMark ? teamMark.mark : 0;
+                roundMarks[round.roundName] = mark;
+                outOfByRound[round.roundName] = round.outOf;
+                total += mark;
+            });
+
+            return {
+                _id: team._id,
+                teamName: team.teamName,
+                roundMarks,
+                total
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            rounds: rounds.map((r) => r.roundName),
+            outOfByRound,
+            data: teamsWithMarks
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch marks board',
+            error: error.message
+        });
+    }
+});
+
+// POST endpoint to create a new round
+app.post('/api/marks/round', async (req, res) => {
+    try {
+        const { roundName, outOf } = req.body;
+
+        if (!roundName || !roundName.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Round name is required'
+            });
+        }
+
+        const numericOutOf = Number(outOf);
+        if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
+            return res.status(400).json({
+                success: false,
+                message: 'Out of mark must be a valid number greater than 0'
+            });
+        }
+
+        const normalizedRound = roundName.trim();
+
+        // Check if round already exists
+        const existingRound = await RoundMarks.findOne({ roundName: normalizedRound });
+        if (existingRound) {
+            return res.status(400).json({
+                success: false,
+                message: 'Round name already exists'
+            });
+        }
+
+        // Get all teams
+        const teams = await TeamRegistration.find({}, { teamName: 1 });
+
+        // Create round with all teams initialized to 0
+        const teamMarks = teams.map((team) => ({
+            teamName: team.teamName,
+            mark: 0
+        }));
+
+        const newRound = await RoundMarks.create({
+            roundName: normalizedRound,
+            outOf: numericOutOf,
+            teamMarks
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Round created successfully',
+            round: newRound.roundName,
+            outOf: newRound.outOf
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create round',
+            error: error.message
+        });
+    }
+});
+
+// PATCH endpoint to update marks for a team in a round
+app.patch('/api/marks', async (req, res) => {
+    try {
+        const { teamName, roundName, mark } = req.body;
+
+        if (!teamName || !roundName || mark === undefined || mark === null) {
+            return res.status(400).json({
+                success: false,
+                message: 'teamName, roundName and mark are required'
+            });
+        }
+
+        const numericMark = Number(mark);
+        if (!Number.isFinite(numericMark)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Mark must be a valid number'
+            });
+        }
+
+        // Find the round and update the team's mark
+        const round = await RoundMarks.findOne({ roundName: roundName.trim() });
+        if (!round) {
+            return res.status(404).json({
+                success: false,
+                message: 'Round not found'
+            });
+        }
+
+        if (numericMark < 0 || numericMark > round.outOf) {
+            return res.status(400).json({
+                success: false,
+                message: `Mark must be between 0 and ${round.outOf}`
+            });
+        }
+
+        const teamMarkIndex = round.teamMarks.findIndex((tm) => tm.teamName === teamName);
+        if (teamMarkIndex === -1) {
+            // Team doesn't exist in this round, add it
+            round.teamMarks.push({ teamName, mark: numericMark });
+        } else {
+            round.teamMarks[teamMarkIndex].mark = numericMark;
+        }
+
+        await round.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Mark updated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update mark',
+            error: error.message
+        });
+    }
+});
+
+// GET endpoint to fetch teams with round marks
+app.get('/api/marks-board', async (req, res) => {
+    try {
+        const teams = await TeamRegistration.find({}, { teamName: 1, roundMarks: 1 }).sort({ submittedAt: -1 });
+
+        const roundsSet = new Set();
+        const formattedTeams = teams.map((team) => {
+            const roundMarks = team.roundMarks ? Object.fromEntries(team.roundMarks) : {};
+            Object.keys(roundMarks).forEach((round) => roundsSet.add(round));
+
+            const total = Object.values(roundMarks).reduce((sum, value) => {
+                const numericValue = Number(value);
+                return sum + (Number.isFinite(numericValue) ? numericValue : 0);
+            }, 0);
+
+            return {
+                _id: team._id,
+                teamName: team.teamName,
+                roundMarks,
+                total
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            rounds: Array.from(roundsSet),
+            data: formattedTeams
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch marks board',
+            error: error.message
+        });
+    }
+});
+
+// POST endpoint to create a new round for all teams
+app.post('/api/marks/round', async (req, res) => {
+    try {
+        const { roundName } = req.body;
+
+        if (!roundName || !roundName.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Round name is required'
+            });
+        }
+
+        const normalizedRound = roundName.trim();
+        const teams = await TeamRegistration.find();
+
+        await Promise.all(
+            teams.map(async (team) => {
+                const existingValue = team.roundMarks ? team.roundMarks.get(normalizedRound) : undefined;
+                if (existingValue === undefined) {
+                    team.roundMarks = team.roundMarks || new Map();
+                    team.roundMarks.set(normalizedRound, 0);
+                    await team.save();
+                }
+            })
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Round created successfully',
+            round: normalizedRound
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create round',
+            error: error.message
+        });
+    }
+});
+
+// PATCH endpoint to update marks for a team in a round
+app.patch('/api/marks', async (req, res) => {
+    try {
+        const { teamId, roundName, mark } = req.body;
+
+        if (!teamId || !roundName || mark === undefined || mark === null) {
+            return res.status(400).json({
+                success: false,
+                message: 'teamId, roundName and mark are required'
+            });
+        }
+
+        const numericMark = Number(mark);
+        if (!Number.isFinite(numericMark)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Mark must be a valid number'
+            });
+        }
+
+        const team = await TeamRegistration.findById(teamId);
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+
+        team.roundMarks = team.roundMarks || new Map();
+        team.roundMarks.set(roundName.trim(), numericMark);
+        await team.save();
+
+        const roundMarks = Object.fromEntries(team.roundMarks || []);
+        const total = Object.values(roundMarks).reduce((sum, value) => {
+            const numericValue = Number(value);
+            return sum + (Number.isFinite(numericValue) ? numericValue : 0);
+        }, 0);
+
+        res.status(200).json({
+            success: true,
+            message: 'Mark updated successfully',
+            data: {
+                _id: team._id,
+                teamName: team.teamName,
+                roundMarks,
+                total
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update mark',
+            error: error.message
+        });
+    }
 });
 
 // POST endpoint to upload receipt to Cloudinary
