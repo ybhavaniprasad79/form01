@@ -3,6 +3,7 @@ import './App.css'
 import Home from './pages/home'
 import Animation from './pages/animation'
 import Download from './pages/Download'
+import Marks from './pages/marks'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path='/' element={<Animation />} />
           <Route path='/home' element={<Home />} />
           <Route path='/download' element={<Download />} />
+          <Route path='/marks' element={<Marks />} />
         </Routes>
       </Router>
     </>
