@@ -16,6 +16,10 @@ function Marks() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingRound, setEditingRound] = useState('')
+  const [editRoundName, setEditRoundName] = useState('')
+  const [editRoundOutOf, setEditRoundOutOf] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const updateTimeoutRef = useRef(null)
 
@@ -146,6 +150,90 @@ function Marks() {
       setShowModal(false)
     } catch (err) {
       setError(err.message || 'Unable to create round')
+      setTimeout(() => setError(''), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditRound = async () => {
+    if (!editRoundName.trim()) {
+      setError('Please enter a round name')
+      return
+    }
+
+    const numericOutOf = Number(editRoundOutOf)
+    if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
+      setError('Please enter valid out of marks (minimum 1)')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/marks/round`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          oldRoundName: editingRound, 
+          newRoundName: editRoundName.trim(), 
+          outOf: numericOutOf 
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update round')
+      }
+
+      // Update rounds list
+      setRounds((prev) => prev.map(r => r === editingRound ? editRoundName.trim() : r))
+      
+      // Update outOfByRound
+      setOutOfByRound((prev) => {
+        const updated = { ...prev }
+        if (editingRound !== editRoundName.trim()) {
+          delete updated[editingRound]
+        }
+        updated[editRoundName.trim()] = numericOutOf
+        return updated
+      })
+
+      // Update teams with new round name
+      setTeams((prev) =>
+        prev.map((team) => {
+          if (editingRound !== editRoundName.trim()) {
+            const updatedRoundMarks = { ...team.roundMarks }
+            if (updatedRoundMarks[editingRound] !== undefined) {
+              updatedRoundMarks[editRoundName.trim()] = updatedRoundMarks[editingRound]
+              delete updatedRoundMarks[editingRound]
+            }
+            return {
+              ...team,
+              roundMarks: updatedRoundMarks
+            }
+          }
+          return team
+        })
+      )
+
+      // Update selected round if it was the one being edited
+      if (selectedRound === editingRound) {
+        setSelectedRound(editRoundName.trim())
+      }
+
+      setMessage('Round updated successfully')
+      setTimeout(() => setMessage(''), 2000)
+      setShowEditModal(false)
+      setEditingRound('')
+      setEditRoundName('')
+      setEditRoundOutOf('')
+    } catch (err) {
+      setError(err.message || 'Unable to update round')
       setTimeout(() => setError(''), 3000)
     } finally {
       setSaving(false)
@@ -301,7 +389,7 @@ function Marks() {
           </div>
         )}
 
-        {/* Modal */}
+        {/* Create Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
             <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -359,6 +447,64 @@ function Marks() {
           </div>
         )}
 
+        {/* Edit Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowEditModal(false)}>
+            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-white text-xl font-semibold">Edit Round</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-400 hover:text-white text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="space-y-4">
+                <input
+                  type='text'
+                  value={editRoundName}
+                  onChange={(e) => setEditRoundName(e.target.value)}
+                  placeholder='Enter round name (e.g., Round 1, Semi Finals)'
+                  className="w-full px-4 py-3 text-base bg-gray-900/70 border border-gray-600/50 text-white rounded-lg outline-none transition-colors focus:ring-1 focus:ring-gray-400 focus:border-gray-400 placeholder:text-gray-500"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !saving) {
+                      handleEditRound()
+                    }
+                  }}
+                />
+                <input
+                  type='number'
+                  min='1'
+                  value={editRoundOutOf}
+                  onChange={(e) => setEditRoundOutOf(e.target.value)}
+                  placeholder='Out of marks (e.g., 10, 20, 50)'
+                  className="w-full px-4 py-3 text-base bg-gray-900/70 border border-gray-600/50 text-white rounded-lg outline-none transition-colors focus:ring-1 focus:ring-gray-400 focus:border-gray-400 placeholder:text-gray-500"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 px-6 py-3 text-base font-semibold text-gray-300 bg-gray-700/80 hover:bg-gray-600 rounded-lg transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleEditRound} 
+                    disabled={saving}
+                    className={`flex-1 px-6 py-3 text-base font-semibold text-white rounded-lg transition-all shadow-lg ${
+                      saving 
+                        ? 'bg-gray-600 cursor-not-allowed' 
+                        : 'bg-blue-600/80 hover:bg-blue-600 cursor-pointer'
+                    }`}
+                  >
+                    {saving ? 'Updating...' : 'Update'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 p-6 bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-700/50">
           <h3 className="text-white text-xl font-semibold mb-4 mt-0">
             Select Round
@@ -372,17 +518,30 @@ function Marks() {
               {rounds.map((round) => {
                 const isSelected = selectedRound === round
                 return (
-                  <button
-                    key={round}
-                    onClick={() => setSelectedRound(round)}
-                    className={`px-6 py-3 text-base rounded-lg cursor-pointer transition-all ${
-                      isSelected
-                        ? 'bg-green-600/80 text-white border border-green-600/50 font-semibold shadow-lg'
-                        : 'bg-gray-700/80 text-gray-300 border border-gray-600/50 font-medium hover:bg-gray-600'
-                    }`}
-                  >
-                    {round}
-                  </button>
+                  <div key={round} className="flex gap-2 items-center">
+                    <button
+                      onClick={() => setSelectedRound(round)}
+                      className={`px-6 py-3 text-base rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-green-600/80 text-white border border-green-600/50 font-semibold shadow-lg'
+                          : 'bg-gray-700/80 text-gray-300 border border-gray-600/50 font-medium hover:bg-gray-600'
+                      }`}
+                    >
+                      {round}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingRound(round)
+                        setEditRoundName(round)
+                        setEditRoundOutOf(String(outOfByRound[round] || ''))
+                        setShowEditModal(true)
+                      }}
+                      className="px-3 py-3 text-base rounded-lg bg-blue-600/80 text-white border border-blue-600/50 hover:bg-blue-600 transition-all shadow-lg"
+                      title="Edit round"
+                    >
+                      ✏️
+                    </button>
+                  </div>
                 )
               })}
             </div>
