@@ -646,6 +646,81 @@ app.post("/api/marks/round", async (req, res) => {
   }
 });
 
+// PUT endpoint to update round name and/or out of marks
+app.put("/api/marks/round", async (req, res) => {
+  try {
+    const { oldRoundName, newRoundName, outOf } = req.body;
+
+    if (!oldRoundName || !oldRoundName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Old round name is required",
+      });
+    }
+
+    if (!newRoundName || !newRoundName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "New round name is required",
+      });
+    }
+
+    const numericOutOf = Number(outOf);
+    if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Out of mark must be a valid number greater than 0",
+      });
+    }
+
+    const normalizedOldRound = oldRoundName.trim();
+    const normalizedNewRound = newRoundName.trim();
+
+    // Find the round to update
+    const roundToUpdate = await RoundMarks.findOne({
+      roundName: normalizedOldRound,
+    });
+
+    if (!roundToUpdate) {
+      return res.status(404).json({
+        success: false,
+        message: "Round not found",
+      });
+    }
+
+    // Check if new round name already exists (only if changing the name)
+    if (normalizedOldRound !== normalizedNewRound) {
+      const existingRound = await RoundMarks.findOne({
+        roundName: normalizedNewRound,
+      });
+      if (existingRound) {
+        return res.status(400).json({
+          success: false,
+          message: "Round name already exists",
+        });
+      }
+    }
+
+    // Update the round
+    roundToUpdate.roundName = normalizedNewRound;
+    roundToUpdate.outOf = numericOutOf;
+    await roundToUpdate.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Round updated successfully",
+      round: roundToUpdate.roundName,
+      outOf: roundToUpdate.outOf,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update round",
+      error: error.message,
+    });
+  }
+});
+
 // PATCH endpoint to update marks for a team in a round
 app.patch("/api/marks", async (req, res) => {
   try {

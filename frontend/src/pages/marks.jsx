@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Trophy, Sparkles, Key, AlertTriangle, Search, Plus, Check, Trash2, Edit } from 'lucide-react';
+import { Trophy, Search, Plus } from 'lucide-react';
 
 function Marks() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,6 +19,10 @@ function Marks() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRound, setEditingRound] = useState('');
+  const [editRoundName, setEditRoundName] = useState('');
+  const [editRoundOutOf, setEditRoundOutOf] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const updateTimeoutRef = useRef(null);
 
@@ -149,6 +153,90 @@ function Marks() {
       setShowModal(false);
     } catch (err) {
       setError(err.message || 'Unable to create round');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditRound = async () => {
+    if (!editRoundName.trim()) {
+      setError('Please enter a round name');
+      return;
+    }
+
+    const numericOutOf = Number(editRoundOutOf);
+    if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
+      setError('Please enter valid out of marks (minimum 1)');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/marks/round`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          oldRoundName: editingRound, 
+          newRoundName: editRoundName.trim(), 
+          outOf: numericOutOf 
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update round');
+      }
+
+      // Update rounds list
+      setRounds((prev) => prev.map(r => r === editingRound ? editRoundName.trim() : r));
+      
+      // Update outOfByRound
+      setOutOfByRound((prev) => {
+        const updated = { ...prev };
+        if (editingRound !== editRoundName.trim()) {
+          delete updated[editingRound];
+        }
+        updated[editRoundName.trim()] = numericOutOf;
+        return updated;
+      });
+
+      // Update teams with new round name
+      setTeams((prev) =>
+        prev.map((team) => {
+          if (editingRound !== editRoundName.trim()) {
+            const updatedRoundMarks = { ...team.roundMarks };
+            if (updatedRoundMarks[editingRound] !== undefined) {
+              updatedRoundMarks[editRoundName.trim()] = updatedRoundMarks[editingRound];
+              delete updatedRoundMarks[editingRound];
+            }
+            return {
+              ...team,
+              roundMarks: updatedRoundMarks
+            };
+          }
+          return team;
+        })
+      );
+
+      // Update selected round if it was the one being edited
+      if (selectedRound === editingRound) {
+        setSelectedRound(editRoundName.trim());
+      }
+
+      setMessage('Round updated successfully');
+      setTimeout(() => setMessage(''), 2000);
+      setShowEditModal(false);
+      setEditingRound('');
+      setEditRoundName('');
+      setEditRoundOutOf('');
+    } catch (err) {
+      setError(err.message || 'Unable to update round');
       setTimeout(() => setError(''), 3000);
     } finally {
       setSaving(false);
@@ -315,6 +403,7 @@ function Marks() {
   return (
     <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
       <Navbar />
+      
       {/* Create Round Modal */}
       <AnimatePresence>
         {showModal && (
@@ -380,6 +469,79 @@ function Marks() {
                     className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
                   >
                     {saving ? 'CONFIGURING...' : '✓ INITIATE'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Round Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-md w-full bg-white border-3 border-black p-5 rounded-2xl shadow-[6px_6px_0_#000] bg-halftone-dots-white text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-3.5 left-6 bg-comic-yellow border-2 border-black text-black font-bangers text-[10px] px-2.5 py-0.5 rounded shadow-[1.5px_1.5px_0_#000]">
+                EDIT STAGE
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="absolute -top-3.5 right-4 bg-comic-red text-white border-2 border-black font-bangers text-[10px] px-3 py-0.5 rounded shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+              >
+                ✕ CLOSE
+              </button>
+              
+              <h3 className="text-xl font-luckiest text-black mb-3.5 mt-2">EDIT MISSION ROUND</h3>
+
+              <div className="space-y-3.5 text-xs font-semibold text-gray-800">
+                <div>
+                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">ROUND NAME</label>
+                  <input
+                    type="text"
+                    value={editRoundName}
+                    onChange={(e) => setEditRoundName(e.target.value)}
+                    placeholder="e.g., ROUND 1, SEMI FINALS"
+                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !saving) handleEditRound();
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">MAX VALUE MARKS</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editRoundOutOf}
+                    onChange={(e) => setEditRoundOutOf(e.target.value)}
+                    placeholder="e.g., 10, 20, 50"
+                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
+                  />
+                </div>
+                <div className="flex gap-3 pt-3 border-t-2 border-dashed border-black font-bangers text-base">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 bg-white border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000]"
+                  >
+                    ABORT
+                  </motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    type="button"
+                    onClick={handleEditRound} 
+                    disabled={saving}
+                    className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                  >
+                    {saving ? 'UPDATING...' : '✓ UPDATE'}
                   </motion.button>
                 </div>
               </div>
@@ -497,19 +659,36 @@ function Marks() {
               {rounds.map((round) => {
                 const isSelected = selectedRound === round;
                 return (
-                  <motion.button
-                    key={round}
-                    whileHover={{ scale: 1.01 }}
-                    type="button"
-                    onClick={() => setSelectedRound(round)}
-                    className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#000] cursor-pointer transition-all ${
-                      isSelected
-                        ? 'bg-comic-red text-white'
-                        : 'bg-white text-black hover:bg-gray-50'
-                    }`}
-                  >
-                    {round.toUpperCase()}
-                  </motion.button>
+                  <div key={round} className="flex gap-1.5 items-center">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      type="button"
+                      onClick={() => setSelectedRound(round)}
+                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#000] cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-comic-red text-white'
+                          : 'bg-white text-black hover:bg-gray-50'
+                      }`}
+                    >
+                      {round.toUpperCase()}
+                    </motion.button>
+                    
+                    {/* Pencil Edit button styled in comic theme */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      type="button"
+                      onClick={() => {
+                        setEditingRound(round);
+                        setEditRoundName(round);
+                        setEditRoundOutOf(String(outOfByRound[round] || ''));
+                        setShowEditModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-comic-cyan border-3 border-black text-black shadow-[2px_2px_0_#000] hover:bg-cyan-400 transition-all cursor-pointer text-xs"
+                      title="Edit stage"
+                    >
+                      ✏️
+                    </motion.button>
+                  </div>
                 );
               })}
             </div>
