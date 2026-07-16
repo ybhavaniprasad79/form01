@@ -10,27 +10,27 @@
   --font-fredoka: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
   --font-comic: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
 
-  --color-sky-blue: #4EC5F1;
-  --color-cyan-custom: #42D4F5;
-  --color-bright-orange: #FF7A1A;
-  --color-coral-orange: #FF5C3A;
-  --color-accent-yellow: #FFD54A;
+  --color-sky-blue: #199CA4;
+  --color-cyan-custom: #5EC0CA;
+  --color-bright-orange: #E53A22;
+  --color-coral-orange: #DE3C46;
+  --color-accent-yellow: #F9B735;
   --color-light-gray: #F5F7FA;
 
   /* Re-mapped existing colors to updated palette to prevent broken color mappings */
-  --color-comic-cyan: #4EC5F1;
-  --color-comic-yellow: #FFD54A;
-  --color-comic-red: #FF5C3A;
-  --color-comic-orange: #FF7A1A;
-  --color-comic-purple: #A855F7;
-  --color-comic-blue: #4EC5F1;
+  --color-comic-cyan: #5EC0CA;
+  --color-comic-yellow: #F9B735;
+  --color-comic-red: #DE3C46;
+  --color-comic-orange: #E53A22;
+  --color-comic-purple: #F17F9A;
+  --color-comic-blue: #199CA4;
   --color-comic-green: #22C55E;
-  --color-comic-lime: #84CC16;
+  --color-comic-lime: #F9B735;
 }
 
 /* Comic-inspired conics-gradient radial burst backgrounds */
 .bg-comic-rays-blue {
-  background-color: #42D4F5;
+  background-color: #199CA4;
   background-image: url('/background.jpg');
   background-size: cover;
   background-position: center;
@@ -275,14 +275,14 @@ h5 {
 }
 
 .comic-input:focus {
-  border-color: #FF7A1A !important;
-  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.45) !important;
+  border-color: #E53A22 !important;
+  box-shadow: 0 0 0 3px rgba(229, 58, 34, 0.45) !important;
   background-color: #ffffff !important;
 }
 
 /* Global Comic Buttons */
 .comic-btn-primary {
-  background-color: #FF7A1A !important;
+  background-color: #E53A22 !important;
   color: #ffffff !important;
   border: 3px solid #111111 !important;
   font-family: "Luckiest Guy", system-ui !important;
@@ -293,7 +293,7 @@ h5 {
 }
 
 .comic-btn-primary:hover {
-  background-color: #FF5C3A !important;
+  background-color: #DE3C46 !important;
   transform: translate(-1px, -1px);
   box-shadow: 4.5px 4.5px 0px #111111 !important;
 }
@@ -304,8 +304,8 @@ h5 {
 }
 
 .comic-btn-secondary {
-  background-color: #4EC5F1 !important;
-  color: #111111 !important;
+  background-color: #199CA4 !important;
+  color: #ffffff !important;
   border: 3px solid #111111 !important;
   font-family: "Luckiest Guy", system-ui !important;
   text-transform: uppercase !important;
@@ -315,7 +315,7 @@ h5 {
 }
 
 .comic-btn-secondary:hover {
-  background-color: #42D4F5 !important;
+  background-color: #5EC0CA !important;
   transform: translate(-1px, -1px);
   box-shadow: 4.5px 4.5px 0px #111111 !important;
 }
