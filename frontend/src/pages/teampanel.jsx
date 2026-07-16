@@ -221,9 +221,152 @@ const TeamPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-12 text-black">
+    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-12 text-black relative overflow-hidden">
       <Navbar />
-      <div className="flex-grow max-w-7xl mx-auto w-full px-4 mt-8">
+
+      {/* Luffy's Straw Hat (One Piece) - Top Left */}
+      <div className="absolute top-[12%] left-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-16 h-16 rotate-[-5deg]" viewBox="0 0 100 100" fill="none">
+            <ellipse cx="50" cy="65" rx="45" ry="12" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 62 C22 25, 78 25, 78 62" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 55 C30 52, 70 52, 78 55 C78 62, 22 62, 22 55 Z" fill="#FF3B30" stroke="black" strokeWidth="3" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">LUFFY</div>
+        </div>
+      </div>
+
+      {/* Hidden Leaf Village Spiral (Naruto) - Top Right */}
+      <div className="absolute top-[16%] right-[8%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden sm:block">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 rotate-[12deg] text-[#FF7A00]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" stroke="black" strokeWidth="8" />
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" />
+            <polygon points="25,35 15,30 25,25" fill="#FF7A00" stroke="black" strokeWidth="2.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">NARUTO</div>
+        </div>
+      </div>
+
+      {/* Paint Palette Doodle - Left */}
+      <div className="absolute top-[28%] left-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden lg:block rotate-[15deg]">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-orange" viewBox="0 0 24 24" fill="currentColor" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.3444 19.4858 5.76179 20.081 6.00282 20.7676L6.08272 20.9946C6.27581 21.5435 6.7969 21.9056 7.37887 21.9056H12Z" />
+            <circle cx="7.5" cy="10.5" r="1.5" fill="white" />
+            <circle cx="11.5" cy="7.5" r="1.5" fill="white" />
+            <circle cx="16.5" cy="9.5" r="1.5" fill="white" />
+            <circle cx="15.5" cy="14.5" r="1.5" fill="white" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">PALETTE</div>
+        </div>
+      </div>
+
+      {/* Pencil & Ruler Doodle - Bottom Left Area */}
+      <div className="absolute bottom-[24%] left-[5%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden lg:block rotate-[-12deg]">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-yellow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2l8 8-14 14H4v-4L18 2z" fill="currentColor" stroke="black" strokeWidth="2" />
+            <path d="M16 4l4 4" stroke="black" strokeWidth="2" />
+            <path d="M9 11l3 3" stroke="black" strokeWidth="2" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">PENCIL</div>
+        </div>
+      </div>
+
+      {/* Lightbulb Doodle - Top Right Area */}
+      <div className="absolute top-[28%] right-[5%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden lg:block rotate-[8deg]">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-yellow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .6 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" fill="currentColor" stroke="black" strokeWidth="2" />
+            <path d="M9 18h6M10 22h4" stroke="black" strokeWidth="2" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">IDEA</div>
+        </div>
+      </div>
+
+      {/* Notebook Laptop - Bottom Right Area */}
+      <div className="absolute bottom-[28%] right-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden lg:block rotate-[15deg]">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" fill="currentColor" stroke="black" strokeWidth="2" />
+            <path d="M2 20h20" stroke="black" strokeWidth="2.5" />
+            <path d="M20 20v2H4v-2" stroke="black" strokeWidth="2.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">CODE</div>
+        </div>
+      </div>
+
+      {/* Lightning Bolt Scattered */}
+      <div className="absolute top-[8%] left-[20%] z-0 pointer-events-none opacity-25 animate-float hidden xl:block rotate-[15deg]">
+        <svg className="w-8 h-8 text-comic-yellow" viewBox="0 0 24 24" fill="currentColor" stroke="black" strokeWidth="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      </div>
+
+      {/* Star Burst Scattered */}
+      <div className="absolute bottom-[8%] right-[22%] z-0 pointer-events-none opacity-25 animate-twinkle hidden xl:block rotate-[-12deg]">
+        <svg className="w-8 h-8 text-comic-yellow" viewBox="0 0 24 24" fill="currentColor" stroke="black" strokeWidth="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      </div>
+
+      {/* Warding Fox Mask (Demon Slayer) - Bottom Left */}
+      <div className="absolute bottom-[10%] left-[8%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 rotate-[-10deg]" viewBox="0 0 100 100">
+            <path d="M20 50 C20 15, 80 15, 80 50 C80 80, 50 95, 50 95 C50 95, 20 80, 20 50 Z" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M25 25 L10 5 L35 18" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M75 25 L90 5 L65 18" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M35 48 L48 48" stroke="black" strokeWidth="5" strokeLinecap="round" />
+            <path d="M52 48 L65 48" stroke="black" strokeWidth="5" strokeLinecap="round" />
+            <path d="M28 65 L40 58 L28 72 Z" fill="#FF3B30" stroke="black" strokeWidth="2" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">DEMON SLAYER</div>
+        </div>
+      </div>
+
+      {/* Shadow Daggers (Jinwoo) - Bottom Right */}
+      <div className="absolute bottom-[15%] right-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 text-[#29C5F6] drop-shadow-[0_0_4px_#29C5F6]" viewBox="0 0 100 100">
+            <path d="M30 80 L75 35 L80 40 L35 85 Z" fill="#333" stroke="black" strokeWidth="3" />
+            <path d="M70 30 L85 15 L90 20 L75 35 Z" fill="currentColor" stroke="black" strokeWidth="2.5" />
+            <path d="M70 80 L25 35 L20 40 L65 85 Z" fill="#333" stroke="black" strokeWidth="3" />
+            <path d="M30 30 L15 15 L10 20 L25 35 Z" fill="currentColor" stroke="black" strokeWidth="2.5" />
+            <circle cx="50" cy="30" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">JINWOO</div>
+        </div>
+      </div>
+
+      {/* Paintbrush & Splat Sticker - Middle Left */}
+      <div className="absolute top-[42%] left-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden lg:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 text-comic-cyan" viewBox="0 0 100 100">
+            <path d="M20 40 C10 30, 10 60, 30 70 C50 80, 80 70, 70 50 C60 30, 30 50, 20 40 Z" fill="currentColor" opacity="0.4" />
+            <path d="M85 15 L50 50 L45 45 L80 10 Z" fill="#D1A153" stroke="black" strokeWidth="3" />
+            <path d="M50 50 L40 60 L35 55 L45 45 Z" fill="#999" stroke="black" strokeWidth="2.5" />
+            <path d="M40 60 C38 65, 30 75, 25 80 C32 82, 42 75, 45 65 Z" fill="#FF3B30" stroke="black" strokeWidth="2.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">BRUSH</div>
+        </div>
+      </div>
+
+      {/* Paint Splat Sticker - Middle Right */}
+      <div className="absolute top-[45%] right-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden lg:block">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-purple" viewBox="0 0 100 100">
+            <path d="M50 20 C60 10, 80 15, 75 35 C70 55, 90 60, 75 75 C60 90, 45 75, 30 85 C15 70, 25 45, 35 30 C45 15, 40 30, 50 20 Z" fill="currentColor" stroke="black" strokeWidth="3" />
+            <circle cx="20" cy="25" r="4" fill="currentColor" stroke="black" strokeWidth="1.5" />
+            <circle cx="80" cy="20" r="5" fill="currentColor" stroke="black" strokeWidth="1.5" />
+            <circle cx="85" cy="70" r="3" fill="currentColor" stroke="black" strokeWidth="1" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">SPLATTER</div>
+        </div>
+      </div>
+
+      <div className="flex-grow max-w-7xl mx-auto w-full px-4 mt-8 relative z-10">
         {view === "access" ? (
           /* Vault Access */
           <div className="min-h-[calc(100vh-160px)] flex items-center justify-center">
@@ -294,10 +437,10 @@ const TeamPanel = () => {
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
               <div className="space-y-0.5 text-left">
                 <div className="text-2xl font-luckiest text-black tracking-wider leading-none">
-                  WELCOME, {team?.teamName}!
+                  Team  {team?.teamName}!
                 </div>
                 <div className="font-bangers text-sm text-comic-red tracking-widest uppercase mt-0.5">
-                  MISSION CONTROL STATION
+                  Welcome to Canvas Craft
                 </div>
               </div>
               <motion.button
@@ -319,13 +462,13 @@ const TeamPanel = () => {
                 {/* 1. Team Details */}
                 <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
                   <div className="absolute -top-4 left-6 bg-comic-cyan border-3 border-black text-black font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
-                    TEAM ROSTER
+                    Your Team
                   </div>
 
                   <div className="mt-3 space-y-3.5">
                     <div className="flex justify-between items-center bg-gray-50 border-2 border-black rounded-lg p-2.5">
                       <div>
-                        <span className="font-bangers text-[10px] text-gray-500 block leading-none">ALLIANCE NAME</span>
+                        <span className="font-bangers text-[10px] text-gray-500 block leading-none">TEAM NAME</span>
                         <span className="font-luckiest text-base text-black">{team?.teamName}</span>
                       </div>
                       <div className="bg-comic-yellow border-2 border-black rounded-lg p-1.5 shadow-[1.5px_1.5px_0_#000]">
@@ -396,7 +539,7 @@ const TeamPanel = () => {
 
               </div>
 
-              {/* Right Column: Problem dossiers */}
+              {/* Right Column: Problem Statements */}
               <div className="lg:col-span-2 space-y-6">
 
                 <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
@@ -408,7 +551,7 @@ const TeamPanel = () => {
                     <p className="text-xs font-semibold text-gray-700 leading-relaxed">
                       {selectedProblemId
                         ? "Your alliance has successfully locked down a hackathon mission file. Proceed to coordinate configurations!"
-                        : `Review dossiers below and select details. Limit cap is ${MAX_TEAMS_PER_PROBLEM} teams per statement folder. Once locked, it cannot be changed.`}
+                        : `Review problem statements below and select details. Limit cap is ${MAX_TEAMS_PER_PROBLEM} teams per statement folder. Once locked, it cannot be changed.`}
                     </p>
                   </div>
 
@@ -434,7 +577,7 @@ const TeamPanel = () => {
                           {selectedProblem.title}
                         </div>
                         {selectedProblem.themePng && (
-                          <div 
+                          <div
                             onClick={(e) => { e.stopPropagation(); setZoomedImage(selectedProblem.themePng); }}
                             className="mx-auto w-32 h-32 border-2 border-black rounded-full overflow-hidden bg-gray-100 shadow-[2px_2px_0_#000] my-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
                           >
@@ -447,7 +590,7 @@ const TeamPanel = () => {
                             : selectedProblem.shortDescription}
                         </p>
                         <div className="mx-auto inline-block font-bangers text-xs text-comic-blue underline hover:text-blue-700 transition">
-                          {isSelectedExpanded ? "CLICK TO SHOW SUMMARY" : "CLICK TO EXPAND DOSSIER"}
+                          {isSelectedExpanded ? "CLICK TO SHOW SUMMARY" : "CLICK TO EXPAND PROBLEM STATEMENT"}
                         </div>
                       </div>
 
@@ -461,7 +604,7 @@ const TeamPanel = () => {
                           }}
                           className="bg-comic-blue hover:bg-blue-600 text-white font-bangers text-sm border-2 border-black rounded-lg px-4 py-1 shadow-[2px_2px_0_#000]"
                         >
-                          VIEW DOSSIER DETAILS
+                          VIEW PROBLEM STATEMENT DETAILS
                         </motion.button>
                       </div>
                     </motion.div>
@@ -494,7 +637,7 @@ const TeamPanel = () => {
                               </h3>
 
                               {p.themePng && (
-                                <div 
+                                <div
                                   onClick={(e) => { e.stopPropagation(); setZoomedImage(p.themePng); }}
                                   className="w-full h-28 border border-black rounded-lg overflow-hidden my-2 bg-gray-100 cursor-pointer hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all"
                                 >
@@ -578,7 +721,7 @@ const TeamPanel = () => {
 
               <div className="space-y-3.5 text-xs font-semibold text-gray-800 leading-relaxed font-comic text-left">
                 {detailsProblem.themePng && (
-                  <div 
+                  <div
                     onClick={() => setZoomedImage(detailsProblem.themePng)}
                     className="w-full h-40 border-2 border-black rounded-lg overflow-hidden bg-gray-100 mb-3 cursor-pointer hover:opacity-90 hover:scale-[1.01] active:scale-95 transition-all"
                   >
@@ -591,7 +734,7 @@ const TeamPanel = () => {
                 </div>
                 {detailsProblem.fullDescription && (
                   <div className="bg-gray-50 border border-black p-3 rounded-lg">
-                    <span className="font-bangers text-[10px] text-gray-500 block mb-0.5">DOSSIER SPECIFICATIONS</span>
+                    <span className="font-bangers text-[10px] text-gray-500 block mb-0.5">PROBLEM STATEMENT SPECIFICATIONS</span>
                     <p className="whitespace-pre-wrap">{detailsProblem.fullDescription}</p>
                   </div>
                 )}
@@ -708,7 +851,7 @@ const TeamPanel = () => {
               >
                 ×
               </button>
-              <div 
+              <div
                 className="bg-white p-3 rounded-2xl border-3 border-black shadow-[8px_8px_0_#000] overflow-hidden max-h-[80vh] pointer-events-auto cursor-zoom-out"
                 onClick={() => setZoomedImage(null)}
               >

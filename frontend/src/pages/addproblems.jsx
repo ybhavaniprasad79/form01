@@ -459,7 +459,7 @@ const AddProblems = () => {
               PROBLEM VAULT PANEL
             </h2>
             <p className="font-bangers text-sm text-comic-red tracking-widest mt-1 uppercase">
-              DOSSIER CONFIGURATION CONSOLE
+              PROBLEM STATEMENT CONFIGURATION CONSOLE
             </p>
           </div>
         </div>
@@ -576,7 +576,7 @@ const AddProblems = () => {
                       onClick={openCreate}
                       className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
                     >
-                      <Plus size={14} /> ADD DOSSIER
+                      <Plus size={14} /> ADD PROBLEM STATEMENT
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.01 }}
@@ -604,7 +604,7 @@ const AddProblems = () => {
                       onClick={showProblems}
                       className="bg-comic-yellow text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
                     >
-                      <FileText size={14} /> DOSSIERS VAULT
+                      <FileText size={14} /> PROBLEM STATEMENTS VAULT
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.01 }}
@@ -742,7 +742,7 @@ const AddProblems = () => {
                     ) : (
                       <div className="col-span-2 border-2 border-dashed border-black rounded-2xl p-6 text-center bg-gray-50">
                         <p className="font-luckiest text-base text-black">NO ACTIVE MISSIONS LOGGED</p>
-                        <p className="text-xs font-semibold text-gray-500 mt-1">Click the "ADD DOSSIER" button above to log a new problem folder.</p>
+                        <p className="text-xs font-semibold text-gray-500 mt-1">Click the "ADD PROBLEM STATEMENT" button above to log a new problem folder.</p>
                       </div>
                     )}
                   </div>
@@ -791,7 +791,7 @@ const AddProblems = () => {
                       <tr className="bg-comic-blue border-b-3 border-black text-white font-bangers text-sm tracking-wider">
                         <th className="px-3.5 py-2.5 text-left border-r-2 border-black">ALLIANCE TEAM NAME</th>
                         <th className="px-3.5 py-2.5 text-left border-r-2 border-black">TEAM LEADER</th>
-                        <th className="px-3.5 py-2.5 text-left border-r-2 border-black">SELECTED MISSION DOSSIER</th>
+                        <th className="px-3.5 py-2.5 text-left border-r-2 border-black">SELECTED MISSION PROBLEM STATEMENT</th>
                         <th className="px-3.5 py-2.5 text-center border-r-2 border-black">TIME SECURED</th>
                         <th className="px-3.5 py-2.5 text-center">ACTION</th>
                       </tr>
@@ -833,7 +833,7 @@ const AddProblems = () => {
                                   }}
                                   className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2.5 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
                                 >
-                                  <Eye size={10} /> DOSSIER
+                                  <Eye size={10} /> PROBLEM STATEMENT
                                 </motion.button>
                               </td>
                             </tr>
@@ -846,7 +846,7 @@ const AddProblems = () => {
                               ? "LOADING TEAM TARGET FILES..."
                               : selectedTeams.length
                                 ? "NO ALLIANCE MEETS QUERY PARAMETERS"
-                                : "NO ALLIANCE HAS LOCKED A DOSSIER YET"}
+                                : "NO ALLIANCE HAS LOCKED A PROBLEM STATEMENT YET"}
                           </td>
                         </tr>
                       )}
@@ -916,7 +916,7 @@ const AddProblems = () => {
                 </div>
                 {studentProblemPopup.problem.fullDescription && (
                   <div className="bg-gray-50 border border-black p-3 rounded-lg">
-                    <span className="font-bangers text-[10px] text-gray-500 block mb-0.5">FULL DOSSIER DETAILS</span>
+                    <span className="font-bangers text-[10px] text-gray-500 block mb-0.5">FULL PROBLEM STATEMENT DETAILS</span>
                     <p className="whitespace-pre-wrap">{studentProblemPopup.problem.fullDescription}</p>
                   </div>
                 )}
@@ -959,10 +959,10 @@ const AddProblems = () => {
               <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3 mb-4">
                 <div>
                   <span className="font-bangers text-[10px] text-comic-red uppercase leading-none block mb-0.5">
-                    ADMIN DOSSIER OVERRIDE
+                    ADMIN PROBLEM STATEMENT OVERRIDE
                   </span>
                   <h3 className="text-xl font-luckiest tracking-wide text-black leading-tight">
-                    {activeModal === "edit" ? "EDIT PROBLEM DOSSIER" : "CREATE NEW DOSSIER"}
+                    {activeModal === "edit" ? "EDIT PROBLEM PROBLEM STATEMENT" : "CREATE NEW PROBLEM STATEMENT"}
                   </h3>
                 </div>
                 <button
@@ -979,7 +979,7 @@ const AddProblems = () => {
                 <form onSubmit={handleSave} className="space-y-4 text-xs">
                   <div>
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      DOSSIER TITLE
+                      PROBLEM STATEMENT TITLE
                     </label>
                     <input
                       className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
@@ -1032,7 +1032,7 @@ const AddProblems = () => {
 
                   <div>
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      FULL INSTRUCTION SHEET (DOSSIER POPUP VIEW)
+                      FULL INSTRUCTION SHEET (PROBLEM STATEMENT POPUP VIEW)
                     </label>
                     <textarea
                       rows={5}
@@ -1071,7 +1071,7 @@ const AddProblems = () => {
                       className={`border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer ${canSave ? "bg-comic-lime text-black hover:bg-comic-green" : "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed"
                         }`}
                     >
-                      {isSaving ? "LOGGING DOSSIER..." : "✓ CREATE DOSSIER"}
+                      {isSaving ? "LOGGING PROBLEM STATEMENT..." : "✓ CREATE PROBLEM STATEMENT"}
                     </motion.button>
                   </div>
                 </form>
@@ -1079,7 +1079,7 @@ const AddProblems = () => {
                 <form onSubmit={handleUpdate} className="space-y-4 text-xs">
                   <div>
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      DOSSIER TITLE
+                      PROBLEM STATEMENT TITLE
                     </label>
                     <input
                       className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
@@ -1130,7 +1130,7 @@ const AddProblems = () => {
 
                   <div>
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      FULL INSTRUCTION SHEET (DOSSIER POPUP VIEW)
+                      FULL INSTRUCTION SHEET (PROBLEM STATEMENT POPUP VIEW)
                     </label>
                     <textarea
                       rows={5}
@@ -1161,7 +1161,7 @@ const AddProblems = () => {
                       disabled={isUpdating}
                       className="bg-comic-cyan hover:bg-[#1eb4e3] text-black border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer"
                     >
-                      {isUpdating ? "UPDATING DOSSIER..." : "✓ SAVE CHANGES"}
+                      {isUpdating ? "UPDATING PROBLEM STATEMENT..." : "✓ SAVE CHANGES"}
                     </motion.button>
                   </div>
                 </form>

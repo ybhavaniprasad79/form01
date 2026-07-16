@@ -211,9 +211,6 @@ const Animation = () => {
                 <h1 className="font-luckiest text-4xl md:text-6xl text-black tracking-tight leading-none comic-title-shadow select-text">
                   CANVAS CRAFT
                 </h1>
-                <p className="font-bangers text-xl md:text-2xl text-coral-orange tracking-widest mt-1.5 uppercase">
-                  Hack. Create. Innovate.
-                </p>
               </div>
             </div>
 
@@ -284,12 +281,6 @@ const Animation = () => {
 
               {/* Counts footer */}
               <div className="flex justify-between items-center mt-2.5 font-bangers text-xs md:text-sm">
-                <span className="bg-comic-purple text-white border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#111]">
-                  {teamCount} TEAMS LOGGED
-                </span>
-                <span className="bg-comic-lime text-black border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#111]">
-                  CAPACITY: {maxTeams} TEAMS
-                </span>
               </div>
             </div>
 
