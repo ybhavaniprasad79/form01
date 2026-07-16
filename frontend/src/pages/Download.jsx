@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import Navbar from '../components/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, Search, Check, RefreshCw, Eye } from 'lucide-react';
 
 const Download = () => {
   const [tab, setTab] = useState('download'); // 'download' or 'status'
@@ -145,7 +148,6 @@ const Download = () => {
       setStatusEdits(nextEdits);
       setSuccess('Access granted');
       
-      // Fetch registration status and max teams
       fetchRegistrationStatus();
       fetchMaxTeams();
     } catch (err) {
@@ -156,22 +158,9 @@ const Download = () => {
     }
   };
 
-  const handleStatusEdit = (transactionId, status) => {
-    setStatusEdits((prev) => ({
-      ...prev,
-      [transactionId]: status
-    }));
-  };
-
-  const handleUpdatePaymentStatus = async (transactionId) => {
+  const handleDirectUpdateStatus = async (transactionId, status) => {
     if (!statusPassword) {
       setError('Please enter admin password');
-      return;
-    }
-
-    const status = statusEdits[transactionId];
-    if (!status) {
-      setError('Please select a status');
       return;
     }
 
@@ -200,6 +189,8 @@ const Download = () => {
       if (!response.ok) {
         throw new Error(data.message || 'Failed to update payment status');
       }
+
+      setStatusEdits(prev => ({ ...prev, [transactionId]: status }));
 
       setAllPayments((prev) => {
         if (!prev) return prev;
@@ -350,16 +341,16 @@ const Download = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBubbleStyle = (status) => {
     switch(status) {
       case 'verified':
-        return 'bg-green-900/30 border-green-600/50 text-green-300';
+        return 'bg-comic-green text-black border-2 border-black';
       case 'rejected':
-        return 'bg-red-900/30 border-red-600/50 text-red-300';
+        return 'bg-comic-red text-white border-2 border-black';
       case 'pending':
-        return 'bg-yellow-900/30 border-yellow-600/50 text-yellow-300';
+        return 'bg-comic-yellow text-black border-2 border-black';
       default:
-        return 'bg-gray-900/30 border-gray-600/50 text-gray-300';
+        return 'bg-white text-black border-2 border-black';
     }
   };
 
@@ -374,320 +365,333 @@ const Download = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
+      <Navbar />
       {/* Image Modal */}
-      {isModalOpen && modalImage && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={closeImageModal}
-        >
-          <div className="relative max-w-2xl w-full">
-            <button
-              onClick={closeImageModal}
-              className="absolute -top-12 right-0 text-white bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-            >
-              ✕ Close
-            </button>
-            <img
-              src={modalImage}
-              alt="Receipt full view"
-              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl mx-auto"
+      <AnimatePresence>
+        {isModalOpen && modalImage && (
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-xl w-full bg-white border-3 border-black p-5 rounded-2xl shadow-[6px_6px_0_#000] text-center"
               onClick={(e) => e.stopPropagation()}
-            />
+            >
+              <div className="absolute -top-3.5 left-6 bg-comic-yellow border-2 border-black text-black font-bangers text-[10px] px-2.5 py-0.5 rounded shadow-[1.5px_1.5px_0_#000]">
+                RECEIPT PROOF
+              </div>
+              <button
+                onClick={closeImageModal}
+                className="absolute -top-3.5 right-4 bg-comic-red text-white border-2 border-black font-bangers text-[10px] px-3 py-0.5 rounded shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+              >
+                ✕ CLOSE
+              </button>
+              <div className="border-3 border-black rounded-xl overflow-hidden mt-4 bg-gray-50">
+                <img
+                  src={modalImage}
+                  alt="Receipt full view"
+                  className="max-w-full max-h-[60vh] object-contain mx-auto"
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
+        
+        {/* Simple Page Header */}
+        <div className="relative mb-8 text-center">
+          <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
+            <h2 className="font-luckiest text-2xl md:text-4xl text-black tracking-wide leading-none">
+              MISSION CONTROL CENTER
+            </h2>
+            <p className="font-bangers text-sm text-comic-red tracking-widest mt-1 uppercase">
+              ADMIN DEPLOYMENT COMMAND
+            </p>
           </div>
         </div>
-      )}
 
-      <div className="max-w-4xl mx-auto">
-        {/* Tab Navigation */}
-        <div className="flex gap-4 mb-8">
-          <button
+        {/* Global Error Banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
+            >
+              💥 OOPS! {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Global Success Banner */}
+        <AnimatePresence>
+          {success && (
+            <motion.div 
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mb-5 bg-comic-lime border-3 border-black rounded-2xl p-4 text-black font-bangers text-base shadow-[3px_3px_0_#000]"
+            >
+              🔥 NICE! {success}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tab Selection */}
+        <div className="flex flex-wrap gap-3 mb-6 font-luckiest text-base">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
             onClick={() => {
               setTab('download');
               setError('');
               setSuccess('');
             }}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              tab === 'download'
-                ? 'bg-gray-700/80 text-white shadow-lg'
-                : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800'
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
+              tab === 'download' ? 'bg-comic-yellow text-black' : 'bg-white text-black hover:bg-gray-50'
             }`}
           >
-            📥 Download Data
-          </button>
-          <button
+            📥 DOWNLOAD DATA
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.01 }}
             onClick={() => {
               setTab('status');
               setError('');
               setSuccess('');
             }}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              tab === 'status'
-                ? 'bg-gray-700/80 text-white shadow-lg'
-                : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800'
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
+              tab === 'status' ? 'bg-comic-yellow text-black' : 'bg-white text-black hover:bg-gray-50'
             }`}
           >
-            💳 Check & Update Status
-          </button>
+            💳 VERIFY DEPOSITS
+          </motion.button>
         </div>
 
-        {/* Download Tab */}
+        {/* ----------------- DOWNLOAD TAB ----------------- */}
         {tab === 'download' && (
-          <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-8 border border-gray-700/50">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">
-                Download Team Data
+          <div className="bg-white border-3 border-black rounded-2xl p-6 md:p-8 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-center">
+            <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
+              XLSX Teleport
+            </div>
+
+            <div className="text-center mb-6 mt-2">
+              <h2 className="text-2xl font-luckiest text-black mb-1">
+                TELEPORT MISSION RECORDS
               </h2>
-              <p className="text-gray-400 text-sm">
-                Enter password to download all registered teams data
+              <p className="text-xs font-semibold text-gray-700">
+                Verify authentication credentials to download registrations.
               </p>
             </div>
 
-            {success && (
-              <div className="mb-6 p-4 bg-green-900/30 border border-green-600/50 rounded-lg text-green-300 text-sm text-center">
-                {success}
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-6 p-4 bg-red-900/30 border border-red-600/50 rounded-lg text-red-300 text-sm text-center">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleDownload} className="space-y-6 max-w-md mx-auto">
+            <form onSubmit={handleDownload} className="space-y-4 max-w-sm mx-auto text-left">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Password
+                <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                  SECRET ACCESS KEY
                 </label>
                 <input
                   type="password"
                   value={downloadPassword}
                   onChange={(e) => setDownloadPassword(e.target.value)}
-                  className="w-full px-4 py-3 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-                  placeholder="Enter download password"
+                  className="w-full h-11 comic-input bg-gray-50 text-black border-3 border-black rounded-lg px-4 focus:bg-comic-yellow/10"
+                  placeholder="Enter access key"
                   required
                 />
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.01 }}
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-gray-700/80 text-white py-3 px-4 rounded-lg text-base font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                  loading
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-600 hover:shadow-xl'
-                }`}
+                className="w-full h-12 bg-comic-red hover:bg-[#ff251c] text-white border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer flex items-center justify-center"
               >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Downloading...
-                  </span>
-                ) : (
-                  '📥 Download Excel File'
-                )}
-              </button>
+                {loading ? 'DOWNLOADING...' : 'DOWNLOAD EXCEL'}
+              </motion.button>
             </form>
           </div>
         )}
 
-        {/* Payment Status Tab */}
+        {/* ----------------- SECURITY ACCREDITATION GATE ----------------- */}
         {tab === 'status' && !isStatusAuthorized && (
-          <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-8 border border-gray-700/50">
-            <h2 className="text-3xl font-bold text-white mb-6">Admin Access Required</h2>
-            <p className="text-gray-400 text-sm mb-6">
-              Enter the admin password to access payment status tools.
-            </p>
+          <div className="bg-white border-3 border-black rounded-2xl p-6 md:p-8 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-center">
+            <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
+              RESTRICTED VAULT
+            </div>
 
-            {success && (
-              <div className="mb-6 p-4 bg-green-900/30 border border-green-600/50 rounded-lg text-green-300 text-sm text-center">
-                {success}
-              </div>
-            )}
+            <div className="text-center mb-6 mt-2">
+              <h2 className="text-2xl font-luckiest text-black mb-1">
+                SECURITY ACCESS Cleared Only
+              </h2>
+              <p className="text-xs font-semibold text-gray-700">
+                Submit admin passcode to manage active verification lists.
+              </p>
+            </div>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-900/30 border border-red-600/50 rounded-lg text-red-300 text-sm text-center">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleUnlockStatusTools} className="space-y-6 max-w-md">
+            <form onSubmit={handleUnlockStatusTools} className="space-y-4 max-w-sm mx-auto text-left">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Admin Password
+                <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                  SECRET ACCESS KEY
                 </label>
                 <input
                   type="password"
                   value={statusGatePassword}
                   onChange={(e) => setStatusGatePassword(e.target.value)}
-                  className="w-full px-4 py-3 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-                  placeholder="Enter admin password"
+                  className="w-full h-11 comic-input bg-gray-50 text-black border-3 border-black rounded-lg px-4 focus:bg-comic-yellow/10"
+                  placeholder="Enter access key"
                   required
                 />
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.01 }}
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-gray-700/80 text-white py-3 px-4 rounded-lg text-base font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                  loading
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-600 hover:shadow-xl'
-                }`}
+                className="w-full h-12 bg-comic-red hover:bg-[#ff251c] text-white border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer"
               >
-                {loading ? '🔒 Verifying...' : '🔒 Unlock Status Tools'}
-              </button>
+                {loading ? 'UNLOCKING...' : 'ACCESS STATUS CONTROL'}
+              </motion.button>
             </form>
           </div>
         )}
 
+        {/* ----------------- VERIFICATION COMMAND STATION ----------------- */}
         {tab === 'status' && isStatusAuthorized && (
           <div className="space-y-6">
-            {/* Registration Control Panel */}
-            <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-6 border border-gray-700/50">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Registration Control</h3>
-                  <p className="text-sm text-gray-400">Temporarily enable or disable team registrations</p>
+            
+            {/* System controls widget */}
+            <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
+              <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
+                CONTROLS
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                <div className="space-y-0.5">
+                  <h3 className="text-xl font-luckiest text-black">MISSION GATE PORTALS</h3>
+                  <p className="text-xs font-semibold text-gray-700 leading-none">Open or shut registration portals and caps.</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className={`px-4 py-2 rounded-lg border ${
-                    registrationEnabled
-                      ? 'bg-green-900/30 border-green-600/50 text-green-300'
-                      : 'bg-red-900/30 border-red-600/50 text-red-300'
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className={`px-3 py-1.5 border-2 border-black rounded-lg font-luckiest text-sm shadow-[1.5px_1.5px_0_#000] ${
+                    registrationEnabled ? 'bg-comic-green text-black' : 'bg-comic-red text-white'
                   }`}>
-                    <span className="font-semibold">
-                      {registrationEnabled ? '✓ ' : '✕'}
-                    </span>
+                    {registrationEnabled ? 'PORTALS ACTIVE' : 'PORTALS SHUT'}
                   </div>
-                  <button
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
                     type="button"
                     onClick={handleToggleRegistration}
                     disabled={loading}
-                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all border ${
-                      loading
-                        ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-400 bg-gray-700/50'
-                        : registrationEnabled
-                          ? 'border-red-500/50 text-red-300 bg-red-900/30 hover:bg-red-900/50'
-                          : 'border-green-500/50 text-green-300 bg-green-900/30 hover:bg-green-900/50'
+                    className={`px-4 py-2 rounded-xl border-3 border-black font-bangers text-base shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
+                      registrationEnabled ? 'bg-comic-red text-white' : 'bg-comic-green text-black'
                     }`}
                   >
-                    {loading ? '...' : registrationEnabled ? '🔒 Close Registrations' : '✓ Open Registrations'}
-                  </button>
+                    {registrationEnabled ? '🔒 CLOSE REGISTRATIONS' : '✓ OPEN REGISTRATIONS'}
+                  </motion.button>
                 </div>
               </div>
-              {/* Max Teams Control */}
-              <div className="mt-4 pt-4 border-t border-gray-600/50">
+
+              <div className="mt-5 pt-4 border-t-2 border-dashed border-black">
                 <div className="flex flex-wrap items-end gap-3">
-                  <div className="flex-1 min-w-[200px]">
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Maximum Teams Limit
+                  <div className="w-full sm:max-w-xs">
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      MAX ROSTER THRESHOLD CAP
                     </label>
                     <div className="flex gap-2">
                       <input
                         type="number"
                         value={maxTeamsInput}
                         onChange={(e) => setMaxTeamsInput(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-                        placeholder="Enter max teams"
+                        className="flex-grow h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-luckiest text-sm"
+                        placeholder="Cap limit"
                         min="1"
                       />
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
                         type="button"
                         onClick={handleUpdateMaxTeams}
                         disabled={loading}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
-                          loading
-                            ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-400 bg-gray-700/50'
-                            : 'border-blue-500/50 text-blue-300 bg-blue-900/30 hover:bg-blue-900/50'
-                        }`}
+                        className="bg-comic-yellow text-black border-3 border-black font-bangers text-xs rounded-lg px-3 shadow-[1.5px_1.5px_0_#000]"
                       >
-                        {loading ? '...' : '✓ Update'}
-                      </button>
+                        UPDATE
+                      </motion.button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Current: {maxTeams}</p>
+                  </div>
+                  <div className="font-bangers text-xs text-gray-500 tracking-wider">
+                    CURRENT REGISTRATION CAP: <span className="font-luckiest text-black">{maxTeams}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-8 border border-gray-700/50">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <h2 className="text-3xl font-bold text-white">Payment Status Dashboard</h2>
-                <button
+            {/* Verification Table */}
+            <div className="bg-white border-3 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div>
+                  <h2 className="text-2xl font-luckiest text-black">DEPOSITS MONITOR</h2>
+                  <p className="text-xs font-semibold text-gray-700">Scan and verify incoming registration proof uploads.</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
                   type="button"
                   onClick={handleRefreshPayments}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
-                    loading
-                      ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-400'
-                      : 'border-gray-500/50 text-gray-300 hover:bg-gray-700/50'
-                  }`}
+                  className="bg-white border-3 border-black text-black font-bangers text-sm rounded-xl px-3.5 py-1.5 shadow-[2px_2px_0_#000] flex items-center gap-1 cursor-pointer"
                 >
-                  {loading ? 'Refreshing...' : '↻ Refresh List'}
-                </button>
+                  <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> REFRESH
+                </motion.button>
               </div>
 
-              {success && (
-                <div className="mb-6 p-4 bg-green-900/30 border border-green-600/50 rounded-lg text-green-300 text-sm text-center">
-                  {success}
-                </div>
-              )}
-
-              {error && (
-                <div className="mb-6 p-4 bg-red-900/30 border border-red-600/50 rounded-lg text-red-300 text-sm text-center">
-                  {error}
-                </div>
-              )}
-
               {!allPayments ? (
-                <div className="text-center text-gray-400 py-10">
-                  No payment data loaded yet.
+                <div className="text-center font-bangers text-gray-500 py-8 tracking-widest text-sm">
+                  RETRIEVING FILES...
                 </div>
               ) : (
                 <>
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Search by Team Name or Transaction ID
+                  {/* Filter Search */}
+                  <div className="mb-5">
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      FILTER BY NAME OR TRANSACTION UTR ID
                     </label>
                     <input
                       type="text"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-4 py-3 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-                      placeholder="Type to filter..."
+                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-4 focus:bg-comic-yellow/10 font-semibold text-sm"
+                      placeholder="Type name or transaction UTR to scan..."
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 text-center">
-                      <p className="text-yellow-300 font-semibold text-2xl">{allPayments.statusCounts.pending}</p>
-                      <p className="text-yellow-300 text-sm">Pending</p>
+                  {/* Clean Stat Metric Boxes */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 font-luckiest text-base">
+                    <div className="bg-comic-yellow border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
+                      <p className="text-black text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.pending}</p>
+                      <p className="text-black text-[10px] font-bangers tracking-widest leading-none mt-1">PENDING VERIFICATION</p>
                     </div>
-                    <div className="bg-green-900/30 border border-green-600/50 rounded-lg p-4 text-center">
-                      <p className="text-green-300 font-semibold text-2xl">{allPayments.statusCounts.verified}</p>
-                      <p className="text-green-300 text-sm">Verified</p>
+
+                    <div className="bg-comic-green border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
+                      <p className="text-black text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.verified}</p>
+                      <p className="text-black text-[10px] font-bangers tracking-widest leading-none mt-1">VERIFIED TEAMS</p>
                     </div>
-                    <div className="bg-red-900/30 border border-red-600/50 rounded-lg p-4 text-center">
-                      <p className="text-red-300 font-semibold text-2xl">{allPayments.statusCounts.rejected}</p>
-                      <p className="text-red-300 text-sm">Rejected</p>
+
+                    <div className="bg-comic-red border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
+                      <p className="text-white text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.rejected}</p>
+                      <p className="text-white text-[10px] font-bangers tracking-widest leading-none mt-1">REJECTED TEAMS</p>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                  {/* Table Roster */}
+                  <div className="overflow-x-auto border-3 border-black rounded-xl shadow-[3px_3px_0_#000] bg-white">
+                    <table className="w-full border-collapse text-xs">
                       <thead>
-                        <tr className="border-b border-gray-600/50">
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Team Name</th>
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Transaction ID</th>
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Receipt</th>
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Submitted</th>
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Status</th>
-                          <th className="px-4 py-3 text-left text-gray-400 font-medium">Update</th>
+                        <tr className="bg-comic-blue border-b-3 border-black text-white font-bangers text-sm tracking-wider">
+                          <th className="px-3.5 py-2.5 text-left border-r-2 border-black">ALLIANCE TITLE</th>
+                          <th className="px-3.5 py-2.5 text-left border-r-2 border-black">TRANSACTION UTR</th>
+                          <th className="px-3.5 py-2.5 text-center border-r-2 border-black">RECEIPT</th>
+                          <th className="px-3.5 py-2.5 text-left border-r-2 border-black">SUBMITTED</th>
+                          <th className="px-3.5 py-2.5 text-center border-r-2 border-black">STATUS</th>
+                          <th className="px-3.5 py-2.5 text-center">DECISION</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -697,57 +701,68 @@ const Download = () => {
                           const teamName = team.teamName.toLowerCase();
                           const txn = team.payment.transactionId.toLowerCase();
                           return teamName.includes(query) || txn.includes(query);
-                        }).map((team) => {
+                        }).map((team, idx) => {
                           const currentStatus = statusEdits[team.payment.transactionId] || team.payment.status;
                           return (
-                            <tr key={team._id} className="border-b border-gray-600/30 hover:bg-gray-700/30 transition">
-                              <td className="px-4 py-3 text-gray-300">{team.teamName}</td>
-                              <td className="px-4 py-3 text-gray-300 font-mono text-xs">{team.payment.transactionId}</td>
-                              <td className="px-4 py-3">
+                            <tr 
+                              key={team._id} 
+                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${
+                                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                              }`}
+                            >
+                              <td className="px-3 py-3 border-r-2 border-black font-luckiest text-black">{team.teamName}</td>
+                              <td className="px-3 py-3 border-r-2 border-black font-mono text-[10px] text-gray-700 font-bold select-all">{team.payment.transactionId}</td>
+                              <td className="px-3 py-3 border-r-2 border-black text-center">
                                 {team.payment.receiptUrl ? (
-                                  <div 
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
                                     onClick={() => openImageModal(team.payment.receiptUrl)}
-                                    className="cursor-pointer group"
+                                    className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2.5 py-0.5 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer"
                                   >
-                                    <img
-                                      src={team.payment.receiptUrl}
-                                      alt="Receipt preview"
-                                      className="w-16 h-16 object-cover rounded border border-gray-600/50 hover:border-blue-500/50 transition-all group-hover:shadow-lg"
-                                    />
-                                    <p className="text-[10px] text-gray-500 group-hover:text-blue-400 mt-1 transition-colors">Click to view</p>
-                                  </div>
+                                    VIEW
+                                  </motion.button>
                                 ) : (
-                                  <span className="text-gray-500 text-xs">No receipt</span>
+                                  <span className="text-gray-500 font-bangers text-[9px] uppercase">NO RECEIPT</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-gray-400 text-xs">{new Date(team.submittedAt).toLocaleDateString()}</td>
-                              <td className="px-4 py-3">
-                                <select
-                                  value={currentStatus}
-                                  onChange={(e) => handleStatusEdit(team.payment.transactionId, e.target.value)}
-                                  className="w-full min-w-[140px] px-3 py-2 text-xs bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition"
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="verified">Verified</option>
-                                  <option value="rejected">Rejected</option>
-                                </select>
-                                <div className={`mt-2 inline-block px-2 py-1 rounded-full text-[10px] font-medium border ${getStatusColor(currentStatus)}`}>
+                              <td className="px-3 py-3 border-r-2 border-black font-bangers text-[10px] text-gray-500 tracking-wider">
+                                {new Date(team.submittedAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-3 py-3 border-r-2 border-black text-center">
+                                <div className={`inline-block px-2 py-0.5 rounded-lg text-[10px] font-luckiest border-2 border-black shadow-[1.5px_1.5px_0_#000] ${getStatusBubbleStyle(currentStatus)}`}>
                                   {currentStatus.toUpperCase()}
                                 </div>
                               </td>
-                              <td className="px-4 py-3">
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdatePaymentStatus(team.payment.transactionId)}
-                                  disabled={loading}
-                                  className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
-                                    loading
-                                      ? 'opacity-50 cursor-not-allowed bg-gray-700/50 text-gray-400'
-                                      : 'bg-green-700/80 text-white hover:bg-green-600'
-                                  }`}
-                                >
-                                  {loading ? 'Updating...' : 'Update'}
-                                </button>
+                              <td className="px-3 py-3 text-center font-bangers text-[10px]">
+                                <div className="flex justify-center items-center gap-1.5">
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
+                                    onClick={() => handleDirectUpdateStatus(team.payment.transactionId, 'verified')}
+                                    disabled={loading || currentStatus === 'verified'}
+                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
+                                      currentStatus === 'verified'
+                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                                        : 'bg-comic-green text-black hover:bg-green-600'
+                                    }`}
+                                  >
+                                    VERIFY
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
+                                    onClick={() => handleDirectUpdateStatus(team.payment.transactionId, 'rejected')}
+                                    disabled={loading || currentStatus === 'rejected'}
+                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
+                                      currentStatus === 'rejected'
+                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                                        : 'bg-comic-red text-white hover:bg-red-600'
+                                    }`}
+                                  >
+                                    REJECT
+                                  </motion.button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -758,20 +773,23 @@ const Download = () => {
                 </>
               )}
             </div>
+
           </div>
         )}
 
-        <div className="mt-8 text-center">
-          <a
+        <div className="mt-8 text-center font-luckiest text-sm">
+          <motion.a
+            whileHover={{ scale: 1.02 }}
             href="/"
-            className="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+            className="inline-block bg-white border-3 border-black rounded-xl px-5 py-1.5 text-black shadow-[3px_3px_0_#000] hover:bg-gray-50 transition"
           >
-            ← Back to Home
-          </a>
+            ← BACK TO HOME
+          </motion.a>
         </div>
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Download
+export default Download;

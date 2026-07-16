@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, ArrowLeft, Upload, Check, AlertTriangle, Smartphone } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -42,7 +45,6 @@ const Home = () => {
   const [formData, setFormData] = useState(() => {
     const savedData = localStorage.getItem('teamRegistrationForm');
     if (savedData) {
-      // Merge saved data with initialFormState to ensure all fields exist
       return { ...initialFormState, ...JSON.parse(savedData) };
     }
     return initialFormState;
@@ -190,10 +192,8 @@ const Home = () => {
       teamName: newTeamName
     }));
     
-    // Reset status and start checking
     setTeamNameStatus({ checking: true, available: null, message: '' });
     
-    // Debounce the API call
     if (window.teamNameCheckTimeout) {
       clearTimeout(window.teamNameCheckTimeout);
     }
@@ -224,21 +224,18 @@ const Home = () => {
     e.preventDefault();
     setError('');
     
-    // Validate team name
     if (!formData.teamName.trim()) {
       setError('Please enter the team name');
       window.scrollTo(0, 0);
       return;
     }
     
-    // Check if team name is available
     if (teamNameStatus.available === false) {
       setError('Team name already exists. Please choose a different team name');
       window.scrollTo(0, 0);
       return;
     }
     
-    // Validate all team members
     const members = [
       { data: formData.teamLeader, name: 'Team Leader' },
       { data: formData.teamMember1, name: 'Team Member 1' },
@@ -289,7 +286,6 @@ const Home = () => {
       }
     }
     
-    // All validations passed, proceed to payment
     setShowPayment(true);
     window.scrollTo(0, 0);
   };
@@ -320,11 +316,9 @@ const Home = () => {
     setSuccess('');
 
     try {
-      // Step 1: Upload receipt to Cloudinary
       const formDataUpload = new FormData();
       formDataUpload.append('receipt', receiptFile);
 
-      // Create abort controller with 120 second timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000);
 
@@ -343,7 +337,6 @@ const Home = () => {
           throw new Error(uploadData.message || 'Failed to upload receipt');
         }
 
-        // Step 2: Submit registration with receipt URL
         const submissionData = {
           ...formData,
           payment: {
@@ -398,7 +391,6 @@ const Home = () => {
       } catch (countError) {
         console.error('Failed to refresh team count:', countError);
       }
-      
       window.scrollTo(0, 0);
     } finally {
       setLoading(false);
@@ -424,176 +416,201 @@ const Home = () => {
   };
 
   const renderRegistrationSuccess = () => (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="max-w-md w-full">
-        <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-8 border border-gray-700/50 text-center">
-          {/* Success Icon */}
-          <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500/50">
-              <span className="text-5xl">✓</span>
+    <div className="min-h-screen bg-comic-rays-yellow bg-halftone-dots flex flex-col font-comic select-none text-black relative overflow-hidden">
+      <Navbar />
+
+      {/* Luffy's Straw Hat (One Piece) - Top Left */}
+      <div className="absolute top-[12%] left-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-16 h-16 rotate-[-5deg]" viewBox="0 0 100 100" fill="none">
+            <ellipse cx="50" cy="65" rx="45" ry="12" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 62 C22 25, 78 25, 78 62" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 55 C30 52, 70 52, 78 55 C78 62, 22 62, 22 55 Z" fill="#FF3B30" stroke="black" strokeWidth="3" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Hidden Leaf Village Spiral (Naruto) - Top Right */}
+      <div className="absolute top-[16%] right-[8%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden sm:block">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 rotate-[12deg] text-[#FF7A00]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" stroke="black" strokeWidth="8" />
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" />
+            <polygon points="25,35 15,30 25,25" fill="#FF7A00" stroke="black" strokeWidth="2.5" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div 
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          className="max-w-md w-full bg-white border-3 border-black rounded-2xl comic-shadow p-6 md:p-8 text-center relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-halftone-dots opacity-5 pointer-events-none"></div>
+
+          <div className="mb-5 flex justify-center">
+            <div className="w-16 h-16 bg-comic-lime rounded-full flex items-center justify-center border-3 border-black shadow-[2px_2px_0_#000]">
+              <span className="text-4xl font-luckiest text-black">✓</span>
             </div>
           </div>
 
-          {/* Success Message */}
-          <h2 className="text-3xl font-bold text-white mb-2">Registration Complete!</h2>
-          <p className="text-gray-300 mb-2">Thank you for registering</p>
-          <p className="text-lg font-semibold text-green-400 mb-6">{completedTeamName}</p>
-
-          {/* Description */}
-          <p className="text-gray-400 text-sm mb-8">
-            Your registration has been submitted successfully. Your payment is now under verification. Join our community to stay updated!
+          <h2 className="text-3xl font-luckiest text-black mb-2 leading-none">REGISTRATION COMPLETE!</h2>
+          <p className="text-gray-800 text-base font-bold mb-1">Thank you for registering team:</p>
+          <p className="text-xl font-bangers text-comic-red tracking-wider mb-6 bg-comic-yellow/10 border-2 border-dashed border-black rounded-lg py-1.5 px-3 inline-block">
+            {completedTeamName}
           </p>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 mb-6">
-            <a
+          <p className="text-gray-600 text-xs font-semibold mb-6 leading-relaxed">
+            Your credentials have been logged in the mission files. Your payment is currently under verification. Join our community chat to receive live updates.
+          </p>
+
+          <div className="space-y-3 mb-6 font-bangers text-base md:text-lg">
+            <motion.a
+              whileHover={{ scale: 1.01 }}
               href="https://chat.whatsapp.com/CWIZynXu7jYKyNcNC57TkB"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-green-600/80 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-semibold transition-all shadow-lg text-center"
+              className="block w-full bg-comic-lime text-black border-3 border-black py-2.5 rounded-xl shadow-[3px_3px_0_#000] text-center transition-all"
             >
-              💬 Join Community (WhatsApp)
-            </a>
-            <a
+              💬 JOIN COMMUNITY (WHATSAPP)
+            </motion.a>
+            <motion.a
+              whileHover={{ scale: 1.01 }}
               href="https://chat.whatsapp.com/DVBIy8LksOeEWQpeTWNqH6?mode=gi_t"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-blue-600/80 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold transition-all shadow-lg text-center"
+              className="block w-full bg-comic-cyan text-black border-3 border-black py-2.5 rounded-xl shadow-[3px_3px_0_#000] text-center transition-all"
             >
-              📱 Join Group (Whatsapp)
-            </a>
+              📱 JOIN GROUP (WHATSAPP)
+            </motion.a>
           </div>
 
-          {/* Home Button */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.01 }}
             onClick={handleGoHome}
-            className="w-full bg-gray-700/80 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition-all border border-gray-600/50"
+            className="w-full bg-white text-black font-luckiest border-3 border-black py-2.5 rounded-xl shadow-[3px_3px_0_#000] hover:bg-gray-50 transition-all text-base"
           >
-            ← Back to Home
-          </button>
-        </div>
+            ← BACK TO HOME
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );
 
-  const renderMemberForm = (memberType, title) => (
-    <div className="bg-gray-700/50 p-5 rounded-xl border border-gray-600/50 backdrop-blur-sm flex flex-col items-center">
-      <div className="flex justify-between items-center w-full mb-5">
-        <h3 className="text-xl font-semibold text-white">{title}</h3>
+  const renderMemberForm = (memberType, title, subtitle) => (
+    <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
+      <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-3 py-0.5 font-bangers text-[10px] text-black rounded-tr-2xl">
+        {subtitle}
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-luckiest text-black tracking-wider">{title}</h3>
         <button
           type="button"
           onClick={() => handleClearMember(memberType)}
-          className="px-3 py-1 text-xs font-medium text-gray-300 bg-gray-600/50 hover:bg-gray-600 rounded-lg border border-gray-500/50 transition-colors"
+          className="px-2 py-0.5 text-[10px] font-bangers text-white bg-comic-red hover:bg-red-600 rounded border-2 border-black shadow-[1.5px_1.5px_0_#000] transition-colors"
         >
-          Clear
+          CLEAR DATA
         </button>
       </div>
       
-      <div className="w-full max-w-lg space-y-3">
-      
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-          Name
-        </label>
-        <input
-          type="text"
-          name="name"
-          value={formData[memberType].name}
-          onChange={(e) => handleChange(e, memberType)}
-          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-          placeholder="Enter full name"
-          required
-        />
-      </div>
-
-      {/* Registration Number */}
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-          Registration Number
-        </label>
-        <input
-          type="tel"
-          name="regNo"
-          value={formData[memberType].regNo}
-          onChange={(e) => handleChange(e, memberType)}
-          pattern="[0-9]"
-          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-          placeholder="Enter registration number"
-          required
-        />
-      </div>
-
-      {/* Phone Number */}
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-          Phone Number
-        </label>
-        <input
-          type="tel"
-          name="phoneNo"
-          value={formData[memberType].phoneNo}
-          onChange={(e) => handleChange(e, memberType)}
-          maxLength="10"
-          pattern="[0-9]{10}"
-          className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-          placeholder="Enter phone number"
-          required
-        />
-      </div>
-
-      {/* Year, Branch and Section side by side */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="w-full space-y-3.5 text-left">
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-            Year
-          </label>
-          <select
-            name="year"
-            value={formData[memberType].year}
-            onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition"
-            required
-          >
-            <option value="">Select year</option>
-            <option value="1">1st Year</option>
-            <option value="2">2nd Year</option>
-            <option value="3">3rd Year</option>
-            <option value="4">4th Year</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-            Branch
+          <label className="block text-[11px] font-bangers tracking-wider text-gray-700">
+            FULL NAME
           </label>
           <input
             type="text"
-            name="branch"
-            value={formData[memberType].branch}
+            name="name"
+            value={formData[memberType].name}
             onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-            placeholder="CSE, ECE..."
+            className="w-full px-3 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition placeholder:text-gray-400 font-semibold"
+            placeholder="Enter full name"
             required
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1.5 text-center">
-            Section
+          <label className="block text-[11px] font-bangers tracking-wider text-gray-700">
+            REGISTRATION NUMBER
           </label>
           <input
-            type="text"
-            name="section"
-            value={formData[memberType].section}
+            type="tel"
+            name="regNo"
+            value={formData[memberType].regNo}
             onChange={(e) => handleChange(e, memberType)}
-            className="w-full px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-            placeholder="A, B, C..."
+            className="w-full px-3 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition placeholder:text-gray-400 font-semibold"
+            placeholder="Enter registration number"
             required
           />
         </div>
-      </div>
-      </div>
 
+        <div>
+          <label className="block text-[11px] font-bangers tracking-wider text-gray-700">
+            PHONE NUMBER
+          </label>
+          <input
+            type="tel"
+            name="phoneNo"
+            value={formData[memberType].phoneNo}
+            onChange={(e) => handleChange(e, memberType)}
+            maxLength="10"
+            className="w-full px-3 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition placeholder:text-gray-400 font-semibold"
+            placeholder="Enter 10 digit number"
+            required
+          />
+        </div>
 
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className="block text-[9px] font-bangers tracking-wider text-gray-700">
+              YEAR
+            </label>
+            <select
+              name="year"
+              value={formData[memberType].year}
+              onChange={(e) => handleChange(e, memberType)}
+              className="w-full px-2 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition font-semibold"
+              required
+            >
+              <option value="">Select</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[9px] font-bangers tracking-wider text-gray-700">
+              BRANCH
+            </label>
+            <input
+              type="text"
+              name="branch"
+              value={formData[memberType].branch}
+              onChange={(e) => handleChange(e, memberType)}
+              className="w-full px-2 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition placeholder:text-gray-400 font-semibold uppercase"
+              placeholder="CSE"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-bangers tracking-wider text-gray-700">
+              SECTION
+            </label>
+            <input
+              type="text"
+              name="section"
+              value={formData[memberType].section}
+              onChange={(e) => handleChange(e, memberType)}
+              className="w-full px-2 py-1.5 text-sm comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition placeholder:text-gray-400 font-semibold uppercase"
+              placeholder="A"
+              required
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -602,80 +619,209 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-6 border border-gray-700/50">
-          <h2 className="text-3xl font-bold text-center text-white mb-6">
-            Team Registration Form
-          </h2>
+    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black relative overflow-hidden">
+      <Navbar />
 
-          {/* Success Message */}
-          {success && (
-            <div className="mb-4 p-4 bg-green-900/30 border border-green-600/50 rounded-lg text-green-300 text-sm text-center">
-              {success}
-            </div>
-          )}
+      {/* Luffy's Straw Hat (One Piece) - Top Left */}
+      <div className="absolute top-[12%] left-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-16 h-16 rotate-[-5deg]" viewBox="0 0 100 100" fill="none">
+            <ellipse cx="50" cy="65" rx="45" ry="12" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 62 C22 25, 78 25, 78 62" fill="#FFD93D" stroke="black" strokeWidth="4" />
+            <path d="M22 55 C30 52, 70 52, 78 55 C78 62, 22 62, 22 55 Z" fill="#FF3B30" stroke="black" strokeWidth="3" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">LUFFY</div>
+        </div>
+      </div>
 
-          {/* Error Message */}
+      {/* Hidden Leaf Village Spiral (Naruto) - Top Right */}
+      <div className="absolute top-[16%] right-[8%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden sm:block">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 rotate-[12deg] text-[#FF7A00]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round">
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" stroke="black" strokeWidth="8" />
+            <path d="M 45 45 C 50 35, 70 45, 60 60 C 50 70, 35 55, 45 45 C 55 35, 80 55, 75 75 L 85 85" />
+            <polygon points="25,35 15,30 25,25" fill="#FF7A00" stroke="black" strokeWidth="2.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">NARUTO</div>
+        </div>
+      </div>
+
+      {/* Warding Fox Mask (Demon Slayer) - Bottom Left */}
+      <div className="absolute bottom-[10%] left-[8%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 rotate-[-10deg]" viewBox="0 0 100 100">
+            <path d="M20 50 C20 15, 80 15, 80 50 C80 80, 50 95, 50 95 C50 95, 20 80, 20 50 Z" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M25 25 L10 5 L35 18" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M75 25 L90 5 L65 18" fill="white" stroke="black" strokeWidth="4" />
+            <path d="M35 48 L48 48" stroke="black" strokeWidth="5" strokeLinecap="round" />
+            <path d="M52 48 L65 48" stroke="black" strokeWidth="5" strokeLinecap="round" />
+            <path d="M28 65 L40 58 L28 72 Z" fill="#FF3B30" stroke="black" strokeWidth="2" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">DEMON SLAYER</div>
+        </div>
+      </div>
+
+      {/* Shadow Daggers (Jinwoo) - Bottom Right */}
+      <div className="absolute bottom-[15%] right-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 text-[#29C5F6] drop-shadow-[0_0_4px_#29C5F6]" viewBox="0 0 100 100">
+            <path d="M30 80 L75 35 L80 40 L35 85 Z" fill="#333" stroke="black" strokeWidth="3" />
+            <path d="M70 30 L85 15 L90 20 L75 35 Z" fill="currentColor" stroke="black" strokeWidth="2.5" />
+            <path d="M70 80 L25 35 L20 40 L65 85 Z" fill="#333" stroke="black" strokeWidth="3" />
+            <path d="M30 30 L15 15 L10 20 L25 35 Z" fill="currentColor" stroke="black" strokeWidth="2.5" />
+            <circle cx="50" cy="30" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">JINWOO</div>
+        </div>
+      </div>
+
+      {/* Paintbrush & Splat Sticker - Middle Left */}
+      <div className="absolute top-[42%] left-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden lg:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-14 h-14 text-comic-cyan" viewBox="0 0 100 100">
+            <path d="M20 40 C10 30, 10 60, 30 70 C50 80, 80 70, 70 50 C60 30, 30 50, 20 40 Z" fill="currentColor" opacity="0.4" />
+            <path d="M85 15 L50 50 L45 45 L80 10 Z" fill="#D1A153" stroke="black" strokeWidth="3" />
+            <path d="M50 50 L40 60 L35 55 L45 45 Z" fill="#999" stroke="black" strokeWidth="2.5" />
+            <path d="M40 60 C38 65, 30 75, 25 80 C32 82, 42 75, 45 65 Z" fill="#FF3B30" stroke="black" strokeWidth="2.5" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">BRUSH</div>
+        </div>
+      </div>
+
+      {/* Paint Splat Sticker - Middle Right */}
+      <div className="absolute top-[45%] right-[4%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-twinkle hidden lg:block">
+        <div className="bg-white border-2 border-black p-2.5 rounded-2xl shadow-[2px_2px_0_#000]">
+          <svg className="w-12 h-12 text-comic-purple" viewBox="0 0 100 100">
+            <path d="M50 20 C60 10, 80 15, 75 35 C70 55, 90 60, 75 75 C60 90, 45 75, 30 85 C15 70, 25 45, 35 30 C45 15, 40 30, 50 20 Z" fill="currentColor" stroke="black" strokeWidth="3" />
+            <circle cx="20" cy="25" r="4" fill="currentColor" stroke="black" strokeWidth="1.5" />
+            <circle cx="80" cy="20" r="5" fill="currentColor" stroke="black" strokeWidth="1.5" />
+            <circle cx="85" cy="70" r="3" fill="currentColor" stroke="black" strokeWidth="1" />
+          </svg>
+          <div className="font-bangers text-[9px] tracking-wider text-black mt-1 text-center">SPLATTER</div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto w-full px-4 mt-8 flex-grow relative z-10">
+        
+        {/* Simple Page Header */}
+        <div className="relative mb-8 text-center">
+          <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
+            <h2 className="font-luckiest text-2xl md:text-4xl text-black tracking-wide leading-none">
+              REGISTRATION DESK
+            </h2>
+            <p className="font-bangers text-sm text-comic-red tracking-widest mt-1 uppercase">
+              REGISTER YOUR ALLIANCE
+            </p>
+          </div>
+        </div>
+
+        {/* Global Error Banner */}
+        <AnimatePresence>
           {error && (
-            <div className="mb-4 p-4 bg-red-900/30 border border-red-600/50 rounded-lg text-red-300 text-sm text-center">
+            <motion.div 
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-6 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000] flex items-center gap-2"
+            >
+              <AlertTriangle size={20} className="stroke-[2.5] text-comic-yellow" />
               {error}
-            </div>
+            </motion.div>
           )}
-          
-          <form className="space-y-5">
-            {/* Team Registration Fields */}
-            {!showPayment && (
-              <>
-                {/* Team Name */}
-                <div className="bg-gray-700/50 p-5 rounded-xl border border-gray-600/50 backdrop-blur-sm flex flex-col items-center">
-                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
-                    Team Name
+        </AnimatePresence>
+
+        {/* Global Success Banner */}
+        <AnimatePresence>
+          {success && (
+            <motion.div 
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mb-6 bg-comic-lime border-3 border-black rounded-2xl p-4 text-black font-bangers text-base shadow-[3px_3px_0_#000] flex items-center gap-2"
+            >
+              <Check size={20} className="stroke-[3]" />
+              {success}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <form className="space-y-6">
+          {!showPayment ? (
+            <div className="space-y-6">
+              
+              {/* Team Name Card */}
+              <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-center">
+                <div className="absolute -top-4 left-6 bg-comic-red border-3 border-black text-white font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
+                  TEAM NAME
+                </div>
+                
+                <div className="mt-3 flex flex-col items-center">
+                  <label className="block text-xs font-bangers tracking-wider text-gray-700 mb-1">
+                    ALLIANCE TITLE / TEAM NAME
                   </label>
                   <input
                     type="text"
                     name="teamName"
                     value={formData.teamName}
                     onChange={handleTeamNameChange}
-                    className="w-full max-w-lg px-3 py-2 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
+                    className="w-full max-w-md px-3 py-2 text-center text-base comic-input bg-gray-50 border-3 border-black rounded-xl focus:bg-comic-yellow/10 outline-none transition font-luckiest text-black"
                     placeholder="Enter team name"
                     required
                   />
+
                   {teamNameStatus.checking && formData.teamName.trim() && (
-                    <p className="text-sm text-gray-400 mt-2">Checking availability...</p>
+                    <p className="text-xs font-bangers text-gray-500 mt-1.5 animate-pulse">CHECKING MISSION ARCHIVES...</p>
                   )}
                   {!teamNameStatus.checking && teamNameStatus.available === true && formData.teamName.trim() && (
-                    <p className="text-sm text-green-400 mt-2">✓ {teamNameStatus.message}</p>
+                    <p className="text-xs font-bangers text-comic-green mt-1.5 flex items-center gap-1">
+                      <Check size={14} /> READY FOR MISSION ACTION!
+                    </p>
                   )}
                   {!teamNameStatus.checking && teamNameStatus.available === false && formData.teamName.trim() && (
-                    <p className="text-sm text-red-400 mt-2">✗ {teamNameStatus.message}</p>
+                    <p className="text-xs font-bangers text-comic-red mt-1.5 flex items-center gap-1">
+                      <AlertTriangle size={14} /> NAME CLAIMED BY ANOTHER HERO!
+                    </p>
                   )}
                 </div>
+              </div>
 
-                {/* Team Leader */}
-                {renderMemberForm('teamLeader', '👨‍💼 Team Leader')}
+              {/* Team Leader Details */}
+              <div className="relative">
+                <div className="absolute -top-4 left-6 z-10 bg-comic-yellow border-3 border-black text-black font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
+                  LEADER DETAILS
+                </div>
+                {renderMemberForm('teamLeader', '👨‍💼 LEADER INFO', 'TEAM LEADER')}
+              </div>
 
-                {/* Team Member 1 */}
-                {renderMemberForm('teamMember1', '👤 Team Member 1')}
+              {/* Team Members */}
+              <div className="relative pt-4">
+                <div className="absolute -top-1 left-6 z-10 bg-comic-purple border-3 border-black text-white font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
+                  TEAM MEMBERS
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+                  {renderMemberForm('teamMember1', '👤 ALLY 1', 'MEMBER 1')}
+                  {renderMemberForm('teamMember2', '👤 ALLY 2', 'MEMBER 2')}
+                  {renderMemberForm('teamMember3', '👤 ALLY 3', 'MEMBER 3')}
+                </div>
+              </div>
 
-                {/* Team Member 2 */}
-                {renderMemberForm('teamMember2', '👤 Team Member 2')}
+            </div>
+          ) : (
+            /* Payment screen */
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border-3 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left"
+            >
+              <div className="absolute -top-4 left-6 bg-comic-yellow border-3 border-black text-black font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
+                PAYMENT DEPOSIT
+              </div>
 
-                {/* Team Member 3 */}
-                {renderMemberForm('teamMember3', '👤 Team Member 3')}
-              </>
-            )}
-
-            {/* Payment Section */}
-            {showPayment && (
-              <div className="bg-gray-700/50 p-6 rounded-xl border border-gray-600/50 backdrop-blur-sm">
-                <h3 className="text-2xl font-semibold text-white mb-6 text-center">💳 Payment Details</h3>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                {/* QR Code Section */}
-                <div className="flex flex-col items-center mb-6">
-                  <div className="bg-white p-4 rounded-xl mb-4 relative">
-                    {/* Placeholder for QR Code - Replace with actual QR code image */}
-                    <div className="w-64 h-64 flex items-center justify-center bg-gray-200 rounded-lg">
+                {/* Left Side: Scan QR */}
+                <div className="flex flex-col items-center">
+                  <div className="relative bg-white border-3 border-black p-3 rounded-xl shadow-[3px_3px_0_#000] mb-3">
+                    <div className="w-56 h-56 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border-2 border-black">
                       <img 
                         src="/payment.jpeg" 
                         alt="Payment QR Code" 
@@ -685,158 +831,175 @@ const Home = () => {
                           e.target.nextSibling.style.display = 'flex';
                         }}
                       />
-                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-sm" style={{display: 'none'}}>
-                        QR Code Here
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 font-bangers text-sm" style={{display: 'none'}}>
+                        SCAN QR CODE
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-gray-300 text-lg font-medium">Scan to Pay</p>
-                    <a
+
+                  <div className="flex items-center gap-2">
+                    <p className="text-black text-sm font-bangers tracking-wider">SCAN TO TELEPORT FEE</p>
+                    <motion.a
+                      whileHover={{ scale: 1.02 }}
                       href="/payment.jpeg"
                       download="payment-qr-code.jpeg"
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-600/80 hover:bg-blue-600 rounded-lg transition-colors"
-                      title="Download QR Code"
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-bangers text-white bg-comic-blue border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000]"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download QR
-                    </a>
+                      DOWNLOAD QR
+                    </motion.a>
+                  </div>
+
+                  {/* Account Details Box */}
+                  <div className="bg-comic-yellow/10 p-4 rounded-xl border-3 border-dashed border-black mt-5 w-full text-center">
+                    <h4 className="text-base font-luckiest text-black mb-2 leading-none">MISSION REVENUE</h4>
+                    <div className="space-y-1.5 text-xs font-semibold text-gray-900 font-comic">
+                      <p>
+                        <span className="font-bangers text-comic-red">BENEFICIARY:</span>{' '}
+                        <span>Naresh Reddy</span>
+                      </p>
+                      <p>
+                        <span className="font-bangers text-comic-red">UPI ID:</span>{' '}
+                        <span className="font-mono bg-white border border-gray-300 px-2 py-0.5 rounded text-[11px] select-all">nr6975060-1@oksbi</span>
+                      </p>
+                      <p>
+                        <span className="font-bangers text-comic-red">FEE AMOUNT:</span>{' '}
+                        <span className="font-luckiest text-lg">₹400</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Account Details */}
-                <div className="bg-gray-800/70 p-4 rounded-lg mb-6 border border-gray-600/30">
-                  <h4 className="text-lg font-semibold text-white mb-3 text-center">Account Details</h4>
-                  <div className="space-y-2 text-center">
-                    <p className="text-gray-300">
-                      <span className="font-medium text-gray-400">Account Name:</span>{' '}
-                      <span className="text-white font-semibold">Naresh Reddy</span>
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="font-medium text-gray-400">UPI ID:</span>{' '}
-                      <span className="text-white font-mono">nr6975060-1@oksbi</span>
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="font-medium text-gray-400">Amount:</span>{' '}
-                      <span className="text-white font-semibold">₹400</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Transaction ID Input */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
-                    Transaction ID / UTR Number
-                  </label>
-                  <input
-                    type="text"
-                    value={transactionId}
-                    onChange={(e) => setTransactionId(e.target.value)}
-                    className="w-full px-4 py-2.5 text-base bg-gray-800/70 border border-gray-600/50 text-white rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none transition placeholder:text-gray-500"
-                    placeholder="Enter transaction ID"
-                    required
-                  />
-                  {isTxnChecking && (
-                    <p className="text-sm text-gray-400 mt-2 text-center">Checking transaction ID...</p>
-                  )}
-                  {!isTxnChecking && txnCheckMessage && (
-                    <p className="text-sm text-red-400 mt-2 text-center">{txnCheckMessage}</p>
-                  )}
-                </div>
-
-                {/* Receipt Upload */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
-                    Upload Payment Screenshot/Receipt
-                  </label>
-                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
-                    only jpg, jpeg, png, pdf, webp formats are allowed
-                  </label>
-                  <label className="block text-sm font-medium text-gray-400 mb-2 text-center">
-                    max "file size" only "5MB" is allowed
-                  </label>
-                  <div className="flex items-center justify-center">
-                    <label className="w-full flex flex-col items-center px-4 py-6 bg-gray-800/70 text-gray-400 rounded-lg border-2 border-dashed border-gray-600/50 cursor-pointer hover:bg-gray-800 transition">
-                      <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <span className="text-sm text-center">
-                        {receiptFile ? receiptFile.name : 'Click to upload receipt'}
-                      </span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*,.pdf"
-                        onChange={(e) => setReceiptFile(e.target.files[0])}
-                        required
-                      />
+                {/* Right Side: Form Inputs */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      TRANSACTION ID / UTR NUMBER
                     </label>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-semibold comic-input bg-gray-50 text-black border-3 border-black rounded-lg focus:bg-comic-yellow/10 outline-none transition"
+                      placeholder="Enter UTR transaction ID"
+                      required
+                    />
+                    
+                    {isTxnChecking && (
+                      <p className="text-[11px] font-bangers text-gray-500 mt-1 animate-pulse">VERIFYING WITH RECORDS VAULT...</p>
+                    )}
+                    {!isTxnChecking && txnCheckMessage && (
+                      <p className="text-[11px] font-bangers text-comic-red mt-1 flex items-center gap-1">
+                        <AlertTriangle size={12} /> {txnCheckMessage}
+                      </p>
+                    )}
                   </div>
-                  {receiptFile && (
-                    <p className="text-green-400 text-sm text-center mt-2">✓ File selected: {receiptFile.name}</p>
-                  )}
+
+                  {/* Drag and Drop Zone */}
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      UPLOAD RECEIPT SCREENSHOT
+                    </label>
+                    
+                    <div className="flex items-center justify-center">
+                      <label className="w-full flex flex-col items-center px-4 py-4 bg-comic-orange/5 hover:bg-comic-orange/10 rounded-2xl border-3 border-dashed border-black cursor-pointer transition-colors">
+                        <Upload className="w-8 h-8 mb-1.5 text-comic-orange stroke-[2]" />
+                        <span className="text-xs font-luckiest tracking-wider text-black block mb-0.5">
+                          DROP RECEIPT HERE
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-semibold">
+                          {receiptFile ? receiptFile.name : 'Or click to select screenshot'}
+                        </span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setReceiptFile(e.target.files[0])}
+                          required
+                        />
+                      </label>
+                    </div>
+
+                    {receiptFile && (
+                      <div className="bg-comic-lime/10 border-2 border-dashed border-comic-green rounded-lg p-2 mt-2 flex items-center justify-center gap-1.5 text-comic-green font-bangers text-xs">
+                        ✓ SCREENSHOT LOGGED: {receiptFile.name}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Summary Panel */}
+                  <div className="bg-gray-50 border-3 border-black p-3.5 rounded-xl relative shadow-[3px_3px_0_#000] text-xs">
+                    <h5 className="font-luckiest text-[11px] text-black mb-1.5 uppercase">MISSION ALLIANCE</h5>
+                    <div className="font-semibold space-y-0.5 text-gray-700 font-comic">
+                      <p><span className="font-bangers text-black">ALLIANCE:</span> {formData.teamName}</p>
+                      <p><span className="font-bangers text-black">LEADER:</span> {formData.teamLeader.name}</p>
+                      <p><span className="font-bangers text-black">ALLIES:</span> {[formData.teamMember1.name, formData.teamMember2.name, formData.teamMember3.name].filter(Boolean).join(', ')}</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Back Button */}
-                <div className="flex justify-center mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowPayment(false)}
-                    className="px-6 py-2 text-sm font-medium text-gray-300 bg-gray-600/50 hover:bg-gray-600 rounded-lg border border-gray-500/50 transition-colors"
-                  >
-                    ← Back to Form
-                  </button>
-                </div>
               </div>
-            )}
 
-            {/* Submit/Payment Button */}
-            <div className="pt-3 flex justify-center">
-              {!showPayment ? (
-                <button
-                  type="submit"
-                  onClick={handleProceedToPayment}
-                  disabled={teamCount >= maxTeams || !registrationEnabled}
-                  className={`w-full max-w-lg bg-gray-700/80 text-white py-2.5 px-4 rounded-lg text-base font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                    teamCount >= maxTeams || !registrationEnabled
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-gray-600 hover:shadow-xl'
-                  }`}
-                >
-                  {!registrationEnabled
-                    ? 'Registration Temporarily Closed'
-                    : teamCount >= maxTeams
-                      ? 'Registration Closed'
-                      : '💳 Proceed to Payment'}
-                </button>
-              ) : (
-                <button
+              {/* Back to Form Button */}
+              <div className="flex justify-center mt-6">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
                   type="button"
-                  onClick={handleFinalSubmit}
-                  disabled={loading || teamCount >= maxTeams || !registrationEnabled}
-                  className={`w-full max-w-lg bg-green-700/80 text-white py-2.5 px-4 rounded-lg text-base font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                    loading || teamCount >= maxTeams || !registrationEnabled
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-green-600 hover:shadow-xl'
-                  }`}
+                  onClick={() => setShowPayment(false)}
+                  className="px-5 py-2 text-sm font-bangers text-black bg-comic-yellow border-3 border-black shadow-[3px_3px_0_#000] flex items-center gap-1 rounded-xl"
                 >
-                  {!registrationEnabled
-                    ? 'Registration Temporarily Closed'
-                    : teamCount >= maxTeams
-                      ? 'Registration Closed'
-                      : loading
-                        ? 'Submitting...'
-                        : '✓ Complete Registration'}
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+                  <ArrowLeft size={16} /> BACK TO FORM
+                </motion.button>
+              </div>
+
+            </motion.div>
+          )}
+
+          {/* Form Action buttons */}
+          <div className="pt-2 flex justify-center">
+            {!showPayment ? (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                type="submit"
+                onClick={handleProceedToPayment}
+                disabled={teamCount >= maxTeams || !registrationEnabled}
+                className={`w-full max-w-md font-luckiest text-lg text-black py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] transition-all flex items-center justify-center gap-2 ${
+                  teamCount >= maxTeams || !registrationEnabled
+                    ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                    : 'bg-comic-yellow hover:bg-[#ebd23a] cursor-pointer'
+                }`}
+              >
+                {!registrationEnabled
+                  ? 'REGISTRATION SUSPENDED'
+                  : teamCount >= maxTeams
+                    ? 'ALL SEATS RESERVED'
+                    : 'PROCEED TO PAYMENT'}
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={loading || teamCount >= maxTeams || !registrationEnabled}
+                className={`w-full max-w-md font-luckiest text-lg text-white py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] transition-all flex items-center justify-center gap-2 ${
+                  loading || teamCount >= maxTeams || !registrationEnabled
+                    ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                    : 'bg-comic-red hover:bg-[#ff271e] cursor-pointer'
+                }`}
+              >
+                {!registrationEnabled
+                  ? 'REGISTRATION SUSPENDED'
+                  : teamCount >= maxTeams
+                    ? 'ALL SEATS RESERVED'
+                    : loading
+                      ? 'COMMITTING DATA...'
+                      : '✓ SUBMIT REGISTRATION'}
+              </motion.button>
+            )}
+          </div>
+        </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
