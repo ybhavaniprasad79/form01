@@ -191,18 +191,18 @@ const Home = () => {
       ...prev,
       teamName: newTeamName
     }));
-    
+
     setTeamNameStatus({ checking: true, available: null, message: '' });
-    
+
     if (window.teamNameCheckTimeout) {
       clearTimeout(window.teamNameCheckTimeout);
     }
-    
+
     if (!newTeamName.trim()) {
       setTeamNameStatus({ checking: false, available: null, message: '' });
       return;
     }
-    
+
     window.teamNameCheckTimeout = setTimeout(async () => {
       try {
         const response = await fetch(
@@ -223,26 +223,26 @@ const Home = () => {
   const handleProceedToPayment = (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.teamName.trim()) {
       setError('Please enter the team name');
       window.scrollTo(0, 0);
       return;
     }
-    
+
     if (teamNameStatus.available === false) {
       setError('Team name already exists. Please choose a different team name');
       window.scrollTo(0, 0);
       return;
     }
-    
+
     const members = [
       { data: formData.teamLeader, name: 'Team Leader' },
       { data: formData.teamMember1, name: 'Team Member 1' },
       { data: formData.teamMember2, name: 'Team Member 2' },
       { data: formData.teamMember3, name: 'Team Member 3' }
     ];
-    
+
     for (const member of members) {
       if (!member.data.name.trim()) {
         setError(`Please enter the name for ${member.name}`);
@@ -285,14 +285,14 @@ const Home = () => {
         return;
       }
     }
-    
+
     setShowPayment(true);
     window.scrollTo(0, 0);
   };
 
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!transactionId.trim()) {
       setError('Please enter the transaction ID');
       window.scrollTo(0, 0);
@@ -304,13 +304,13 @@ const Home = () => {
       window.scrollTo(0, 0);
       return;
     }
-    
+
     if (!receiptFile) {
       setError('Please upload the payment receipt/screenshot');
       window.scrollTo(0, 0);
       return;
     }
-    
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -369,7 +369,7 @@ const Home = () => {
         setReceiptFile(null);
         setShowPayment(false);
         setTeamCount(prev => prev + 1);
-        
+
         window.scrollTo(0, 0);
       } catch (uploadErr) {
         clearTimeout(timeoutId);
@@ -381,7 +381,7 @@ const Home = () => {
     } catch (err) {
       setError(err.message || 'An error occurred while submitting the form');
       console.error('Submission error:', err);
-      
+
       try {
         const countResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/teams/count`);
         const countData = await countResponse.json();
@@ -442,7 +442,7 @@ const Home = () => {
       </div>
 
       <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           className="max-w-md w-full bg-white border-3 border-black rounded-2xl comic-shadow p-6 md:p-8 text-center relative overflow-hidden"
@@ -514,7 +514,7 @@ const Home = () => {
           CLEAR DATA
         </button>
       </div>
-      
+
       <div className="w-full space-y-3.5 text-left">
         <div>
           <label className="block text-[11px] font-bangers tracking-wider text-gray-700">
@@ -702,7 +702,7 @@ const Home = () => {
       </div>
 
       <div className="max-w-4xl mx-auto w-full px-4 mt-8 flex-grow relative z-10">
-        
+
         {/* Simple Page Header */}
         <div className="relative mb-8 text-center">
           <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
@@ -718,7 +718,7 @@ const Home = () => {
         {/* Global Error Banner */}
         <AnimatePresence>
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -733,7 +733,7 @@ const Home = () => {
         {/* Global Success Banner */}
         <AnimatePresence>
           {success && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="mb-6 bg-comic-lime border-3 border-black rounded-2xl p-4 text-black font-bangers text-base shadow-[3px_3px_0_#000] flex items-center gap-2"
@@ -743,17 +743,17 @@ const Home = () => {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         <form className="space-y-6">
           {!showPayment ? (
             <div className="space-y-6">
-              
+
               {/* Team Name Card */}
               <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-center">
                 <div className="absolute -top-4 left-6 bg-comic-red border-3 border-black text-white font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
                   TEAM NAME
                 </div>
-                
+
                 <div className="mt-3 flex flex-col items-center">
                   <label className="block text-xs font-bangers tracking-wider text-gray-700 mb-1">
                     ALLIANCE TITLE / TEAM NAME
@@ -807,7 +807,7 @@ const Home = () => {
             </div>
           ) : (
             /* Payment screen */
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white border-3 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left"
@@ -817,21 +817,21 @@ const Home = () => {
               </div>
 
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                
+
                 {/* Left Side: Scan QR */}
                 <div className="flex flex-col items-center">
                   <div className="relative bg-white border-3 border-black p-3 rounded-xl shadow-[3px_3px_0_#000] mb-3">
                     <div className="w-56 h-56 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border-2 border-black">
-                      <img 
-                        src="/payment.jpeg" 
-                        alt="Payment QR Code" 
+                      <img
+                        src="/payment.jpeg"
+                        alt="Payment QR Code"
                         className="w-full h-full object-contain"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
                         }}
                       />
-                      <div className="w-full h-full flex items-center justify-center text-gray-500 font-bangers text-sm" style={{display: 'none'}}>
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 font-bangers text-sm" style={{ display: 'none' }}>
                         SCAN QR CODE
                       </div>
                     </div>
@@ -883,7 +883,7 @@ const Home = () => {
                       placeholder="Enter UTR transaction ID"
                       required
                     />
-                    
+
                     {isTxnChecking && (
                       <p className="text-[11px] font-bangers text-gray-500 mt-1 animate-pulse">VERIFYING WITH RECORDS VAULT...</p>
                     )}
@@ -899,7 +899,7 @@ const Home = () => {
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
                       UPLOAD RECEIPT SCREENSHOT
                     </label>
-                    
+
                     <div className="flex items-center justify-center">
                       <label className="w-full flex flex-col items-center px-4 py-4 bg-comic-orange/5 hover:bg-comic-orange/10 rounded-2xl border-3 border-dashed border-black cursor-pointer transition-colors">
                         <Upload className="w-8 h-8 mb-1.5 text-comic-orange stroke-[2]" />
@@ -960,11 +960,10 @@ const Home = () => {
                 type="submit"
                 onClick={handleProceedToPayment}
                 disabled={teamCount >= maxTeams || !registrationEnabled}
-                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${
-                  teamCount >= maxTeams || !registrationEnabled
-                    ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
-                    : 'comic-btn-primary'
-                }`}
+                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${teamCount >= maxTeams || !registrationEnabled
+                  ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
+                  : 'comic-btn-primary'
+                  }`}
               >
                 {!registrationEnabled
                   ? 'REGISTRATION SUSPENDED'
@@ -978,11 +977,10 @@ const Home = () => {
                 type="button"
                 onClick={handleFinalSubmit}
                 disabled={loading || teamCount >= maxTeams || !registrationEnabled}
-                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${
-                  loading || teamCount >= maxTeams || !registrationEnabled
-                    ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
-                    : 'comic-btn-primary'
-                }`}
+                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${loading || teamCount >= maxTeams || !registrationEnabled
+                  ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
+                  : 'comic-btn-primary'
+                  }`}
               >
                 {!registrationEnabled
                   ? 'REGISTRATION SUSPENDED'

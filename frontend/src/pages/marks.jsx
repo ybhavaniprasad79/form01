@@ -181,10 +181,10 @@ function Marks() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          oldRoundName: editingRound, 
-          newRoundName: editRoundName.trim(), 
-          outOf: numericOutOf 
+        body: JSON.stringify({
+          oldRoundName: editingRound,
+          newRoundName: editRoundName.trim(),
+          outOf: numericOutOf
         })
       });
 
@@ -195,7 +195,7 @@ function Marks() {
 
       // Update rounds list
       setRounds((prev) => prev.map(r => r === editingRound ? editRoundName.trim() : r));
-      
+
       // Update outOfByRound
       setOutOfByRound((prev) => {
         const updated = { ...prev };
@@ -367,7 +367,7 @@ function Marks() {
 
               <AnimatePresence>
                 {authError && (
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.98, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="rounded-xl border-3 border-black bg-comic-red p-3 text-white font-bangers text-xs shadow-[2px_2px_0_#000]"
@@ -403,12 +403,12 @@ function Marks() {
   return (
     <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
       <Navbar />
-      
+
       {/* Create Round Modal */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -424,7 +424,7 @@ function Marks() {
               >
                 ✕ CLOSE
               </button>
-              
+
               <h3 className="text-xl font-luckiest text-black mb-3.5 mt-2">ADD MISSION ROUND</h3>
 
               <div className="space-y-3.5 text-xs font-semibold text-gray-800">
@@ -461,10 +461,10 @@ function Marks() {
                   >
                     ABORT
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.02 }}
                     type="button"
-                    onClick={handleCreateRound} 
+                    onClick={handleCreateRound}
                     disabled={saving}
                     className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
                   >
@@ -481,7 +481,7 @@ function Marks() {
       <AnimatePresence>
         {showEditModal && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -497,7 +497,7 @@ function Marks() {
               >
                 ✕ CLOSE
               </button>
-              
+
               <h3 className="text-xl font-luckiest text-black mb-3.5 mt-2">EDIT MISSION ROUND</h3>
 
               <div className="space-y-3.5 text-xs font-semibold text-gray-800">
@@ -534,10 +534,10 @@ function Marks() {
                   >
                     ABORT
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.02 }}
                     type="button"
-                    onClick={handleEditRound} 
+                    onClick={handleEditRound}
                     disabled={saving}
                     className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
                   >
@@ -551,7 +551,7 @@ function Marks() {
       </AnimatePresence>
 
       <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
-        
+
         {/* Title & Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
           <div className="space-y-0.5 text-left">
@@ -601,7 +601,7 @@ function Marks() {
             <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-0.5 text-white font-bangers text-[10px] rounded-tr-2xl">
               TOP GLORY SCOREBOARD
             </div>
-            
+
             <h3 className="text-xl font-luckiest text-black text-left mb-4 flex items-center gap-2">
               🏆 ARENA LEADERS
             </h3>
@@ -629,7 +629,7 @@ function Marks() {
                       )}
                       <h4 className="text-base tracking-wide leading-none">{team.teamName}</h4>
                     </div>
-                    
+
                     {/* Pulsing Score Sticker */}
                     <div className="bg-white border-2 border-black rounded-lg p-1.5 text-center min-w-[60px] shadow-[1.5px_1.5px_0_#000]">
                       <span className="font-bangers text-xl text-comic-red block leading-none">{team.total ?? 0}</span>
@@ -647,9 +647,9 @@ function Marks() {
           <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
             ROUND SELECT
           </div>
-          
+
           <h3 className="text-base font-luckiest text-black mb-3">ACTIVE STAGE</h3>
-          
+
           {rounds.length === 0 ? (
             <p className="text-gray-600 font-semibold italic text-xs">
               No battle stages configured yet. Click "+ CREATE ROUND" to deploy one!
@@ -664,15 +664,14 @@ function Marks() {
                       whileHover={{ scale: 1.01 }}
                       type="button"
                       onClick={() => setSelectedRound(round)}
-                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#111] cursor-pointer transition-all ${
-                        isSelected
+                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#111] cursor-pointer transition-all ${isSelected
                           ? 'bg-bright-orange text-white'
                           : 'bg-white text-black hover:bg-light-gray'
-                      }`}
+                        }`}
                     >
                       {round.toUpperCase()}
                     </motion.button>
-                    
+
                     {/* Pencil Edit button styled in comic theme */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -736,19 +735,18 @@ function Marks() {
                   </thead>
                   <tbody>
                     {sortedTeams
-                      .filter((team) => 
+                      .filter((team) =>
                         team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
                       )
                       .map((team, index) => {
                         const roundValue = selectedRound ? team.roundMarks?.[selectedRound] ?? 0 : 0;
                         const rankIdx = teams.findIndex(t => t.teamName === team.teamName);
-                        
+
                         return (
-                          <tr 
+                          <tr
                             key={team._id}
-                            className={`border-b-2 border-black transition-colors hover:bg-[#fffbe6] ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                            }`}
+                            className={`border-b-2 border-black transition-colors hover:bg-[#fffbe6] ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                              }`}
                           >
                             <td className="px-4 py-3 border-r-2 border-black font-luckiest text-sm text-black flex items-center gap-2 text-left">
                               {rankIdx < 3 ? (
@@ -762,14 +760,14 @@ function Marks() {
                               )}
                               {team.teamName}
                             </td>
-                            
+
                             <td className="px-4 py-3 border-r-2 border-black text-center">
                               {selectedRound ? (
                                 <div className="inline-flex py-0.5 px-2 bg-gray-50 border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000] focus-within:bg-comic-yellow/10 transition-colors">
-                                  <input 
-                                    className="w-14 p-0 bg-transparent border-0 text-center text-black font-luckiest text-sm outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" 
-                                    style={{MozAppearance: 'textfield'}}
-                                    type="number" 
+                                  <input
+                                    className="w-14 p-0 bg-transparent border-0 text-center text-black font-luckiest text-sm outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    style={{ MozAppearance: 'textfield' }}
+                                    type="number"
                                     value={roundValue}
                                     onChange={(e) => handleMarkChange(team.teamName, selectedRound, e.target.value)}
                                     disabled={saving}
@@ -781,7 +779,7 @@ function Marks() {
                             </td>
 
                             <td className="px-4 py-3 text-center font-luckiest text-base text-comic-red">
-                              <motion.div 
+                              <motion.div
                                 key={team.total}
                                 animate={{ scale: [1, 1.05, 1] }}
                                 className="inline-block bg-comic-yellow/20 border border-dashed border-black px-3.5 py-1 rounded-lg shadow-[1.5px_1.5px_0_#000]"

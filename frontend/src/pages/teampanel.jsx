@@ -145,12 +145,12 @@ const TeamPanel = () => {
     const safe = (m) =>
       m
         ? {
-            name: m.name || "",
-            regNo: m.regNo ?? "",
-            year: m.year || "",
-            branch: m.branch || "",
-            section: m.section || "",
-          }
+          name: m.name || "",
+          regNo: m.regNo ?? "",
+          year: m.year || "",
+          branch: m.branch || "",
+          section: m.section || "",
+        }
         : null;
 
     return [
@@ -262,7 +262,7 @@ const TeamPanel = () => {
 
                 <AnimatePresence>
                   {error && (
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.98, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="rounded-xl border-3 border-black bg-comic-red p-3.5 text-white font-bangers text-sm shadow-[2px_2px_0_#000]"
@@ -272,7 +272,7 @@ const TeamPanel = () => {
                   )}
                 </AnimatePresence>
 
-                 <motion.button
+                <motion.button
                   whileHover={{ scale: 1.01 }}
                   type="submit"
                   disabled={isLoading}
@@ -286,7 +286,7 @@ const TeamPanel = () => {
         ) : (
           /* Control Room Dashboard */
           <div className="space-y-6">
-            
+
             {/* Header */}
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
               <div className="space-y-0.5 text-left">
@@ -309,10 +309,10 @@ const TeamPanel = () => {
 
             {/* Split layout grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
+
               {/* Left Column: Team Details & Payment Status */}
               <div className="lg:col-span-1 space-y-6">
-                
+
                 {/* 1. Team Details */}
                 <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
                   <div className="absolute -top-4 left-6 bg-comic-cyan border-3 border-black text-black font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
@@ -335,21 +335,18 @@ const TeamPanel = () => {
                       {members.map((m, idx) => (
                         <div
                           key={`${m.role}-${m.regNo}`}
-                          className={`flex items-center gap-2.5 border-2 border-black p-2.5 rounded-lg shadow-[1.5px_1.5px_0_#000] ${
-                            m.role === "Team Leader" ? "bg-comic-lime/10" : "bg-white"
-                          }`}
+                          className={`flex items-center gap-2.5 border-2 border-black p-2.5 rounded-lg shadow-[1.5px_1.5px_0_#000] ${m.role === "Team Leader" ? "bg-comic-lime/10" : "bg-white"
+                            }`}
                         >
-                          <div className={`w-8 h-8 border-2 border-black rounded-full flex items-center justify-center font-luckiest text-xs ${
-                            m.role === "Team Leader" ? "bg-comic-lime" : "bg-comic-cyan"
-                          }`}>
+                          <div className={`w-8 h-8 border-2 border-black rounded-full flex items-center justify-center font-luckiest text-xs ${m.role === "Team Leader" ? "bg-comic-lime" : "bg-comic-cyan"
+                            }`}>
                             {m.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-grow text-left">
                             <div className="flex items-center justify-between gap-1 leading-none">
                               <span className="truncate text-xs font-luckiest tracking-wide text-black">{m.name}</span>
-                              <span className={`text-[9px] font-bangers border border-black px-1.5 py-0.25 rounded ${
-                                m.role === "Team Leader" ? "bg-comic-lime text-black" : "bg-gray-100"
-                              }`}>
+                              <span className={`text-[9px] font-bangers border border-black px-1.5 py-0.25 rounded ${m.role === "Team Leader" ? "bg-comic-lime text-black" : "bg-gray-100"
+                                }`}>
                                 {m.role === "Team Leader" ? "LEADER" : `ALLY ${idx}`}
                               </span>
                             </div>
@@ -371,7 +368,7 @@ const TeamPanel = () => {
 
                   <div className="mt-3 flex flex-col items-center">
                     <span className="font-bangers text-[10px] text-gray-500 mb-3.5 block leading-none">VERIFICATION SCAN STATUS</span>
-                    
+
                     {team?.payment?.status === "verified" ? (
                       <div className="speech-bubble speech-bubble-bottom bg-comic-green text-black px-4 py-3 w-full text-center shadow-[3px_3px_0_#111] mb-2.5">
                         <Check size={22} className="mx-auto mb-0.5 stroke-[3]" />
@@ -398,7 +395,7 @@ const TeamPanel = () => {
 
               {/* Right Column: Problem dossiers */}
               <div className="lg:col-span-2 space-y-6">
-                
+
                 <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
                   <div className="absolute -top-4 left-6 bg-comic-orange border-3 border-black text-white font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
                     {selectedProblemId ? "MISSION FILE LOCKED" : "MISSION SELECTION"}
@@ -406,7 +403,7 @@ const TeamPanel = () => {
 
                   <div className="mt-3 mb-3">
                     <p className="text-xs font-semibold text-gray-700 leading-relaxed">
-                      {selectedProblemId 
+                      {selectedProblemId
                         ? "Your alliance has successfully locked down a hackathon mission file. Proceed to coordinate configurations!"
                         : `Review dossiers below and select details. Limit cap is ${MAX_TEAMS_PER_PROBLEM} teams per statement folder. Once locked, it cannot be changed.`}
                     </p>
@@ -428,7 +425,7 @@ const TeamPanel = () => {
                       <div className="absolute -top-3 right-4 bg-comic-red border border-black text-white font-bangers text-[10px] px-2 py-0.5 rounded rotate-3">
                         LOCKED TARGET!
                       </div>
-                      
+
                       <div className="space-y-3 text-center">
                         <div className="font-luckiest text-xl text-black">
                           {selectedProblem.title}
@@ -535,7 +532,7 @@ const TeamPanel = () => {
               className="absolute inset-0 bg-black/60"
               onClick={() => setDetailsProblemId(null)}
             />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -579,7 +576,7 @@ const TeamPanel = () => {
                 >
                   CLOSE
                 </motion.button>
-                
+
                 {!selectedProblemId && team?.payment?.status === "verified" ? (
                   <motion.button
                     whileHover={{ scale: 1.02 }}

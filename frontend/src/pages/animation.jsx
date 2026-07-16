@@ -65,7 +65,7 @@ const Animation = () => {
       <Navbar />
 
       {/* FLOATING ANIME CHARACTER STICKERS IN THE BACKGROUND */}
-      
+
       {/* Luffy's Straw Hat (One Piece) - Top Left */}
       <div className="absolute top-[12%] left-[6%] z-0 pointer-events-none opacity-20 lg:opacity-30 hover:opacity-90 transition-opacity duration-300 animate-float hidden sm:block">
         <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#000]">
@@ -183,7 +183,7 @@ const Animation = () => {
 
       {/* Hero Section */}
       <div className="flex-grow flex flex-col items-center justify-center px-4 py-8 relative z-10 overflow-hidden">
-        
+
         {/* Subtle decorative Sparkles */}
         <div className="absolute top-10 left-10 text-comic-yellow animate-twinkle pointer-events-none opacity-50">
           <Sparkles size={32} />
@@ -194,7 +194,7 @@ const Animation = () => {
 
         {/* Clean Comic Card Wrapper */}
         <div className="max-w-3xl w-full bg-white border-3 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0_#111] relative bg-halftone-dots-white my-4 text-center">
-          
+
           {/* Issue headers */}
           <div className="absolute top-0 left-0 bg-comic-yellow border-b-3 border-r-3 border-black px-4 py-1 text-black font-bangers text-xs rounded-tl-2xl">
             ISSUE #01
@@ -204,7 +204,7 @@ const Animation = () => {
           </div>
 
           <div className="flex flex-col items-center mt-6">
-            
+
             {/* Clean Logo Panel */}
             <div className="relative mb-6 w-full max-w-lg">
               <div className="bg-comic-yellow border-3 border-black px-6 py-4 rounded-2xl shadow-[4px_4px_0_#111]">
@@ -218,7 +218,7 @@ const Animation = () => {
             </div>
 
             {/* Club Logo */}
-            <motion.div 
+            <motion.div
               className="relative w-36 h-36 bg-gray-50 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] flex items-center justify-center p-4 mb-6"
               whileHover={{ scale: 1.03 }}
             >
@@ -245,8 +245,8 @@ const Animation = () => {
                   {!registrationEnabled
                     ? "The mission board is temporarily disabled. Check back soon!"
                     : teamCount >= maxTeams
-                    ? "All superhero slots have been claimed!"
-                    : "Form your alliance and claim your mission folder today."}
+                      ? "All superhero slots have been claimed!"
+                      : "Form your alliance and claim your mission folder today."}
                 </p>
               </div>
             </div>
@@ -259,20 +259,20 @@ const Animation = () => {
 
               {/* Progress Track */}
               <div className="w-full bg-white border-3 border-black h-8 rounded-full relative overflow-visible flex items-center">
-                <div 
+                <div
                   className="bg-comic-cyan h-full rounded-full border-r-3 border-black transition-all duration-700"
                   style={{ width: `${progressPercent}%` }}
                 />
-                
+
                 {/* Float Rocket Icon */}
-                <div 
+                <div
                   className="absolute transition-all duration-700"
-                  style={{ 
+                  style={{
                     left: `calc(${progressPercent}% - 12px)`,
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     animate={{ y: [0, -2, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
                     className="bg-comic-yellow border-2 border-black p-1 rounded-full shadow-[1px_1px_0_#111] rotate-90 inline-block"
@@ -300,11 +300,10 @@ const Animation = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleNavigate('/home')}
                 disabled={isClosed}
-                className={`font-luckiest text-xl text-white px-8 py-3.5 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all ${
-                  isClosed 
-                    ? 'bg-gray-400 cursor-not-allowed opacity-60' 
-                    : 'bg-bright-orange hover:bg-coral-orange cursor-pointer'
-                }`}
+                className={`font-luckiest text-xl text-white px-8 py-3.5 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all ${isClosed
+                  ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                  : 'bg-bright-orange hover:bg-coral-orange cursor-pointer'
+                  }`}
               >
                 REGISTER NOW
               </motion.button>

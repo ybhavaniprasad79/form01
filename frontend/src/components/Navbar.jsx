@@ -24,7 +24,7 @@ const Navbar = () => {
             <span className="text-lg leading-none">🎨</span>
             <div>
               <span className="font-luckiest text-xl md:text-2xl text-black tracking-wider block leading-none">
-                CANVAS CRAFT
+                CAMPUS CREATIVE
               </span>
               <span className="font-bangers text-[9px] text-comic-red tracking-widest block mt-0.5 leading-none">
                 HACK • CREATE • INNOVATE

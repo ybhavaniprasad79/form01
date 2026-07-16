@@ -437,7 +437,7 @@ const AddProblems = () => {
     <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
       <Navbar />
       <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
-        
+
         {/* Simple Page Header */}
         <div className="relative mb-8 text-center">
           <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
@@ -453,7 +453,7 @@ const AddProblems = () => {
         {/* Global Error Banner */}
         <AnimatePresence>
           {problemsLoadError && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
@@ -465,7 +465,7 @@ const AddProblems = () => {
 
         <AnimatePresence>
           {updateError && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
@@ -516,7 +516,7 @@ const AddProblems = () => {
 
                 <AnimatePresence>
                   {verifyError && (
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.98, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="rounded-xl border-3 border-black bg-comic-red p-3 text-white font-bangers text-sm shadow-[2px_2px_0_#000]"
@@ -540,7 +540,7 @@ const AddProblems = () => {
         ) : (
           /* Main console view */
           <div className="space-y-6">
-            
+
             {/* Top Toolbar */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
               <div className="space-y-0.5 text-left">
@@ -613,7 +613,7 @@ const AddProblems = () => {
             {/* ----------------- PROBLEMS TAB ----------------- */}
             {viewMode === VIEW_MODES.problems && (
               <div className="space-y-6">
-                
+
                 {/* Enable toggle control widget */}
                 <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
                   <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
@@ -634,15 +634,13 @@ const AddProblems = () => {
                         type="button"
                         disabled={isToggling}
                         onClick={() => handleToggleProblems(!problemsEnabled)}
-                        className={`relative inline-flex h-9 w-18 items-center rounded-full border-3 border-black transition ${
-                          problemsEnabled ? "bg-comic-green" : "bg-comic-red"
-                        }`}
+                        className={`relative inline-flex h-9 w-18 items-center rounded-full border-3 border-black transition ${problemsEnabled ? "bg-comic-green" : "bg-comic-red"
+                          }`}
                         aria-label="Toggle problem statements"
                       >
                         <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white border-2 border-black transition-transform ${
-                            problemsEnabled ? "translate-x-9" : "translate-x-1"
-                          }`}
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white border-2 border-black transition-transform ${problemsEnabled ? "translate-x-9" : "translate-x-1"
+                            }`}
                         />
                       </button>
                     </label>
@@ -660,9 +658,9 @@ const AddProblems = () => {
                   <div className="absolute top-0 right-0 bg-comic-purple border-b-3 border-l-3 border-black px-4 py-0.5 text-white font-bangers text-[10px] rounded-tr-2xl">
                     MISSION FILES
                   </div>
-                  
+
                   <h3 className="text-2xl font-luckiest text-black mb-5">ALL ACTIVE MISSION FILES</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {problems.length ? (
                       problems.map((p) => {
@@ -692,7 +690,7 @@ const AddProblems = () => {
                               <h4 className="font-luckiest text-base text-black leading-tight tracking-wide border-b-2 border-black pb-1">
                                 {p.title}
                               </h4>
-                              
+
                               <p className="text-xs font-semibold text-gray-700 leading-relaxed font-comic line-clamp-3 mb-3">
                                 {p.shortDescription}
                               </p>
@@ -785,11 +783,10 @@ const AddProblems = () => {
                             t?.selectedProblemStatement?.name ||
                             "-";
                           return (
-                            <tr 
-                              key={t._id} 
-                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${
-                                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              }`}
+                            <tr
+                              key={t._id}
+                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                }`}
                             >
                               <td className="px-3 py-3 border-r-2 border-black font-luckiest text-black">{t.teamName}</td>
                               <td className="px-3 py-3 border-r-2 border-black font-semibold text-gray-800">{t?.teamLeader?.name || "-"}</td>
@@ -1024,9 +1021,8 @@ const AddProblems = () => {
                       whileHover={{ scale: 1.02 }}
                       type="submit"
                       disabled={!canSave}
-                      className={`border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer ${
-                        canSave ? "bg-comic-lime text-black hover:bg-comic-green" : "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed"
-                      }`}
+                      className={`border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer ${canSave ? "bg-comic-lime text-black hover:bg-comic-green" : "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed"
+                        }`}
                     >
                       {isSaving ? "LOGGING DOSSIER..." : "✓ CREATE DOSSIER"}
                     </motion.button>

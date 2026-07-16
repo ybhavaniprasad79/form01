@@ -123,7 +123,8 @@
   border-radius: 1.25rem;
 }
 
-.speech-bubble::after, .speech-bubble::before {
+.speech-bubble::after,
+.speech-bubble::before {
   content: '';
   position: absolute;
   border-style: solid;
@@ -187,7 +188,11 @@ body {
   color: #111111;
 }
 
-h1, h2, h3, h4, h5 {
+h1,
+h2,
+h3,
+h4,
+h5 {
   font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif !important;
   font-weight: 700 !important;
   font-style: italic !important;
@@ -196,9 +201,17 @@ h1, h2, h3, h4, h5 {
 
 /* Gentle floating animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .animate-float {
@@ -206,8 +219,15 @@ h1, h2, h3, h4, h5 {
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .animate-twinkle {
@@ -218,6 +238,7 @@ h1, h2, h3, h4, h5 {
 .comic-card-hover {
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
 }
+
 .comic-card-hover:hover {
   transform: translate(-2px, -2px);
   box-shadow: 7px 7px 0px #111111 !important;
@@ -226,23 +247,23 @@ h1, h2, h3, h4, h5 {
 .comic-btn-hover {
   transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
 }
+
 .comic-btn-hover:hover {
   transform: translate(-2px, -2px);
   box-shadow: 5px 5px 0px #111111 !important;
 }
+
 .comic-btn-hover:active {
   transform: translate(1px, 1px);
   box-shadow: 2px 2px 0px #111111 !important;
 }
 
 .bg-stripes-comic {
-  background: repeating-linear-gradient(
-    45deg,
-    #111111,
-    #111111 6px,
-    #ffffff 6px,
-    #ffffff 12px
-  );
+  background: repeating-linear-gradient(45deg,
+      #111111,
+      #111111 6px,
+      #ffffff 6px,
+      #ffffff 12px);
 }
 
 /* Global Comic Forms */
@@ -270,11 +291,13 @@ h1, h2, h3, h4, h5 {
   transition: all 0.15s ease-in-out !important;
   cursor: pointer;
 }
+
 .comic-btn-primary:hover {
   background-color: #FF5C3A !important;
   transform: translate(-1px, -1px);
   box-shadow: 4.5px 4.5px 0px #111111 !important;
 }
+
 .comic-btn-primary:active {
   transform: translate(1px, 1px);
   box-shadow: 1.5px 1.5px 0px #111111 !important;
@@ -290,11 +313,13 @@ h1, h2, h3, h4, h5 {
   transition: all 0.15s ease-in-out !important;
   cursor: pointer;
 }
+
 .comic-btn-secondary:hover {
   background-color: #42D4F5 !important;
   transform: translate(-1px, -1px);
   box-shadow: 4.5px 4.5px 0px #111111 !important;
 }
+
 .comic-btn-secondary:active {
   transform: translate(1px, 1px);
   box-shadow: 1.5px 1.5px 0px #111111 !important;

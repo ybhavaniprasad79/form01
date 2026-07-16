@@ -27,7 +27,7 @@ const Download = () => {
 
   const handleDownload = async (e) => {
     e.preventDefault();
-    
+
     if (!downloadPassword) {
       setError('Please enter password');
       return;
@@ -58,7 +58,7 @@ const Download = () => {
       a.download = `team_registrations_${Date.now()}.xlsx`;
       document.body.appendChild(a);
       a.click();
-      
+
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
@@ -147,7 +147,7 @@ const Download = () => {
       });
       setStatusEdits(nextEdits);
       setSuccess('Access granted');
-      
+
       fetchRegistrationStatus();
       fetchMaxTeams();
     } catch (err) {
@@ -342,7 +342,7 @@ const Download = () => {
   };
 
   const getStatusBubbleStyle = (status) => {
-    switch(status) {
+    switch (status) {
       case 'verified':
         return 'bg-comic-green text-black border-2 border-black';
       case 'rejected':
@@ -371,7 +371,7 @@ const Download = () => {
       <AnimatePresence>
         {isModalOpen && modalImage && (
           <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -400,7 +400,7 @@ const Download = () => {
       </AnimatePresence>
 
       <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
-        
+
         {/* Simple Page Header */}
         <div className="relative mb-8 text-center">
           <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
@@ -416,7 +416,7 @@ const Download = () => {
         {/* Global Error Banner */}
         <AnimatePresence>
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
@@ -429,7 +429,7 @@ const Download = () => {
         {/* Global Success Banner */}
         <AnimatePresence>
           {success && (
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="mb-5 bg-comic-lime border-3 border-black rounded-2xl p-4 text-black font-bangers text-base shadow-[3px_3px_0_#000]"
@@ -448,9 +448,8 @@ const Download = () => {
               setError('');
               setSuccess('');
             }}
-            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${
-              tab === 'download' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
-            }`}
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${tab === 'download' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
+              }`}
           >
             📥 DOWNLOAD DATA
           </motion.button>
@@ -461,9 +460,8 @@ const Download = () => {
               setError('');
               setSuccess('');
             }}
-            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${
-              tab === 'status' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
-            }`}
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${tab === 'status' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
+              }`}
           >
             💳 VERIFY DEPOSITS
           </motion.button>
@@ -558,7 +556,7 @@ const Download = () => {
         {/* ----------------- VERIFICATION COMMAND STATION ----------------- */}
         {tab === 'status' && isStatusAuthorized && (
           <div className="space-y-6">
-            
+
             {/* System controls widget */}
             <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
               <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
@@ -570,11 +568,10 @@ const Download = () => {
                   <h3 className="text-xl font-luckiest text-black">MISSION GATE PORTALS</h3>
                   <p className="text-xs font-semibold text-gray-700 leading-none">Open or shut registration portals and caps.</p>
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className={`px-3 py-1.5 border-2 border-black rounded-lg font-luckiest text-sm shadow-[1.5px_1.5px_0_#000] ${
-                    registrationEnabled ? 'bg-comic-green text-black' : 'bg-comic-red text-white'
-                  }`}>
+                  <div className={`px-3 py-1.5 border-2 border-black rounded-lg font-luckiest text-sm shadow-[1.5px_1.5px_0_#000] ${registrationEnabled ? 'bg-comic-green text-black' : 'bg-comic-red text-white'
+                    }`}>
                     {registrationEnabled ? 'PORTALS ACTIVE' : 'PORTALS SHUT'}
                   </div>
 
@@ -583,9 +580,8 @@ const Download = () => {
                     type="button"
                     onClick={handleToggleRegistration}
                     disabled={loading}
-                    className={`px-4 py-2 rounded-xl border-3 border-black font-bangers text-base shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
-                      registrationEnabled ? 'bg-comic-red text-white' : 'bg-comic-green text-black'
-                    }`}
+                    className={`px-4 py-2 rounded-xl border-3 border-black font-bangers text-base shadow-[3px_3px_0_#000] cursor-pointer transition-all ${registrationEnabled ? 'bg-comic-red text-white' : 'bg-comic-green text-black'
+                      }`}
                   >
                     {registrationEnabled ? '🔒 CLOSE REGISTRATIONS' : '✓ OPEN REGISTRATIONS'}
                   </motion.button>
@@ -704,11 +700,10 @@ const Download = () => {
                         }).map((team, idx) => {
                           const currentStatus = statusEdits[team.payment.transactionId] || team.payment.status;
                           return (
-                            <tr 
-                              key={team._id} 
-                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${
-                                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              }`}
+                            <tr
+                              key={team._id}
+                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                }`}
                             >
                               <td className="px-3 py-3 border-r-2 border-black font-luckiest text-black">{team.teamName}</td>
                               <td className="px-3 py-3 border-r-2 border-black font-mono text-[10px] text-gray-700 font-bold select-all">{team.payment.transactionId}</td>
@@ -741,11 +736,10 @@ const Download = () => {
                                     type="button"
                                     onClick={() => handleDirectUpdateStatus(team.payment.transactionId, 'verified')}
                                     disabled={loading || currentStatus === 'verified'}
-                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
-                                      currentStatus === 'verified'
+                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${currentStatus === 'verified'
                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
                                         : 'bg-comic-green text-black hover:bg-green-600'
-                                    }`}
+                                      }`}
                                   >
                                     VERIFY
                                   </motion.button>
@@ -754,11 +748,10 @@ const Download = () => {
                                     type="button"
                                     onClick={() => handleDirectUpdateStatus(team.payment.transactionId, 'rejected')}
                                     disabled={loading || currentStatus === 'rejected'}
-                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
-                                      currentStatus === 'rejected'
+                                    className={`border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer ${currentStatus === 'rejected'
                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
                                         : 'bg-comic-red text-white hover:bg-red-600'
-                                    }`}
+                                      }`}
                                   >
                                     REJECT
                                   </motion.button>
