@@ -63,9 +63,11 @@ app.get("/api/admin/problems", async (req, res) => {
       {},
       {
         title: 1,
+        themePng: 1,
         shortDescription: 1,
         fullDescription: 1,
         slotsTaken: 1,
+        limit: 1,
         createdAt: 1,
         updatedAt: 1,
       },
@@ -167,9 +169,11 @@ app.get("/api/problems", async (req, res) => {
       {},
       {
         title: 1,
+        themePng: 1,
         shortDescription: 1,
         fullDescription: 1,
         slotsTaken: 1,
+        limit: 1,
         createdAt: 1,
         updatedAt: 1,
       },
@@ -194,7 +198,7 @@ app.get("/api/problems", async (req, res) => {
 // Admin: create a new problem statement (password protected)
 app.post("/api/problems", async (req, res) => {
   try {
-    const { password, title, shortDescription, fullDescription } =
+    const { password, title, themePng, shortDescription, fullDescription, limit } =
       req.body || {};
 
     if (password !== process.env.adminPassword) {
@@ -234,8 +238,10 @@ app.post("/api/problems", async (req, res) => {
 
     const created = await ProblemStatement.create({
       title: String(title).trim(),
+      themePng: String(themePng || "").trim(),
       shortDescription: String(shortDescription).trim(),
       fullDescription: String(fullDescription || "").trim(),
+      limit: typeof limit === "number" ? limit : 7,
     });
 
     res.status(201).json({
@@ -265,7 +271,7 @@ app.post("/api/problems", async (req, res) => {
 app.put("/api/problems/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { password, title, shortDescription, fullDescription } =
+    const { password, title, themePng, shortDescription, fullDescription, limit } =
       req.body || {};
 
     if (password !== process.env.adminPassword) {
@@ -300,8 +306,10 @@ app.put("/api/problems/:id", async (req, res) => {
       id,
       {
         title: String(title).trim(),
+        themePng: String(themePng || "").trim(),
         shortDescription: String(shortDescription).trim(),
         fullDescription: String(fullDescription || "").trim(),
+        limit: typeof limit === "number" ? limit : 7,
       },
       { new: true, runValidators: true },
     ).lean();
@@ -1097,15 +1105,14 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
       });
     }
 
-    const problemExists = await ProblemStatement.exists({
-      _id: normalizedProblemId,
-    });
-    if (!problemExists) {
+    const problem = await ProblemStatement.findById(normalizedProblemId).lean();
+    if (!problem) {
       return res.status(404).json({
         success: false,
         message: "Problem statement not found",
       });
     }
+    const problemLimit = typeof problem.limit === "number" && problem.limit > 0 ? problem.limit : MAX_TEAMS_PER_PROBLEM;
 
     const teamNameQuery = {
       teamName: {
@@ -1149,18 +1156,18 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
       { $set: { slotsTaken: currentSelectedCount } },
     );
 
-    if (currentSelectedCount >= MAX_TEAMS_PER_PROBLEM) {
+    if (currentSelectedCount >= problemLimit) {
       return res.status(409).json({
         success: false,
         code: "PROBLEM_FULL",
-        message: `This problem statement already has ${MAX_TEAMS_PER_PROBLEM} teams.`,
+        message: `This problem statement already has ${problemLimit} teams.`,
       });
     }
 
     const reserved = await ProblemStatement.findOneAndUpdate(
       {
         _id: normalizedProblemId,
-        slotsTaken: { $lt: MAX_TEAMS_PER_PROBLEM },
+        slotsTaken: { $lt: problemLimit },
       },
       { $inc: { slotsTaken: 1 } },
       { new: true, projection: { _id: 1, slotsTaken: 1 } },
@@ -1170,7 +1177,7 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
       return res.status(409).json({
         success: false,
         code: "PROBLEM_FULL",
-        message: `This problem statement already has ${MAX_TEAMS_PER_PROBLEM} teams.`,
+        message: `This problem statement already has ${problemLimit} teams.`,
       });
     }
 

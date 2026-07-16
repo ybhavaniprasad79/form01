@@ -22,6 +22,7 @@ const TeamPanel = () => {
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(false);
   const [expandedProblemId, setExpandedProblemId] = useState(null);
   const [problemsError, setProblemsError] = useState("");
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   useEffect(() => {
     setAnimateIn(false);
@@ -95,9 +96,11 @@ const TeamPanel = () => {
           .map((p) => ({
             id: String(p._id || ""),
             title: p.title || "",
+            themePng: p.themePng || "",
             shortDescription: p.shortDescription || "",
             fullDescription: p.fullDescription || "",
             slotsTaken: Number(p.slotsTaken || 0),
+            limit: Number(p.limit || 7),
           }))
           .filter((p) => p.id && p.title && p.shortDescription);
 
@@ -136,7 +139,7 @@ const TeamPanel = () => {
 
   const visibleProblems = useMemo(() => {
     if (selectedProblemId) return problems;
-    return problems.filter((p) => (p.slotsTaken || 0) < MAX_TEAMS_PER_PROBLEM);
+    return problems.filter((p) => (p.slotsTaken || 0) < (p.limit || MAX_TEAMS_PER_PROBLEM));
   }, [problems, selectedProblemId]);
 
   const members = useMemo(() => {
@@ -430,6 +433,14 @@ const TeamPanel = () => {
                         <div className="font-luckiest text-xl text-black">
                           {selectedProblem.title}
                         </div>
+                        {selectedProblem.themePng && (
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setZoomedImage(selectedProblem.themePng); }}
+                            className="mx-auto w-32 h-32 border-2 border-black rounded-full overflow-hidden bg-gray-100 shadow-[2px_2px_0_#000] my-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                          >
+                            <img src={selectedProblem.themePng} alt={selectedProblem.title} className="w-full h-full object-cover animate-none" />
+                          </div>
+                        )}
                         <p className="mx-auto max-w-2xl text-xs font-semibold text-gray-800 leading-relaxed font-comic">
                           {isSelectedExpanded
                             ? selectedProblem.fullDescription || selectedProblem.shortDescription
@@ -459,7 +470,8 @@ const TeamPanel = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1">
                       {visibleProblems.map((p) => {
                         const difficulty = getProblemDifficulty(p.id, p.title);
-                        const slotsLeft = MAX_TEAMS_PER_PROBLEM - p.slotsTaken;
+                        const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
+                        const slotsLeft = problemLimit - p.slotsTaken;
 
                         return (
                           <motion.div
@@ -473,13 +485,23 @@ const TeamPanel = () => {
                                   {difficulty.label}
                                 </span>
                                 <span className="font-bangers text-[10px] bg-comic-cyan border border-black text-black px-2 py-0.25 rounded shadow-[1px_1px_0_#000]">
-                                  {slotsLeft} SLOTS LEFT
+                                  {slotsLeft} / {problemLimit} SLOTS LEFT
                                 </span>
                               </div>
 
                               <h3 className="font-luckiest text-base text-black leading-tight mb-1.5 tracking-wide">
                                 {p.title}
                               </h3>
+
+                              {p.themePng && (
+                                <div 
+                                  onClick={(e) => { e.stopPropagation(); setZoomedImage(p.themePng); }}
+                                  className="w-full h-28 border border-black rounded-lg overflow-hidden my-2 bg-gray-100 cursor-pointer hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all"
+                                >
+                                  <img src={p.themePng} alt={p.title} className="w-full h-full object-cover animate-none" />
+                                </div>
+                              )}
+
                               <p className="text-[11px] font-semibold text-gray-600 line-clamp-3 leading-relaxed font-comic mb-3">
                                 {p.shortDescription}
                               </p>
@@ -555,6 +577,14 @@ const TeamPanel = () => {
               </div>
 
               <div className="space-y-3.5 text-xs font-semibold text-gray-800 leading-relaxed font-comic text-left">
+                {detailsProblem.themePng && (
+                  <div 
+                    onClick={() => setZoomedImage(detailsProblem.themePng)}
+                    className="w-full h-40 border-2 border-black rounded-lg overflow-hidden bg-gray-100 mb-3 cursor-pointer hover:opacity-90 hover:scale-[1.01] active:scale-95 transition-all"
+                  >
+                    <img src={detailsProblem.themePng} alt={detailsProblem.title} className="w-full h-full object-cover animate-none" />
+                  </div>
+                )}
                 <div className="bg-comic-yellow/5 border border-dashed border-black p-3 rounded-lg">
                   <span className="font-bangers text-[10px] text-comic-red block mb-0.5">OBJECTIVE SUMMARY</span>
                   <p>{detailsProblem.shortDescription}</p>
@@ -648,6 +678,45 @@ const TeamPanel = () => {
                     * PAYMENT VERIFICATION REQUIRED TO LOCK
                   </span>
                 ) : null}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Zoomed Image Lightbox Modal */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.85 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black cursor-zoom-out"
+              onClick={() => setZoomedImage(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center z-10 pointer-events-none"
+            >
+              <button
+                type="button"
+                onClick={() => setZoomedImage(null)}
+                className="absolute -top-12 right-0 bg-comic-red text-white border-2 border-black font-bangers text-lg rounded-full w-9 h-9 flex items-center justify-center shadow-[2px_2px_0_#000] cursor-pointer hover:scale-105 active:scale-95 transition pointer-events-auto"
+              >
+                ×
+              </button>
+              <div 
+                className="bg-white p-3 rounded-2xl border-3 border-black shadow-[8px_8px_0_#000] overflow-hidden max-h-[80vh] pointer-events-auto cursor-zoom-out"
+                onClick={() => setZoomedImage(null)}
+              >
+                <img
+                  src={zoomedImage}
+                  alt="Expanded theme PNG"
+                  className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                />
               </div>
             </motion.div>
           </div>

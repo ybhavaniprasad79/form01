@@ -148,6 +148,11 @@ const problemStatementSchema = new mongoose.Schema(
       minlength: [3, "Title must be at least 3 characters"],
       maxlength: [120, "Title must not exceed 120 characters"],
     },
+    themePng: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     shortDescription: {
       type: String,
       required: [true, "Short description is required"],
@@ -165,6 +170,11 @@ const problemStatementSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, "slotsTaken cannot be negative"],
+    },
+    limit: {
+      type: Number,
+      default: 7,
+      min: [1, "Limit must be at least 1"],
     },
   },
   { timestamps: true },

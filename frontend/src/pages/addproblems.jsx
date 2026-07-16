@@ -85,8 +85,10 @@ const AddProblems = () => {
   const [activeModal, setActiveModal] = useState(null); // null | create | edit
 
   const [title, setTitle] = useState("");
+  const [themePng, setThemePng] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [fullDescription, setFullDescription] = useState("");
+  const [limit, setLimit] = useState(7);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -120,8 +122,10 @@ const AddProblems = () => {
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editThemePng, setEditThemePng] = useState("");
   const [editShortDescription, setEditShortDescription] = useState("");
   const [editFullDescription, setEditFullDescription] = useState("");
+  const [editLimit, setEditLimit] = useState(7);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState("");
 
@@ -278,16 +282,20 @@ const AddProblems = () => {
     setUpdateError("");
     setEditingId(p._id);
     setEditTitle(String(p.title || ""));
+    setEditThemePng(String(p.themePng || ""));
     setEditShortDescription(String(p.shortDescription || ""));
     setEditFullDescription(String(p.fullDescription || ""));
+    setEditLimit(Number(p.limit || 7));
     setActiveModal("edit");
   };
 
   const cancelEditing = () => {
     setEditingId(null);
     setEditTitle("");
+    setEditThemePng("");
     setEditShortDescription("");
     setEditFullDescription("");
+    setEditLimit(7);
     setUpdateError("");
     setActiveModal(null);
   };
@@ -335,8 +343,10 @@ const AddProblems = () => {
           body: JSON.stringify({
             password: password.trim(),
             title: editTitle.trim(),
+            themePng: editThemePng.trim(),
             shortDescription: editShortDescription.trim(),
             fullDescription: editFullDescription.trim(),
+            limit: Number(editLimit || 7),
           }),
         },
       );
@@ -400,8 +410,10 @@ const AddProblems = () => {
           body: JSON.stringify({
             password: password.trim(),
             title: title.trim(),
+            themePng: themePng.trim(),
             shortDescription: shortDescription.trim(),
             fullDescription: fullDescription.trim(),
+            limit: Number(limit || 7),
           }),
         },
       );
@@ -414,8 +426,10 @@ const AddProblems = () => {
 
       setSaveMessage("Problem statement added.");
       setTitle("");
+      setThemePng("");
       setShortDescription("");
       setFullDescription("");
+      setLimit(7);
 
       await loadConfigAndProblems();
       setActiveModal(null);
@@ -665,7 +679,8 @@ const AddProblems = () => {
                     {problems.length ? (
                       problems.map((p) => {
                         const difficulty = getProblemDifficulty(p._id, p.title);
-                        const slotsLeft = MAX_TEAMS_PER_PROBLEM - (p.slotsTaken || 0);
+                        const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
+                        const slotsLeft = problemLimit - (p.slotsTaken || 0);
 
                         return (
                           /* Problem Card Styled like a Top Secret Folder File */
@@ -683,13 +698,19 @@ const AddProblems = () => {
                                   {difficulty.label}
                                 </span>
                                 <span className="font-bangers text-[10px] bg-comic-cyan border border-black text-black px-2 py-0.25 rounded shadow-[1px_1px_0_#000]">
-                                  SLOTS LEFT: {slotsLeft}
+                                  SLOTS LEFT: {slotsLeft} / {problemLimit}
                                 </span>
                               </div>
 
                               <h4 className="font-luckiest text-base text-black leading-tight tracking-wide border-b-2 border-black pb-1">
                                 {p.title}
                               </h4>
+
+                              {p.themePng && (
+                                <div className="w-full h-24 border border-black rounded-lg overflow-hidden my-2 bg-gray-100">
+                                  <img src={p.themePng} alt={p.title} className="w-full h-full object-cover" />
+                                </div>
+                              )}
 
                               <p className="text-xs font-semibold text-gray-700 leading-relaxed font-comic line-clamp-3 mb-3">
                                 {p.shortDescription}
@@ -971,6 +992,32 @@ const AddProblems = () => {
 
                   <div>
                     <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      THEME PNG IMAGE URL
+                    </label>
+                    <input
+                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      value={themePng}
+                      onChange={(e) => setThemePng(e.target.value)}
+                      placeholder="e.g., https://example.com/logo.png"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      SELECTION LIMIT (MAX TEAMS)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold animate-none"
+                      value={limit}
+                      onChange={(e) => setLimit(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
                       SHORT SUMMARY (SHOWN ON TRADING CARDS)
                     </label>
                     <textarea
@@ -1038,6 +1085,32 @@ const AddProblems = () => {
                       className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      THEME PNG IMAGE URL
+                    </label>
+                    <input
+                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      value={editThemePng}
+                      onChange={(e) => setEditThemePng(e.target.value)}
+                      placeholder="e.g., https://example.com/logo.png"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                      SELECTION LIMIT (MAX TEAMS)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold animate-none"
+                      value={editLimit}
+                      onChange={(e) => setEditLimit(Number(e.target.value))}
                       required
                     />
                   </div>
