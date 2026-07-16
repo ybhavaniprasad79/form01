@@ -346,9 +346,9 @@ const Download = () => {
       case 'verified':
         return 'bg-comic-green text-black border-2 border-black';
       case 'rejected':
-        return 'bg-comic-red text-white border-2 border-black';
+        return 'bg-coral-orange text-white border-2 border-black';
       case 'pending':
-        return 'bg-comic-yellow text-black border-2 border-black';
+        return 'bg-bright-orange text-white border-2 border-black';
       default:
         return 'bg-white text-black border-2 border-black';
     }
@@ -448,8 +448,8 @@ const Download = () => {
               setError('');
               setSuccess('');
             }}
-            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
-              tab === 'download' ? 'bg-comic-yellow text-black' : 'bg-white text-black hover:bg-gray-50'
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${
+              tab === 'download' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
             }`}
           >
             📥 DOWNLOAD DATA
@@ -461,8 +461,8 @@ const Download = () => {
               setError('');
               setSuccess('');
             }}
-            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#000] cursor-pointer transition-all ${
-              tab === 'status' ? 'bg-comic-yellow text-black' : 'bg-white text-black hover:bg-gray-50'
+            className={`px-5 py-2.5 border-3 border-black rounded-xl shadow-[3px_3px_0_#111] cursor-pointer transition-all ${
+              tab === 'status' ? 'bg-bright-orange text-white' : 'bg-white text-black hover:bg-light-gray'
             }`}
           >
             💳 VERIFY DEPOSITS
@@ -504,7 +504,7 @@ const Download = () => {
                 whileHover={{ scale: 1.01 }}
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-comic-red hover:bg-[#ff251c] text-white border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer flex items-center justify-center"
+                className="w-full h-12 rounded-xl flex items-center justify-center comic-btn-primary"
               >
                 {loading ? 'DOWNLOADING...' : 'DOWNLOAD EXCEL'}
               </motion.button>
@@ -665,17 +665,17 @@ const Download = () => {
 
                   {/* Clean Stat Metric Boxes */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 font-luckiest text-base">
-                    <div className="bg-comic-yellow border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
-                      <p className="text-black text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.pending}</p>
-                      <p className="text-black text-[10px] font-bangers tracking-widest leading-none mt-1">PENDING VERIFICATION</p>
+                    <div className="bg-bright-orange border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#111] text-white">
+                      <p className="text-white text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.pending}</p>
+                      <p className="text-white text-[10px] font-bangers tracking-widest leading-none mt-1">PENDING VERIFICATION</p>
                     </div>
 
-                    <div className="bg-comic-green border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
+                    <div className="bg-comic-green border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#111] text-black">
                       <p className="text-black text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.verified}</p>
                       <p className="text-black text-[10px] font-bangers tracking-widest leading-none mt-1">VERIFIED TEAMS</p>
                     </div>
 
-                    <div className="bg-comic-red border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#000]">
+                    <div className="bg-coral-orange border-3 border-black rounded-xl p-3 text-center shadow-[3px_3px_0_#111] text-white">
                       <p className="text-white text-2xl leading-none font-luckiest mb-0.5">{allPayments.statusCounts.rejected}</p>
                       <p className="text-white text-[10px] font-bangers tracking-widest leading-none mt-1">REJECTED TEAMS</p>
                     </div>
@@ -718,7 +718,7 @@ const Download = () => {
                                     whileHover={{ scale: 1.02 }}
                                     type="button"
                                     onClick={() => openImageModal(team.payment.receiptUrl)}
-                                    className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2.5 py-0.5 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                                    className="bg-sky-blue hover:bg-cyan-custom text-black border-2 border-black rounded px-2.5 py-0.5 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#111] cursor-pointer"
                                   >
                                     VIEW
                                   </motion.button>

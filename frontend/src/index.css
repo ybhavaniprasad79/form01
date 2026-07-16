@@ -1,37 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-bangers: "Bangers", system-ui;
-  --font-luckiest: "Luckiest Guy", system-ui;
-  --font-fredoka: "Fredoka", system-ui;
-  --font-comic: "Comic Neue", system-ui;
+  --font-bangers: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-poppins: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-outfit: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-jakarta: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-luckiest: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-fredoka: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-comic: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
 
-  --color-comic-cyan: #29C5F6;
-  --color-comic-yellow: #FFD93D;
-  --color-comic-red: #FF3B30;
-  --color-comic-orange: #FF7A00;
+  --color-sky-blue: #4EC5F1;
+  --color-cyan-custom: #42D4F5;
+  --color-bright-orange: #FF7A1A;
+  --color-coral-orange: #FF5C3A;
+  --color-accent-yellow: #FFD54A;
+  --color-light-gray: #F5F7FA;
+
+  /* Re-mapped existing colors to updated palette to prevent broken color mappings */
+  --color-comic-cyan: #4EC5F1;
+  --color-comic-yellow: #FFD54A;
+  --color-comic-red: #FF5C3A;
+  --color-comic-orange: #FF7A1A;
   --color-comic-purple: #A855F7;
-  --color-comic-blue: #3B82F6;
+  --color-comic-blue: #4EC5F1;
   --color-comic-green: #22C55E;
   --color-comic-lime: #84CC16;
 }
 
-/* Redefined Simple Comic Backgrounds (Pastel Solids for Clean Look) */
+/* Comic-inspired conics-gradient radial burst backgrounds */
 .bg-comic-rays-blue {
-  background-color: #EBF8FF;
+  background-color: #42D4F5;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .bg-comic-rays-yellow {
   background-color: #FFFDF0;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .bg-comic-rays-red {
   background-color: #FFF5F5;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .bg-comic-rays-purple {
   background-color: #F8F0FC;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Extremely Subtle Halftone Textures (3% opacity) */
@@ -150,10 +181,17 @@
 }
 
 body {
-  font-family: "Comic Neue", system-ui, sans-serif;
-  font-weight: 500;
-  background-color: #fcfcf9;
-  color: #000000;
+  font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  font-weight: 700;
+  background-color: #F5F7FA;
+  color: #111111;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif !important;
+  font-weight: 700 !important;
+  font-style: italic !important;
+  text-transform: uppercase !important;
 }
 
 /* Gentle floating animations */
@@ -182,7 +220,7 @@ body {
 }
 .comic-card-hover:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0px #000000 !important;
+  box-shadow: 7px 7px 0px #111111 !important;
 }
 
 .comic-btn-hover {
@@ -190,19 +228,74 @@ body {
 }
 .comic-btn-hover:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0px #000000 !important;
+  box-shadow: 5px 5px 0px #111111 !important;
 }
 .comic-btn-hover:active {
   transform: translate(1px, 1px);
-  box-shadow: 2px 2px 0px #000000 !important;
+  box-shadow: 2px 2px 0px #111111 !important;
 }
 
 .bg-stripes-comic {
   background: repeating-linear-gradient(
     45deg,
-    #000,
-    #000 6px,
-    #fff 6px,
-    #fff 12px
+    #111111,
+    #111111 6px,
+    #ffffff 6px,
+    #ffffff 12px
   );
+}
+
+/* Global Comic Forms */
+.comic-input {
+  background-color: #ffffff !important;
+  border: 3px solid #111111 !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.comic-input:focus {
+  border-color: #FF7A1A !important;
+  box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.45) !important;
+  background-color: #ffffff !important;
+}
+
+/* Global Comic Buttons */
+.comic-btn-primary {
+  background-color: #FF7A1A !important;
+  color: #ffffff !important;
+  border: 3px solid #111111 !important;
+  font-family: "Luckiest Guy", system-ui !important;
+  text-transform: uppercase !important;
+  box-shadow: 3px 3px 0px #111111 !important;
+  transition: all 0.15s ease-in-out !important;
+  cursor: pointer;
+}
+.comic-btn-primary:hover {
+  background-color: #FF5C3A !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 4.5px 4.5px 0px #111111 !important;
+}
+.comic-btn-primary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1.5px 1.5px 0px #111111 !important;
+}
+
+.comic-btn-secondary {
+  background-color: #4EC5F1 !important;
+  color: #111111 !important;
+  border: 3px solid #111111 !important;
+  font-family: "Luckiest Guy", system-ui !important;
+  text-transform: uppercase !important;
+  box-shadow: 3px 3px 0px #111111 !important;
+  transition: all 0.15s ease-in-out !important;
+  cursor: pointer;
+}
+.comic-btn-secondary:hover {
+  background-color: #42D4F5 !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 4.5px 4.5px 0px #111111 !important;
+}
+.comic-btn-secondary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1.5px 1.5px 0px #111111 !important;
 }

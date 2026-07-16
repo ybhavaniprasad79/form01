@@ -489,7 +489,7 @@ const Home = () => {
           <motion.button
             whileHover={{ scale: 1.01 }}
             onClick={handleGoHome}
-            className="w-full bg-white text-black font-luckiest border-3 border-black py-2.5 rounded-xl shadow-[3px_3px_0_#000] hover:bg-gray-50 transition-all text-base"
+            className="w-full py-2.5 rounded-xl text-base comic-btn-secondary"
           >
             ← BACK TO HOME
           </motion.button>
@@ -939,13 +939,12 @@ const Home = () => {
 
               </div>
 
-              {/* Back to Form Button */}
               <div className="flex justify-center mt-6">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   type="button"
                   onClick={() => setShowPayment(false)}
-                  className="px-5 py-2 text-sm font-bangers text-black bg-comic-yellow border-3 border-black shadow-[3px_3px_0_#000] flex items-center gap-1 rounded-xl"
+                  className="px-5 py-2 text-sm font-bangers flex items-center gap-1 rounded-xl comic-btn-secondary"
                 >
                   <ArrowLeft size={16} /> BACK TO FORM
                 </motion.button>
@@ -954,7 +953,6 @@ const Home = () => {
             </motion.div>
           )}
 
-          {/* Form Action buttons */}
           <div className="pt-2 flex justify-center">
             {!showPayment ? (
               <motion.button
@@ -962,10 +960,10 @@ const Home = () => {
                 type="submit"
                 onClick={handleProceedToPayment}
                 disabled={teamCount >= maxTeams || !registrationEnabled}
-                className={`w-full max-w-md font-luckiest text-lg text-black py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] transition-all flex items-center justify-center gap-2 ${
+                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${
                   teamCount >= maxTeams || !registrationEnabled
-                    ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                    : 'bg-comic-yellow hover:bg-[#ebd23a] cursor-pointer'
+                    ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
+                    : 'comic-btn-primary'
                 }`}
               >
                 {!registrationEnabled
@@ -980,10 +978,10 @@ const Home = () => {
                 type="button"
                 onClick={handleFinalSubmit}
                 disabled={loading || teamCount >= maxTeams || !registrationEnabled}
-                className={`w-full max-w-md font-luckiest text-lg text-white py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] transition-all flex items-center justify-center gap-2 ${
+                className={`w-full max-w-md py-3 px-6 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all flex items-center justify-center gap-2 ${
                   loading || teamCount >= maxTeams || !registrationEnabled
-                    ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                    : 'bg-comic-red hover:bg-[#ff271e] cursor-pointer'
+                    ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white font-luckiest text-lg'
+                    : 'comic-btn-primary'
                 }`}
               >
                 {!registrationEnabled

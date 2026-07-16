@@ -381,7 +381,7 @@ function Marks() {
                 whileHover={{ scale: 1.01 }}
                 type="submit"
                 disabled={authenticating}
-                className="w-full h-12 bg-comic-yellow hover:bg-[#ebd23a] text-black border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl text-lg flex items-center justify-center gap-2 comic-btn-primary"
               >
                 {authenticating ? "OPENING GATE..." : "OPEN MARKS ARENA"}
               </motion.button>
@@ -567,7 +567,7 @@ function Marks() {
               whileHover={{ scale: 1.01 }}
               type="button"
               onClick={handleLogout}
-              className="bg-comic-red hover:bg-[#eb2419] text-white border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer"
+              className="rounded-xl px-4 py-1.5 comic-btn-secondary"
             >
               LOGOUT
             </motion.button>
@@ -575,7 +575,7 @@ function Marks() {
               whileHover={{ scale: 1.01 }}
               type="button"
               onClick={() => setShowModal(true)}
-              className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
+              className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2.5px_2.5px_0_#111] hover:scale-102 transition-transform cursor-pointer flex items-center gap-1"
             >
               <Plus size={14} /> CREATE ROUND
             </motion.button>
@@ -664,10 +664,10 @@ function Marks() {
                       whileHover={{ scale: 1.01 }}
                       type="button"
                       onClick={() => setSelectedRound(round)}
-                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#000] cursor-pointer transition-all ${
+                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#111] cursor-pointer transition-all ${
                         isSelected
-                          ? 'bg-comic-red text-white'
-                          : 'bg-white text-black hover:bg-gray-50'
+                          ? 'bg-bright-orange text-white'
+                          : 'bg-white text-black hover:bg-light-gray'
                       }`}
                     >
                       {round.toUpperCase()}

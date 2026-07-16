@@ -272,11 +272,11 @@ const TeamPanel = () => {
                   )}
                 </AnimatePresence>
 
-                <motion.button
+                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 bg-comic-yellow hover:bg-[#ebd23a] text-black border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl text-lg flex items-center justify-center gap-2 comic-btn-primary"
                 >
                   {isLoading ? "VERIFYING ALLIANCE..." : "ACCESS DASHBOARD"}
                 </motion.button>
@@ -301,7 +301,7 @@ const TeamPanel = () => {
                 whileHover={{ scale: 1.02 }}
                 type="button"
                 onClick={handleLogout}
-                className="bg-comic-red hover:bg-red-600 text-white font-bangers text-base border-3 border-black rounded-xl px-4 py-1.5 shadow-[3px_3px_0_#000] cursor-pointer"
+                className="rounded-xl px-4 py-1.5 text-base comic-btn-secondary"
               >
                 LOGOUT
               </motion.button>
@@ -373,22 +373,22 @@ const TeamPanel = () => {
                     <span className="font-bangers text-[10px] text-gray-500 mb-3.5 block leading-none">VERIFICATION SCAN STATUS</span>
                     
                     {team?.payment?.status === "verified" ? (
-                      <div className="speech-bubble speech-bubble-bottom bg-comic-green text-black px-4 py-3 w-full text-center shadow-[3px_3px_0_#000] mb-2.5">
+                      <div className="speech-bubble speech-bubble-bottom bg-comic-green text-black px-4 py-3 w-full text-center shadow-[3px_3px_0_#111] mb-2.5">
                         <Check size={22} className="mx-auto mb-0.5 stroke-[3]" />
                         <h4 className="font-luckiest text-lg">VERIFIED!</h4>
                         <p className="font-bangers text-[10px] text-gray-800 tracking-wider mt-0.5">ACCESS TO PROBLEM PORTAL UNLOCKED!</p>
                       </div>
                     ) : team?.payment?.status === "rejected" ? (
-                      <div className="speech-bubble speech-bubble-bottom bg-comic-red text-white px-4 py-3 w-full text-center shadow-[3px_3px_0_#000] mb-2.5">
+                      <div className="speech-bubble speech-bubble-bottom bg-coral-orange text-white px-4 py-3 w-full text-center shadow-[3px_3px_0_#111] mb-2.5">
                         <AlertTriangle size={22} className="mx-auto mb-0.5 stroke-[2.5]" />
                         <h4 className="font-luckiest text-lg">REJECTED!</h4>
                         <p className="font-bangers text-[10px] text-red-200 tracking-wider mt-0.5">SUBMIT CORRECT RECEIPT ON REGISTRATION DESK.</p>
                       </div>
                     ) : (
-                      <div className="speech-bubble speech-bubble-bottom bg-comic-yellow text-black px-4 py-3 w-full text-center shadow-[3px_3px_0_#000] mb-2.5">
+                      <div className="speech-bubble speech-bubble-bottom bg-bright-orange text-white px-4 py-3 w-full text-center shadow-[3px_3px_0_#111] mb-2.5">
                         <Clock size={22} className="mx-auto mb-0.5 stroke-[2.5]" />
                         <h4 className="font-luckiest text-lg">PENDING...</h4>
-                        <p className="font-bangers text-[10px] text-gray-800 tracking-wider mt-0.5">REVENUE SENSORS SCANNING TRANSACTION PROOF.</p>
+                        <p className="font-bangers text-[10px] text-orange-100 tracking-wider mt-0.5">REVENUE SENSORS SCANNING TRANSACTION PROOF.</p>
                       </div>
                     )}
                   </div>

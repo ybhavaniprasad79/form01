@@ -530,7 +530,7 @@ const AddProblems = () => {
                   whileHover={{ scale: 1.01 }}
                   type="submit"
                   disabled={isVerifying}
-                  className="w-full h-12 bg-comic-yellow hover:bg-[#ebd23a] text-black border-3 border-black rounded-xl font-luckiest text-lg shadow-[3px_3px_0_#000] cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl text-lg flex items-center justify-center gap-2 comic-btn-primary"
                 >
                   {isVerifying ? "UNLOCKING PORTALS..." : "OPEN PROBLEM PANEL"}
                 </motion.button>

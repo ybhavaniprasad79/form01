@@ -145,6 +145,42 @@ const Animation = () => {
         </div>
       </div>
 
+      {/* Paper Airplane Sticker */}
+      <div className="absolute top-[30%] left-[12%] z-0 pointer-events-none opacity-25 lg:opacity-40 animate-float hidden md:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#111] rotate-[15deg]">
+          <svg className="w-12 h-12 text-sky-blue" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z" fill="currentColor" />
+            <path d="M22 2 11 13" />
+          </svg>
+          <div className="font-bangers text-[8px] tracking-wider text-black mt-1 text-center">LAUNCH</div>
+        </div>
+      </div>
+
+      {/* Pencil Doodle Sticker */}
+      <div className="absolute bottom-[28%] left-[16%] z-0 pointer-events-none opacity-25 lg:opacity-40 animate-twinkle hidden md:block">
+        <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-[2px_2px_0_#111] rotate-[-15deg]">
+          <svg className="w-12 h-12 text-accent-yellow" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" fill="currentColor" />
+          </svg>
+          <div className="font-bangers text-[8px] tracking-wider text-black mt-1 text-center">CREATE</div>
+        </div>
+      </div>
+
+      {/* Top-Left Cloud Decoration */}
+      <div className="absolute -top-6 -left-6 z-0 opacity-40 pointer-events-none hidden lg:block">
+        <svg className="w-48 h-48 text-white fill-white stroke-black" strokeWidth="3.5" viewBox="0 0 100 100">
+          <path d="M10 80 Q10 40 40 40 Q50 30 70 40 Q90 40 90 70 Q90 85 75 90 L10 90 Z" />
+        </svg>
+      </div>
+
+      {/* Bottom-Right Cloud Decoration */}
+      <div className="absolute -bottom-6 -right-6 z-0 opacity-40 pointer-events-none hidden lg:block">
+        <svg className="w-48 h-48 text-white fill-white stroke-black" strokeWidth="3.5" viewBox="0 0 100 100">
+          <path d="M10 80 Q10 40 40 40 Q50 30 70 40 Q90 40 90 70 Q90 85 75 90 L10 90 Z" transform="scale(-1, 1) translate(-100, 0)" />
+        </svg>
+      </div>
+
       {/* Hero Section */}
       <div className="flex-grow flex flex-col items-center justify-center px-4 py-8 relative z-10 overflow-hidden">
         
@@ -157,13 +193,13 @@ const Animation = () => {
         </div>
 
         {/* Clean Comic Card Wrapper */}
-        <div className="max-w-3xl w-full bg-white border-3 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0_#000] relative bg-halftone-dots-white my-4 text-center">
+        <div className="max-w-3xl w-full bg-white border-3 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0_#111] relative bg-halftone-dots-white my-4 text-center">
           
           {/* Issue headers */}
           <div className="absolute top-0 left-0 bg-comic-yellow border-b-3 border-r-3 border-black px-4 py-1 text-black font-bangers text-xs rounded-tl-2xl">
             ISSUE #01
           </div>
-          <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
+          <div className="absolute top-0 right-0 bg-coral-orange border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
             VOL. 2026
           </div>
 
@@ -171,11 +207,11 @@ const Animation = () => {
             
             {/* Clean Logo Panel */}
             <div className="relative mb-6 w-full max-w-lg">
-              <div className="bg-comic-yellow border-3 border-black px-6 py-4 rounded-2xl shadow-[4px_4px_0_#000]">
+              <div className="bg-comic-yellow border-3 border-black px-6 py-4 rounded-2xl shadow-[4px_4px_0_#111]">
                 <h1 className="font-luckiest text-4xl md:text-6xl text-black tracking-tight leading-none comic-title-shadow select-text">
                   CANVAS CRAFT
                 </h1>
-                <p className="font-bangers text-xl md:text-2xl text-comic-red tracking-widest mt-1.5 uppercase">
+                <p className="font-bangers text-xl md:text-2xl text-coral-orange tracking-widest mt-1.5 uppercase">
                   Hack. Create. Innovate.
                 </p>
               </div>
@@ -183,7 +219,7 @@ const Animation = () => {
 
             {/* Club Logo */}
             <motion.div 
-              className="relative w-36 h-36 bg-gray-50 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] flex items-center justify-center p-4 mb-6"
+              className="relative w-36 h-36 bg-gray-50 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] flex items-center justify-center p-4 mb-6"
               whileHover={{ scale: 1.03 }}
             >
               <img
@@ -195,12 +231,12 @@ const Animation = () => {
 
             {/* Event Status Speech Bubble */}
             <div className="mb-8 max-w-md w-full">
-              <div className="speech-bubble speech-bubble-bottom p-4 shadow-[3px_3px_0_#000]">
+              <div className="speech-bubble speech-bubble-bottom p-4 shadow-[3px_3px_0_#111]">
                 <p className="font-bangers text-xl text-black tracking-wider">
                   {!registrationEnabled ? (
                     <span className="text-comic-orange">⚡ POW! REGISTRATION CLOSED</span>
                   ) : teamCount >= maxTeams ? (
-                    <span className="text-comic-red">⚡ BAM! SLOTS ARE FULL</span>
+                    <span className="text-coral-orange">⚡ BAM! SLOTS ARE FULL</span>
                   ) : (
                     <span className="text-comic-green">🔥 BOOM! REGISTRATIONS ARE OPEN!</span>
                   )}
@@ -216,7 +252,7 @@ const Animation = () => {
             </div>
 
             {/* MISSION PROGRESS */}
-            <div className="w-full max-w-md bg-gray-50 border-3 border-black rounded-2xl p-4 mb-8 shadow-[3px_3px_0_#000]">
+            <div className="w-full max-w-md bg-gray-50 border-3 border-black rounded-2xl p-4 mb-8 shadow-[3px_3px_0_#111]">
               <h3 className="font-bangers text-lg text-black text-left mb-2.5 flex items-center gap-1.5">
                 🚀 MISSION PROGRESS
               </h3>
@@ -239,19 +275,19 @@ const Animation = () => {
                   <motion.div 
                     animate={{ y: [0, -2, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="bg-comic-yellow border-2 border-black p-1 rounded-full shadow-[1px_1px_0_#000] rotate-90 inline-block"
+                    className="bg-comic-yellow border-2 border-black p-1 rounded-full shadow-[1px_1px_0_#111] rotate-90 inline-block"
                   >
-                    <Rocket className="w-4.5 h-4.5 text-comic-red stroke-[2.5]" />
+                    <Rocket className="w-4.5 h-4.5 text-coral-orange stroke-[2.5]" />
                   </motion.div>
                 </div>
               </div>
 
               {/* Counts footer */}
               <div className="flex justify-between items-center mt-2.5 font-bangers text-xs md:text-sm">
-                <span className="bg-comic-purple text-white border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#000]">
+                <span className="bg-comic-purple text-white border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#111]">
                   {teamCount} TEAMS LOGGED
                 </span>
-                <span className="bg-comic-lime text-black border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#000]">
+                <span className="bg-comic-lime text-black border-2 border-black rounded-lg px-2 py-0.5 shadow-[1.5px_1.5px_0_#111]">
                   CAPACITY: {maxTeams} TEAMS
                 </span>
               </div>
@@ -264,10 +300,10 @@ const Animation = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleNavigate('/home')}
                 disabled={isClosed}
-                className={`font-luckiest text-xl text-white px-8 py-3.5 border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] transition-all ${
+                className={`font-luckiest text-xl text-white px-8 py-3.5 border-3 border-black rounded-2xl shadow-[4px_4px_0_#111] transition-all ${
                   isClosed 
                     ? 'bg-gray-400 cursor-not-allowed opacity-60' 
-                    : 'bg-comic-red hover:bg-[#ff251c] cursor-pointer'
+                    : 'bg-bright-orange hover:bg-coral-orange cursor-pointer'
                 }`}
               >
                 REGISTER NOW
