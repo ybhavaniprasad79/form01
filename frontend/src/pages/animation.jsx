@@ -220,7 +220,7 @@ const Animation = () => {
               whileHover={{ scale: 1.03 }}
             >
               <img
-                src="/club_logo.png"
+                src="/Club_logo.png"
                 alt="Club Logo"
                 className="w-full h-full object-contain"
               />

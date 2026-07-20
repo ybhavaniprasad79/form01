@@ -468,7 +468,7 @@ const Home = () => {
             </motion.a>
             <motion.a
               whileHover={{ scale: 1.01 }}
-              href="https://chat.whatsapp.com/DVBIy8LksOeEWQpeTWNqH6?mode=gi_t"
+              href="https://chat.whatsapp.com/LeCwjIg78Fs0SUll0AMWAx"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full bg-comic-cyan text-black border-3 border-black py-2.5 rounded-xl shadow-[3px_3px_0_#000] text-center transition-all"
@@ -813,7 +813,7 @@ const Home = () => {
                   <div className="relative bg-white border-3 border-black p-3 rounded-xl shadow-[3px_3px_0_#000] mb-3">
                     <div className="w-56 h-56 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border-2 border-black">
                       <img
-                        src="/payment.jpeg"
+                        src="/payment.png"
                         alt="Payment QR Code"
                         className="w-full h-full object-contain"
                         onError={(e) => {
@@ -849,7 +849,7 @@ const Home = () => {
                       </p>
                       <p>
                         <span className="font-bangers text-comic-red">UPI ID:</span>{' '}
-                        <span className="font-mono bg-white border border-gray-300 px-2 py-0.5 rounded text-[11px] select-all">nr6975060-1@oksbi</span>
+                        <span className="font-mono bg-white border border-gray-300 px-2 py-0.5 rounded text-[11px] select-all">reddynaresh559-1@oksbi</span>
                       </p>
                       <p>
                         <span className="font-bangers text-comic-red">FEE AMOUNT:</span>{' '}
