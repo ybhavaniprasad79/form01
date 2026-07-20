@@ -472,6 +472,72 @@ app.get("/api/admin/teams/selected", async (req, res) => {
   }
 });
 
+// Admin: reset selected problem statement for a team (password protected)
+app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    const { teamId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid teamId",
+      });
+    }
+
+    const team = await TeamRegistration.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    const problemId = team.selectedProblemStatement;
+    if (!problemId) {
+      return res.status(400).json({
+        success: false,
+        message: "Team has not selected any problem statement",
+      });
+    }
+
+    // Decrement slotsTaken on the problem statement
+    await ProblemStatement.findByIdAndUpdate(
+      problemId,
+      { $inc: { slotsTaken: -1 } }
+    );
+
+    // Also update slotsTaken to not go below 0 (just in case)
+    await ProblemStatement.updateOne(
+      { _id: problemId, slotsTaken: { $lt: 0 } },
+      { $set: { slotsTaken: 0 } }
+    );
+
+    // Clear the problem selection in the team document
+    team.selectedProblemStatement = null;
+    team.selectedProblemSelectedAt = null;
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Problem statement reset successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
 app.post("/api/verify-admin", (req, res) => {
   const { password } = req.body;
 
@@ -1258,7 +1324,6 @@ app.put("/api/register", async (req, res) => {
       teamLeader,
       teamMember1,
       teamMember2,
-      teamMember3,
       payment,
     } = req.body;
 
@@ -1267,8 +1332,7 @@ app.put("/api/register", async (req, res) => {
       !teamName ||
       !teamLeader ||
       !teamMember1 ||
-      !teamMember2 ||
-      !teamMember3
+      !teamMember2
     ) {
       return res.status(400).json({
         success: false,
@@ -1345,7 +1409,6 @@ app.put("/api/register", async (req, res) => {
       teamLeader.regNo,
       teamMember1.regNo,
       teamMember2.regNo,
-      teamMember3.regNo,
     ];
 
     // Check for duplicates within the same team
@@ -1380,7 +1443,6 @@ app.put("/api/register", async (req, res) => {
       teamLeader,
       teamMember1,
       teamMember2,
-      teamMember3,
       payment: {
         transactionId: payment.transactionId.trim(),
         receiptUrl: payment.receiptUrl,
@@ -1511,22 +1573,24 @@ app.post("/api/download-teams", async (req, res) => {
         "Registered On": "",
       });
 
-      // Add team member 3
-      excelData.push({
-        "S.No": "",
-        "Team Name": "",
-        "Member Type": "Team Member 3",
-        Name: team.teamMember3.name,
-        "Reg No": team.teamMember3.regNo,
-        "Phone No": team.teamMember3.phoneNo,
-        email: team.teamMember3.regNo + "@klu.ac.in",
-        Year: team.teamMember3.year,
-        Branch: team.teamMember3.branch,
-        Section: team.teamMember3.section,
-        "Transaction ID": "",
-        "Payment Status": "",
-        "Registered On": "",
-      });
+      // Add team member 3 if present (for legacy registrations)
+      if (team.teamMember3 && team.teamMember3.name) {
+        excelData.push({
+          "S.No": "",
+          "Team Name": "",
+          "Member Type": "Team Member 3",
+          Name: team.teamMember3.name,
+          "Reg No": team.teamMember3.regNo,
+          "Phone No": team.teamMember3.phoneNo,
+          email: team.teamMember3.regNo + "@klu.ac.in",
+          Year: team.teamMember3.year,
+          Branch: team.teamMember3.branch,
+          Section: team.teamMember3.section,
+          "Transaction ID": "",
+          "Payment Status": "",
+          "Registered On": "",
+        });
+      }
     });
 
     // Create workbook and worksheet

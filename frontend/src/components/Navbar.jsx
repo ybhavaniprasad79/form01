@@ -27,7 +27,7 @@ const Navbar = () => {
                 CAMPUS CREATIVE
               </span>
               <span className="font-bangers text-[9px] text-comic-red tracking-widest block mt-0.5 leading-none">
-                HACK • CREATE • INNOVATE
+                Where Ideas Comes Alive
               </span>
             </div>
             <span className="text-lg leading-none animate-pulse">✨</span>

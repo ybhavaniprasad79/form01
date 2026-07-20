@@ -66,7 +66,6 @@ const teamRegistrationSchema = new mongoose.Schema({
   },
   teamMember3: {
     type: memberSchema,
-    required: [true, "Team member 3 information is required"],
   },
   payment: {
     transactionId: {

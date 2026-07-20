@@ -31,14 +31,6 @@ const Home = () => {
       year: '',
       branch: '',
       section: ''
-    },
-    teamMember3: {
-      name: '',
-      regNo: '',
-      phoneNo: '',
-      year: '',
-      branch: '',
-      section: ''
     }
   };
 
@@ -239,8 +231,7 @@ const Home = () => {
     const members = [
       { data: formData.teamLeader, name: 'Team Leader' },
       { data: formData.teamMember1, name: 'Team Member 1' },
-      { data: formData.teamMember2, name: 'Team Member 2' },
-      { data: formData.teamMember3, name: 'Team Member 3' }
+      { data: formData.teamMember2, name: 'Team Member 2' }
     ];
 
     for (const member of members) {
@@ -797,10 +788,9 @@ const Home = () => {
                 <div className="absolute -top-1 left-6 z-10 bg-comic-purple border-3 border-black text-white font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
                   TEAM MEMBERS
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
                   {renderMemberForm('teamMember1', '👤 ALLY 1', 'MEMBER 1')}
                   {renderMemberForm('teamMember2', '👤 ALLY 2', 'MEMBER 2')}
-                  {renderMemberForm('teamMember3', '👤 ALLY 3', 'MEMBER 3')}
                 </div>
               </div>
 
@@ -863,7 +853,7 @@ const Home = () => {
                       </p>
                       <p>
                         <span className="font-bangers text-comic-red">FEE AMOUNT:</span>{' '}
-                        <span className="font-luckiest text-lg">₹400</span>
+                        <span className="font-luckiest text-lg">₹450</span>
                       </p>
                     </div>
                   </div>
@@ -932,7 +922,7 @@ const Home = () => {
                     <div className="font-semibold space-y-0.5 text-gray-700 font-comic">
                       <p><span className="font-bangers text-black">ALLIANCE:</span> {formData.teamName}</p>
                       <p><span className="font-bangers text-black">LEADER:</span> {formData.teamLeader.name}</p>
-                      <p><span className="font-bangers text-black">ALLIES:</span> {[formData.teamMember1.name, formData.teamMember2.name, formData.teamMember3.name].filter(Boolean).join(', ')}</p>
+                      <p><span className="font-bangers text-black">ALLIES:</span> {[formData.teamMember1.name, formData.teamMember2.name].filter(Boolean).join(', ')}</p>
                     </div>
                   </div>
                 </div>

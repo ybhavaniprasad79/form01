@@ -393,6 +393,32 @@ const AddProblems = () => {
     }
   };
 
+  const handleResetProblem = async (teamId, teamName) => {
+    const ok = window.confirm(`Reset the selected problem statement for team "${teamName}"? This will free up one slot for that problem statement.`);
+    if (!ok) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(teamId)}/reset-problem`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        },
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to reset problem statement.");
+        return;
+      }
+
+      alert("Problem statement reset successfully!");
+      await loadSelectedTeams();
+    } catch {
+      alert("Unable to connect to the server.");
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaveError("");
@@ -818,23 +844,33 @@ const AddProblems = () => {
                                   : "-"}
                               </td>
                               <td className="px-3 py-3 text-center font-bangers text-[10px]">
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  type="button"
-                                  onClick={() => {
-                                    const problem = t?.selectedProblemStatement;
-                                    if (!problem || typeof problem !== "object") return;
-                                    setStudentProblemPopup({
-                                      teamName: t?.teamName || "",
-                                      leaderName: t?.teamLeader?.name || "",
-                                      selectedAt: t?.selectedProblemSelectedAt || null,
-                                      problem,
-                                    });
-                                  }}
-                                  className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2.5 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
-                                >
-                                  <Eye size={10} /> PROBLEM STATEMENT
-                                </motion.button>
+                                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
+                                    onClick={() => {
+                                      const problem = t?.selectedProblemStatement;
+                                      if (!problem || typeof problem !== "object") return;
+                                      setStudentProblemPopup({
+                                        teamName: t?.teamName || "",
+                                        leaderName: t?.teamLeader?.name || "",
+                                        selectedAt: t?.selectedProblemSelectedAt || null,
+                                        problem,
+                                      });
+                                    }}
+                                    className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                  >
+                                    <Eye size={10} /> VIEW PROBLEM
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
+                                    onClick={() => handleResetProblem(t._id, t.teamName)}
+                                    className="bg-comic-red hover:bg-red-600 text-white border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                  >
+                                    <RefreshCw size={10} /> RESET
+                                  </motion.button>
+                                </div>
                               </td>
                             </tr>
                           );
