@@ -466,12 +466,12 @@ const AddProblems = () => {
     }
   };
 
-  const getProblemDifficulty = (id, title) => {
-    const val = (title.length + id.charCodeAt(id.length - 1)) % 3;
-    if (val === 0) return { label: "HARD", color: "bg-comic-red text-white" };
-    if (val === 1) return { label: "MEDIUM", color: "bg-comic-orange text-black" };
-    return { label: "EASY", color: "bg-comic-lime text-black" };
-  };
+  // const getProblemDifficulty = (id, title) => {
+  //   const val = (title.length + id.charCodeAt(id.length - 1)) % 3;
+  //   if (val === 0) return { label: "HARD", color: "bg-comic-red text-white" };
+  //   if (val === 1) return { label: "MEDIUM", color: "bg-comic-orange text-black" };
+  //   return { label: "EASY", color: "bg-comic-lime text-black" };
+  // };
 
   return (
     <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
@@ -704,7 +704,7 @@ const AddProblems = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {problems.length ? (
                       problems.map((p) => {
-                        const difficulty = getProblemDifficulty(p._id, p.title);
+                        // const difficulty = getProblemDifficulty(p._id, p.title);
                         const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
                         const slotsLeft = problemLimit - (p.slotsTaken || 0);
 
@@ -720,9 +720,9 @@ const AddProblems = () => {
 
                             <div className="space-y-2 text-left">
                               <div className="flex justify-between items-center mb-1">
-                                <span className={`font-bangers text-[10px] px-2 py-0.25 border border-black rounded shadow-[1px_1px_0_#000] ${difficulty.color}`}>
+                                {/* <span className={`font-bangers text-[10px] px-2 py-0.25 border border-black rounded shadow-[1px_1px_0_#000] ${difficulty.color}`}>
                                   {difficulty.label}
-                                </span>
+                                </span> */}
                                 <span className="font-bangers text-[10px] bg-comic-cyan border border-black text-black px-2 py-0.25 rounded shadow-[1px_1px_0_#000]">
                                   SLOTS LEFT: {slotsLeft} / {problemLimit}
                                 </span>
