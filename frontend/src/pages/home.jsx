@@ -789,8 +789,8 @@ const Home = () => {
                   TEAM MEMBERS
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                  {renderMemberForm('teamMember1', '👤 ALLY 1', 'MEMBER 1')}
-                  {renderMemberForm('teamMember2', '👤 ALLY 2', 'MEMBER 2')}
+                  {renderMemberForm('teamMember1', '👤 Comrade 1', 'MEMBER 1')}
+                  {renderMemberForm('teamMember2', '👤 Comrade 2', 'MEMBER 2')}
                 </div>
               </div>
 
@@ -831,8 +831,8 @@ const Home = () => {
                     <p className="text-black text-sm font-bangers tracking-wider">SCAN TO TELEPORT FEE</p>
                     <motion.a
                       whileHover={{ scale: 1.02 }}
-                      href="/payment.jpeg"
-                      download="payment-qr-code.jpeg"
+                      href="/payment.png"
+                      download="payment.png"
                       className="flex items-center gap-1 px-2.5 py-1 text-xs font-bangers text-white bg-comic-blue border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000]"
                     >
                       DOWNLOAD QR
@@ -922,7 +922,7 @@ const Home = () => {
                     <div className="font-semibold space-y-0.5 text-gray-700 font-comic">
                       <p><span className="font-bangers text-black">ALLIANCE:</span> {formData.teamName}</p>
                       <p><span className="font-bangers text-black">LEADER:</span> {formData.teamLeader.name}</p>
-                      <p><span className="font-bangers text-black">ALLIES:</span> {[formData.teamMember1.name, formData.teamMember2.name].filter(Boolean).join(', ')}</p>
+                      <p><span className="font-bangers text-black">Comrades:</span> {[formData.teamMember1.name, formData.teamMember2.name].filter(Boolean).join(', ')}</p>
                     </div>
                   </div>
                 </div>
