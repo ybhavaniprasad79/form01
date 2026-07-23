@@ -108,6 +108,7 @@ const AddProblems = () => {
 
   const [teamSearch, setTeamSearch] = useState("");
   const [studentProblemPopup, setStudentProblemPopup] = useState(null);
+  const [manageSubmissionsPopup, setManageSubmissionsPopup] = useState(null);
 
   const filteredTeams = useMemo(() => {
     const q = teamSearch.trim().toLowerCase();
@@ -414,6 +415,88 @@ const AddProblems = () => {
 
       alert("Problem statement reset successfully!");
       await loadSelectedTeams();
+    } catch {
+      alert("Unable to connect to the server.");
+    }
+  };
+
+  const handleAddFormSlot = async () => {
+    if (!manageSubmissionsPopup) return;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/add-form`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to add form slot.");
+        return;
+      }
+      setManageSubmissionsPopup(data.data);
+      await loadSelectedTeams();
+    } catch {
+      alert("Unable to connect to the server.");
+    }
+  };
+
+
+  const handleResetForm = async (idx) => {
+    if (!manageSubmissionsPopup) return;
+    const confirmReset = window.confirm("Reset (unlock) this form submission?");
+    if (!confirmReset) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/reset-form/${idx}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to reset form.");
+        return;
+      }
+      setManageSubmissionsPopup(data.data);
+      await loadSelectedTeams();
+      alert("Form unlocked successfully!");
+    } catch {
+      alert("Unable to connect to the server.");
+    }
+  };
+
+  const handleRemoveForm = async (idx) => {
+    if (!manageSubmissionsPopup) return;
+    if ((manageSubmissionsPopup.submissions?.length || 0) <= 1) {
+      alert("A team must have at least one submission form.");
+      return;
+    }
+    const confirmRemove = window.confirm(`Remove form #${idx + 1}? This action cannot be undone.`);
+    if (!confirmRemove) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/remove-form/${idx}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to remove form.");
+        return;
+      }
+      setManageSubmissionsPopup(data.data);
+      await loadSelectedTeams();
+      alert("Form removed successfully!");
     } catch {
       alert("Unable to connect to the server.");
     }
@@ -870,6 +953,14 @@ const AddProblems = () => {
                                   >
                                     <RefreshCw size={10} /> RESET
                                   </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    type="button"
+                                    onClick={() => setManageSubmissionsPopup(t)}
+                                    className="bg-comic-lime hover:bg-green-500 text-black border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                  >
+                                    <FileText size={10} /> SUBMISSIONS ({t.submissions?.length || 0})
+                                  </motion.button>
                                 </div>
                               </td>
                             </tr>
@@ -1202,6 +1293,148 @@ const AddProblems = () => {
                   </div>
                 </form>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. Manage Submissions Modal */}
+      <AnimatePresence>
+        {manageSubmissionsPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.75 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setManageSubmissionsPopup(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-white border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0_#000] bg-halftone-dots-white max-h-[85vh] overflow-y-auto text-left"
+            >
+              <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3 mb-4">
+                <div>
+                  <span className="font-bangers text-[10px] text-comic-red uppercase leading-none block mb-0.5">
+                    ALLIANCE SUBMISSION MANAGER
+                  </span>
+                  <h3 className="text-xl font-luckiest tracking-wide text-black leading-tight">
+                    TEAM: {manageSubmissionsPopup.teamName}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManageSubmissionsPopup(null)}
+                  className="bg-comic-red text-white border-2 border-black font-bangers text-base rounded w-7 h-7 flex items-center justify-center shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-semibold text-xs text-gray-700">Manage links, notes, status, or add extra submissions.</span>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  type="button"
+                  onClick={handleAddFormSlot}
+                  className="bg-comic-lime text-black border-2 border-black rounded px-3 py-1 font-bangers text-xs shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                >
+                  <Plus size={10} /> ADD ANOTHER FORM
+                </motion.button>
+              </div>
+
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                {(!manageSubmissionsPopup.submissions || manageSubmissionsPopup.submissions.length === 0) ? (
+                  <div className="border-2 border-dashed border-black rounded-lg p-5 text-center bg-gray-50">
+                    <span className="font-luckiest text-sm text-black">NO SUBMISSION FORMS YET</span>
+                    <p className="text-[10px] font-semibold text-gray-500 mt-1">Click the "ADD ANOTHER FORM" button above to initialize a submission form for this team.</p>
+                  </div>
+                ) : (
+                  manageSubmissionsPopup.submissions.map((sub, idx) => (
+                    <div key={idx} className="border-2 border-black p-4 rounded-xl shadow-[2px_2px_0_#000] bg-white">
+                      <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-1">
+                        <span className="font-luckiest text-sm text-black">FORM #{idx + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] border px-2 py-0.5 rounded font-bangers tracking-wider ${sub.isSubmitted ? 'bg-comic-green/20 border-comic-green text-green-700' : 'bg-comic-yellow/20 border-comic-yellow text-amber-700'}`}>
+                            {sub.isSubmitted ? 'SUBMITTED' : 'PENDING'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-left">
+                        <div>
+                          <label className="block text-[10px] font-bangers tracking-wider text-black mb-1">
+                            CANVA / FIGMA LINK
+                            {sub.canvaFigmaLink && (
+                              <a
+                                href={sub.canvaFigmaLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-2 text-comic-blue hover:underline font-comic"
+                              >
+                                [OPEN LINK ↗]
+                              </a>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            className="w-full h-8 comic-input bg-gray-100 border-2 border-black rounded-md px-2.5 font-semibold text-xs text-gray-600 cursor-default"
+                            value={sub.canvaFigmaLink || "No link submitted yet."}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bangers tracking-wider text-black mb-1">SUBMISSION NOTE / REMARKS</label>
+                          <textarea
+                            rows={2}
+                            readOnly
+                            className="w-full rounded-md border-2 border-black bg-gray-100 px-2.5 py-1.5 font-semibold text-xs text-gray-600 cursor-default"
+                            value={sub.note || "No notes added."}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-end pt-2 border-t border-gray-100 gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.01 }}
+                            type="button"
+                            onClick={() => handleResetForm(idx)}
+                            className="bg-comic-red hover:bg-red-600 text-white border-2 border-black rounded px-2.5 py-1 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                          >
+                            RESET (UNLOCK)
+                          </motion.button>
+                          <motion.button
+                            whileHover={manageSubmissionsPopup.submissions.length > 1 ? { scale: 1.01 } : {}}
+                            type="button"
+                            disabled={manageSubmissionsPopup.submissions.length <= 1}
+                            onClick={() => handleRemoveForm(idx)}
+                            className={`border-2 border-black rounded px-2.5 py-1 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
+                              manageSubmissionsPopup.submissions.length <= 1
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60 shadow-none border-gray-300"
+                                : "bg-coral-orange hover:bg-red-700 text-white"
+                            }`}
+                          >
+                            REMOVE
+                          </motion.button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-5 flex justify-end font-bangers text-base border-t-2 border-black pt-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  type="button"
+                  onClick={() => setManageSubmissionsPopup(null)}
+                  className="bg-white border-3 border-black rounded-lg px-4.5 py-1.5 shadow-[2px_2px_0_#000] hover:bg-gray-50 text-black cursor-pointer"
+                >
+                  CLOSE
+                </motion.button>
+              </div>
             </motion.div>
           </div>
         )}

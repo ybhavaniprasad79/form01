@@ -24,6 +24,83 @@ const TeamPanel = () => {
   const [problemsError, setProblemsError] = useState("");
   const [zoomedImage, setZoomedImage] = useState(null);
 
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
+  const [submissionSuccess, setSubmissionSuccess] = useState("");
+
+  const handleSubmissionChange = (idx, field, value) => {
+    setTeam((prev) => {
+      if (!prev) return prev;
+      const nextSubmissions = prev.submissions ? [...prev.submissions] : [];
+      while (nextSubmissions.length <= idx) {
+        nextSubmissions.push({ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null });
+      }
+      nextSubmissions[idx] = { ...nextSubmissions[idx], [field]: value };
+      return { ...prev, submissions: nextSubmissions };
+    });
+  };
+
+  const handleSubmitSubmission = async (idx) => {
+    setSubmissionError("");
+    setSubmissionSuccess("");
+
+    const subs = team?.submissions || [];
+    const sub = subs[idx] || { canvaFigmaLink: "", note: "" };
+
+    const link = (sub.canvaFigmaLink || "").trim();
+    const note = (sub.note || "").trim();
+
+    if (!link) {
+      setSubmissionError("Canva/Figma link is required.");
+      return;
+    }
+
+    const confirmSubmit = window.confirm(
+      "Are you sure you want to submit? Once submitted, you cannot update or change your submission."
+    );
+    if (!confirmSubmit) return;
+
+    setIsSubmittingForm(true);
+    try {
+      const teamName = String(team?.teamName || "").trim();
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/team/${encodeURIComponent(teamName)}/submit-form/${idx}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            canvaFigmaLink: link,
+            note: note,
+          }),
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        setSubmissionError(data?.message || "Failed to submit project.");
+        return;
+      }
+
+      setSubmissionSuccess(`Form #${idx + 1} submitted successfully!`);
+      setTeam(data.data);
+    } catch {
+      setSubmissionError("Unable to connect to the server.");
+    } finally {
+      setIsSubmittingForm(false);
+    }
+  };
+
+  const teamSubmissions = useMemo(() => {
+    if (team?.submissions && team.submissions.length > 0) {
+      return team.submissions;
+    }
+    return [{ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null }];
+  }, [team?.submissions]);
+
+
   useEffect(() => {
     setAnimateIn(false);
     const id = requestAnimationFrame(() => setAnimateIn(true));
@@ -563,51 +640,134 @@ const TeamPanel = () => {
 
                   {/* Selected topic panel */}
                   {selectedProblem ? (
-                    <motion.div
-                      layout
-                      onClick={() => setIsSelectedExpanded((v) => !v)}
-                      className="cursor-pointer border-3 border-black rounded-xl bg-comic-yellow/5 p-5 shadow-[2px_2px_0_#000] border-dashed hover:bg-comic-yellow/10 transition-colors relative"
-                    >
-                      <div className="absolute -top-3 right-4 bg-comic-red border border-black text-white font-bangers text-[10px] px-2 py-0.5 rounded rotate-3">
-                        LOCKED TARGET!
-                      </div>
-
-                      <div className="space-y-3 text-center">
-                        <div className="font-luckiest text-xl text-black">
-                          {selectedProblem.title}
+                    <div className="space-y-6">
+                      <motion.div
+                        layout
+                        onClick={() => setIsSelectedExpanded((v) => !v)}
+                        className="cursor-pointer border-3 border-black rounded-xl bg-comic-yellow/5 p-5 shadow-[2px_2px_0_#000] border-dashed hover:bg-comic-yellow/10 transition-colors relative"
+                      >
+                        <div className="absolute -top-3 right-4 bg-comic-red border border-black text-white font-bangers text-[10px] px-2 py-0.5 rounded rotate-3">
+                          LOCKED TARGET!
                         </div>
-                        {selectedProblem.themePng && (
-                          <div
-                            onClick={(e) => { e.stopPropagation(); setZoomedImage(selectedProblem.themePng); }}
-                            className="mx-auto w-32 h-32 border-2 border-black rounded-full overflow-hidden bg-gray-100 shadow-[2px_2px_0_#000] my-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
-                          >
-                            <img src={selectedProblem.themePng} alt={selectedProblem.title} className="w-full h-full object-cover animate-none" />
+
+                        <div className="space-y-3 text-center">
+                          <div className="font-luckiest text-xl text-black">
+                            {selectedProblem.title}
                           </div>
-                        )}
-                        <p className="mx-auto max-w-2xl text-xs font-semibold text-gray-800 leading-relaxed font-comic">
-                          {isSelectedExpanded
-                            ? selectedProblem.fullDescription || selectedProblem.shortDescription
-                            : selectedProblem.shortDescription}
-                        </p>
-                        <div className="mx-auto inline-block font-bangers text-xs text-comic-blue underline hover:text-blue-700 transition">
-                          {isSelectedExpanded ? "CLICK TO SHOW SUMMARY" : "CLICK TO EXPAND PROBLEM STATEMENT"}
+                          {selectedProblem.themePng && (
+                            <div
+                              onClick={(e) => { e.stopPropagation(); setZoomedImage(selectedProblem.themePng); }}
+                              className="mx-auto w-32 h-32 border-2 border-black rounded-full overflow-hidden bg-gray-100 shadow-[2px_2px_0_#000] my-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                            >
+                              <img src={selectedProblem.themePng} alt={selectedProblem.title} className="w-full h-full object-cover animate-none" />
+                            </div>
+                          )}
+                          <p className="mx-auto max-w-2xl text-xs font-semibold text-gray-800 leading-relaxed font-comic">
+                            {isSelectedExpanded
+                              ? selectedProblem.fullDescription || selectedProblem.shortDescription
+                              : selectedProblem.shortDescription}
+                          </p>
+                          <div className="mx-auto inline-block font-bangers text-xs text-comic-blue underline hover:text-blue-700 transition">
+                            {isSelectedExpanded ? "CLICK TO SHOW SUMMARY" : "CLICK TO EXPAND PROBLEM STATEMENT"}
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex justify-center">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDetailsProblemId(selectedProblem.id);
+                            }}
+                            className="bg-comic-blue hover:bg-blue-600 text-white font-bangers text-sm border-2 border-black rounded-lg px-4 py-1 shadow-[2px_2px_0_#000]"
+                          >
+                            VIEW PROBLEM STATEMENT DETAILS
+                          </motion.button>
+                        </div>
+                      </motion.div>
+
+                      {/* Project Submissions Form Card */}
+                      <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left mt-6">
+                        <div className="absolute -top-4 left-6 bg-comic-lime border-3 border-black text-black font-luckiest text-sm px-4 py-0.5 rounded-lg shadow-[2px_2px_0_#000]">
+                          PROJECT SUBMISSIONS
+                        </div>
+
+                        <div className="mt-4 space-y-5">
+                          {submissionError && (
+                            <div className="bg-comic-red border-2 border-black rounded-lg p-2.5 text-white font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
+                              💥 OOPS! {submissionError}
+                            </div>
+                          )}
+                          {submissionSuccess && (
+                            <div className="bg-comic-green border-2 border-black rounded-lg p-2.5 text-black font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
+                              🎉 {submissionSuccess}
+                            </div>
+                          )}
+
+                          {teamSubmissions.map((sub, idx) => (
+                            <div key={idx} className="border-2 border-black p-4 rounded-xl shadow-[2px_2px_0_#000] bg-white relative">
+                              <h4 className="font-luckiest text-sm text-black mb-3 pb-1 border-b-2 border-black flex justify-between items-center">
+                                <span>SUBMISSION FORM {teamSubmissions.length > 1 ? `#${idx + 1}` : ""}</span>
+                                {sub.isSubmitted ? (
+                                  <span className="text-[10px] bg-comic-green/20 border border-comic-green text-green-700 px-2 py-0.5 rounded font-bangers tracking-wider">
+                                    LOCKED & SUBMITTED
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-comic-yellow/20 border border-comic-yellow text-amber-700 px-2 py-0.5 rounded font-bangers tracking-wider">
+                                    DRAFT / PENDING
+                                  </span>
+                                )}
+                              </h4>
+
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                                    CANVA / FIGMA LINK
+                                  </label>
+                                  <input
+                                    type="text"
+                                    disabled={sub.isSubmitted}
+                                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 font-semibold text-xs disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                    value={sub.canvaFigmaLink || ""}
+                                    placeholder="e.g., https://figma.com/... or https://canva.com/..."
+                                    onChange={(e) => handleSubmissionChange(idx, "canvaFigmaLink", e.target.value)}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">
+                                    SUBMISSION NOTE / REMARKS
+                                  </label>
+                                  <textarea
+                                    rows={3}
+                                    disabled={sub.isSubmitted}
+                                    className="w-full rounded-lg border-3 border-black bg-gray-50 px-3 py-2 font-semibold text-xs disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                    value={sub.note || ""}
+                                    placeholder="Add any comments or instructions for review..."
+                                    onChange={(e) => handleSubmissionChange(idx, "note", e.target.value)}
+                                  />
+                                </div>
+
+                                {!sub.isSubmitted && (
+                                  <div className="pt-2 text-right">
+                                    <motion.button
+                                      whileHover={{ scale: 1.01 }}
+                                      type="button"
+                                      disabled={isSubmittingForm}
+                                      onClick={() => handleSubmitSubmission(idx)}
+                                      className="bg-comic-lime hover:bg-green-600 text-black border-2 border-black font-bangers py-1.5 px-4 rounded-lg text-sm shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                                    >
+                                      {isSubmittingForm ? "SUBMITTING..." : "SUBMIT PROJECT"}
+                                    </motion.button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-
-                      <div className="mt-5 flex justify-center">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDetailsProblemId(selectedProblem.id);
-                          }}
-                          className="bg-comic-blue hover:bg-blue-600 text-white font-bangers text-sm border-2 border-black rounded-lg px-4 py-1 shadow-[2px_2px_0_#000]"
-                        >
-                          VIEW PROBLEM STATEMENT DETAILS
-                        </motion.button>
-                      </div>
-                    </motion.div>
+                    </div>
                   ) : problems.length ? (
                     /* Simple List of problem statements as trading cards */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1">

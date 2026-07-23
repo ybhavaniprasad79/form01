@@ -461,6 +461,7 @@ app.get("/api/admin/teams/selected", async (req, res) => {
         selectedProblemStatement: 1,
         selectedProblemSelectedAt: 1,
         submittedAt: 1,
+        submissions: 1,
       },
     )
       .populate({
@@ -534,11 +535,200 @@ app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
     // Clear the problem selection in the team document
     team.selectedProblemStatement = null;
     team.selectedProblemSelectedAt = null;
+    team.submissions = [];
     await team.save();
 
     return res.status(200).json({
       success: true,
       message: "Problem statement reset successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+
+// Admin: reset (unlock) team project submission form (password protected)
+app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const { teamId, formIndex } = req.params;
+    const index = parseInt(formIndex, 10);
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (isNaN(index) || index < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid form index",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid teamId",
+      });
+    }
+
+    const team = await TeamRegistration.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    if (!team.submissions || index >= team.submissions.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Form index out of bounds",
+      });
+    }
+
+    const submission = team.submissions[index];
+    submission.isSubmitted = false;
+    submission.submittedAt = null;
+
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Form reset successfully (unlocked)",
+      data: team,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: add another submission form for team (password protected)
+app.post("/api/admin/team/:teamId/add-form", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const { teamId } = req.params;
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid teamId",
+      });
+    }
+
+    const team = await TeamRegistration.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    if (!team.submissions) {
+      team.submissions = [];
+    }
+
+    team.submissions.push({
+      canvaFigmaLink: "",
+      note: "",
+      isSubmitted: false,
+      submittedAt: null,
+    });
+
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Form added successfully",
+      data: team,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: remove team project submission form (password protected)
+app.post("/api/admin/team/:teamId/remove-form/:formIndex", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const { teamId, formIndex } = req.params;
+    const index = parseInt(formIndex, 10);
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (isNaN(index) || index < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid form index",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid teamId",
+      });
+    }
+
+    const team = await TeamRegistration.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    if (!team.submissions || index >= team.submissions.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Form index out of bounds",
+      });
+    }
+
+    if (team.submissions.length <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: "A team must have at least one submission form",
+      });
+    }
+
+    // Remove the form at the specified index
+    team.submissions.splice(index, 1);
+
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Form removed successfully",
+      data: team,
     });
   } catch (error) {
     return res.status(500).json({
@@ -1130,6 +1320,7 @@ app.get("/api/team/:teamKey", async (req, res) => {
         selectedProblemSelectedAt: 1,
         submittedAt: 1,
         "payment.status": 1,
+        submissions: 1,
       },
     ).lean();
 
@@ -1273,6 +1464,7 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
         $set: {
           selectedProblemStatement: normalizedProblemId,
           selectedProblemSelectedAt: new Date(),
+          submissions: [{ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null }],
         },
       },
       {
@@ -1281,6 +1473,7 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
           teamName: 1,
           selectedProblemStatement: 1,
           selectedProblemSelectedAt: 1,
+          submissions: 1,
         },
       },
     ).lean();
@@ -1320,6 +1513,90 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
       success: true,
       message: "Problem statement selected",
       data: updated,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Public: submit a Canva/Figma link and note for a team (formIndex 0-indexed)
+app.post("/api/team/:teamKey/submit-form/:formIndex", async (req, res) => {
+  try {
+    const { teamKey, formIndex } = req.params;
+    const { canvaFigmaLink, note } = req.body || {};
+    const index = parseInt(formIndex, 10);
+
+    const normalizedTeamKey = (teamKey || "").trim();
+    if (!normalizedTeamKey) {
+      return res.status(400).json({
+        success: false,
+        message: "Team Key is required",
+      });
+    }
+
+    if (isNaN(index) || index < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid form index",
+      });
+    }
+
+    const team = await TeamRegistration.findOne({
+      teamName: { $regex: new RegExp(`^${escapeRegex(normalizedTeamKey)}$`, "i") },
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    if (!team.selectedProblemStatement) {
+      return res.status(400).json({
+        success: false,
+        message: "No problem statement selected yet",
+      });
+    }
+
+    // Initialize submissions if empty
+    if (!team.submissions || team.submissions.length === 0) {
+      team.submissions = [{ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null }];
+    }
+
+    if (index >= team.submissions.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Form index out of bounds",
+      });
+    }
+
+    const submission = team.submissions[index];
+    if (submission.isSubmitted) {
+      return res.status(400).json({
+        success: false,
+        message: "Form is already submitted and locked against changes",
+      });
+    }
+
+    submission.canvaFigmaLink = (canvaFigmaLink || "").trim();
+    submission.note = (note || "").trim();
+    submission.isSubmitted = true;
+    submission.submittedAt = new Date();
+
+    // Update global submittedAt of the team to show activity
+    team.submittedAt = new Date();
+
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Form submitted successfully",
+      data: team,
     });
   } catch (error) {
     return res.status(500).json({

@@ -101,6 +101,17 @@ const teamRegistrationSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  submissions: {
+    type: [
+      {
+        canvaFigmaLink: { type: String, default: "" },
+        note: { type: String, default: "" },
+        isSubmitted: { type: Boolean, default: false },
+        submittedAt: { type: Date, default: null },
+      },
+    ],
+    default: [],
+  },
   submittedAt: {
     type: Date,
     default: Date.now,
