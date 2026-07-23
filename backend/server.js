@@ -198,8 +198,14 @@ app.get("/api/problems", async (req, res) => {
 // Admin: create a new problem statement (password protected)
 app.post("/api/problems", async (req, res) => {
   try {
-    const { password, title, themePng, shortDescription, fullDescription, limit } =
-      req.body || {};
+    const {
+      password,
+      title,
+      themePng,
+      shortDescription,
+      fullDescription,
+      limit,
+    } = req.body || {};
 
     if (password !== process.env.adminPassword) {
       return res.status(401).json({
@@ -271,8 +277,14 @@ app.post("/api/problems", async (req, res) => {
 app.put("/api/problems/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { password, title, themePng, shortDescription, fullDescription, limit } =
-      req.body || {};
+    const {
+      password,
+      title,
+      themePng,
+      shortDescription,
+      fullDescription,
+      limit,
+    } = req.body || {};
 
     if (password !== process.env.adminPassword) {
       return res.status(401).json({
@@ -509,15 +521,14 @@ app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
     }
 
     // Decrement slotsTaken on the problem statement
-    await ProblemStatement.findByIdAndUpdate(
-      problemId,
-      { $inc: { slotsTaken: -1 } }
-    );
+    await ProblemStatement.findByIdAndUpdate(problemId, {
+      $inc: { slotsTaken: -1 },
+    });
 
     // Also update slotsTaken to not go below 0 (just in case)
     await ProblemStatement.updateOne(
       { _id: problemId, slotsTaken: { $lt: 0 } },
-      { $set: { slotsTaken: 0 } }
+      { $set: { slotsTaken: 0 } },
     );
 
     // Clear the problem selection in the team document
@@ -1178,7 +1189,10 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
         message: "Problem statement not found",
       });
     }
-    const problemLimit = typeof problem.limit === "number" && problem.limit > 0 ? problem.limit : MAX_TEAMS_PER_PROBLEM;
+    const problemLimit =
+      typeof problem.limit === "number" && problem.limit > 0
+        ? problem.limit
+        : MAX_TEAMS_PER_PROBLEM;
 
     const teamNameQuery = {
       teamName: {
@@ -1319,21 +1333,11 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
 // PUT endpoint for team registration form submission
 app.put("/api/register", async (req, res) => {
   try {
-    const {
-      teamName,
-      teamLeader,
-      teamMember1,
-      teamMember2,
-      payment,
-    } = req.body;
+    const { teamName, teamLeader, teamMember1, teamMember2, payment } =
+      req.body;
 
     // Validate required fields
-    if (
-      !teamName ||
-      !teamLeader ||
-      !teamMember1 ||
-      !teamMember2
-    ) {
+    if (!teamName || !teamLeader || !teamMember1 || !teamMember2) {
       return res.status(400).json({
         success: false,
         message: "Team name and all team members information are required",
@@ -1405,11 +1409,7 @@ app.put("/api/register", async (req, res) => {
     }
 
     // Collect all registration numbers
-    const regNos = [
-      teamLeader.regNo,
-      teamMember1.regNo,
-      teamMember2.regNo,
-    ];
+    const regNos = [teamLeader.regNo, teamMember1.regNo, teamMember2.regNo];
 
     // Check for duplicates within the same team
     const uniqueRegNos = new Set(regNos);

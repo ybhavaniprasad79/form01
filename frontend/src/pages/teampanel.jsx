@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Key, AlertTriangle, Key as KeyIcon, Clock, Check, Users } from "lucide-react";
 
 const TEAM_KEY_STORAGE = "teamPanel.teamKey";
-const MAX_TEAMS_PER_PROBLEM = 7;
+const MAX_TEAMS_PER_PROBLEM = 10;
 
 const TeamPanel = () => {
   const [teamKey, setTeamKey] = useState("");
@@ -213,12 +213,12 @@ const TeamPanel = () => {
     setView("access");
   };
 
-  const getProblemDifficulty = (id, title) => {
-    const val = (title.length + id.charCodeAt(id.length - 1)) % 3;
-    if (val === 0) return { label: "HARD", color: "bg-comic-red text-white" };
-    if (val === 1) return { label: "MEDIUM", color: "bg-comic-orange text-black" };
-    return { label: "EASY", color: "bg-comic-lime text-black" };
-  };
+  // const getProblemDifficulty = (id, title) => {
+  //   const val = (title.length + id.charCodeAt(id.length - 1)) % 3;
+  //   if (val === 0) return { label: "HARD", color: "bg-comic-red text-white" };
+  //   if (val === 1) return { label: "MEDIUM", color: "bg-comic-orange text-black" };
+  //   return { label: "EASY", color: "bg-comic-lime text-black" };
+  // };
 
   return (
     <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-12 text-black relative overflow-hidden">
@@ -612,7 +612,7 @@ const TeamPanel = () => {
                     /* Simple List of problem statements as trading cards */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1">
                       {visibleProblems.map((p) => {
-                        const difficulty = getProblemDifficulty(p.id, p.title);
+                        // const difficulty = getProblemDifficulty(p.id, p.title);
                         const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
                         const slotsLeft = problemLimit - p.slotsTaken;
 
@@ -624,9 +624,9 @@ const TeamPanel = () => {
                           >
                             <div>
                               <div className="flex justify-between items-center mb-2.5">
-                                <span className={`font-bangers text-[10px] px-2 py-0.25 border border-black rounded shadow-[1px_1px_0_#000] ${difficulty.color}`}>
+                                {/* <span className={`font-bangers text-[10px] px-2 py-0.25 border border-black rounded shadow-[1px_1px_0_#000] ${difficulty.color}`}>
                                   {difficulty.label}
-                                </span>
+                                </span> */}
                                 <span className="font-bangers text-[10px] bg-comic-cyan border border-black text-black px-2 py-0.25 rounded shadow-[1px_1px_0_#000]">
                                   {slotsLeft} / {problemLimit} SLOTS LEFT
                                 </span>

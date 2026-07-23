@@ -722,7 +722,7 @@ const Download = () => {
                                 )}
                               </td>
                               <td className="px-3 py-3 border-r-2 border-black font-bangers text-[10px] text-gray-500 tracking-wider">
-                                {new Date(team.submittedAt).toLocaleDateString()}
+                                {new Date(team.submittedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                               </td>
                               <td className="px-3 py-3 border-r-2 border-black text-center">
                                 <div className={`inline-block px-2 py-0.5 rounded-lg text-[10px] font-luckiest border-2 border-black shadow-[1.5px_1.5px_0_#000] ${getStatusBubbleStyle(currentStatus)}`}>
