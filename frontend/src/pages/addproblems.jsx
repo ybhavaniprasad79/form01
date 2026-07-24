@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Sparkles, Key, AlertTriangle, FileText, Check, Plus, RefreshCw, Trash2, Edit, Users, Eye } from "lucide-react";
+import { Shield, Sparkles, Key, AlertTriangle, FileText, Check, Plus, RefreshCw, Trash2, Edit, Users, Eye, Download } from "lucide-react";
 
 const VIEW_MODES = {
   problems: "problems",
@@ -502,6 +502,105 @@ const AddProblems = () => {
     }
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportSubmissionsToCSV = async (targetTeams = null) => {
+    setIsExporting(true);
+    try {
+      let teamsToExport = Array.isArray(targetTeams) && targetTeams.length > 0 ? targetTeams : selectedTeams;
+
+      // If teams are not loaded in state yet, fetch them from backend
+      if (!teamsToExport || teamsToExport.length === 0) {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
+            password.trim(),
+          )}`,
+        );
+        const data = await response.json().catch(() => null);
+        if (response.ok && data?.success && Array.isArray(data?.data)) {
+          teamsToExport = data.data;
+          setSelectedTeams(data.data);
+        }
+      }
+
+      if (!teamsToExport || teamsToExport.length === 0) {
+        alert("No registered team records found to export.");
+        return;
+      }
+
+      const headers = [
+        "Team Name",
+        "Problem Statement",
+        "Submission Link",
+        "Submission Note"
+      ];
+
+      const cleanVal = (val) => {
+        if (val === null || val === undefined || val === "") return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const rows = teamsToExport.map((t) => {
+        const teamName = t?.teamName || "-";
+        const problemTitle =
+          t?.selectedProblemStatement?.title ||
+          t?.selectedProblemStatement?.name ||
+          "Not Selected";
+
+        const submissions = Array.isArray(t?.submissions) ? t.submissions : [];
+
+        // Extract submission links
+        const linksArr = submissions
+          .map((sub, i) => {
+            const link = (sub?.canvaFigmaLink || "").trim();
+            if (!link) return null;
+            return submissions.length > 1 ? `Form #${i + 1}: ${link}` : link;
+          })
+          .filter(Boolean);
+
+        // Extract submission notes
+        const notesArr = submissions
+          .map((sub, i) => {
+            const note = (sub?.note || "").trim();
+            if (!note) return null;
+            return submissions.length > 1 ? `Form #${i + 1}: ${note}` : note;
+          })
+          .filter(Boolean);
+
+        const submissionLink = linksArr.length ? linksArr.join(" | ") : "No Link";
+        const submissionNote = notesArr.length ? notesArr.join(" | ") : "No Note";
+
+        return [
+          cleanVal(teamName),
+          cleanVal(problemTitle),
+          cleanVal(submissionLink),
+          cleanVal(submissionNote)
+        ].join(",");
+      });
+
+      const csvContent =
+        "data:text/csv;charset=utf-8,\uFEFF" +
+        [headers.map(h => cleanVal(h)).join(","), ...rows].join("\r\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute(
+        "download",
+        `all_teams_submissions_${new Date().toISOString().slice(0, 10)}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      alert("Failed to generate CSV export.");
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaveError("");
@@ -871,8 +970,21 @@ const AddProblems = () => {
                     <h3 className="text-2xl font-luckiest text-black">ALLIANCE TARGET LOGS</h3>
                     <p className="text-xs font-semibold text-gray-700">Check team coordinates and active target choices.</p>
                   </div>
-                  <div className="font-bangers text-base bg-comic-yellow border-2 border-black rounded-xl px-3.5 py-0.5 shadow-[1.5px_1.5px_0_#000]">
-                    TOTAL TEAMS: {selectedTeams.length}
+                  <div className="flex items-center gap-2.5">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      type="button"
+                      onClick={() => exportSubmissionsToCSV()}
+                      disabled={isExporting}
+                      className="bg-comic-lime text-black border-2 border-black rounded-xl px-3.5 py-1 shadow-[2px_2px_0_#000] font-bangers text-sm cursor-pointer flex items-center gap-1.5 hover:bg-green-400 transition-colors"
+                      title="Download all teams and submissions as CSV"
+                    >
+                      <Download size={14} className={isExporting ? "animate-spin" : ""} />
+                      {isExporting ? "GENERATING CSV..." : "EXPORT ALL TEAMS (CSV)"}
+                    </motion.button>
+                    <div className="font-bangers text-base bg-comic-yellow border-2 border-black rounded-xl px-3.5 py-0.5 shadow-[1.5px_1.5px_0_#000]">
+                      TOTAL TEAMS: {selectedTeams.length}
+                    </div>
                   </div>
                 </div>
 

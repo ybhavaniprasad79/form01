@@ -452,9 +452,7 @@ app.get("/api/admin/teams/selected", async (req, res) => {
     }
 
     const teams = await TeamRegistration.find(
-      {
-        selectedProblemStatement: { $exists: true, $ne: null },
-      },
+      {},
       {
         teamName: 1,
         teamLeader: 1,
@@ -815,10 +813,19 @@ app.get("/api/teams", async (req, res) => {
 // GET endpoint to fetch marks board with all rounds and team scores
 app.get("/api/marks-board", async (req, res) => {
   try {
-    const teams = await TeamRegistration.find({}, { teamName: 1 }).sort({
-      submittedAt: -1,
-    });
+    const teams = await TeamRegistration.find(
+      {},
+      { teamName: 1, selectedProblemStatement: 1 }
+    )
+      .populate({
+        path: "selectedProblemStatement",
+        select: { title: 1 },
+      })
+      .sort({
+        submittedAt: -1,
+      });
     const rounds = await RoundMarks.find().sort({ createdAt: 1 });
+    const problems = await ProblemStatement.find({}, { title: 1 }).sort({ title: 1 });
     const outOfByRound = {};
 
     const teamsWithMarks = teams.map((team) => {
@@ -835,9 +842,13 @@ app.get("/api/marks-board", async (req, res) => {
         total += mark;
       });
 
+      const theme = team.selectedProblemStatement?.title || "Unassigned";
+
       return {
         _id: team._id,
         teamName: team.teamName,
+        theme,
+        selectedProblemStatement: team.selectedProblemStatement,
         roundMarks,
         total,
       };
@@ -847,6 +858,7 @@ app.get("/api/marks-board", async (req, res) => {
       success: true,
       rounds: rounds.map((r) => r.roundName),
       outOfByRound,
+      problemStatements: problems.map((p) => p.title),
       data: teamsWithMarks,
     });
   } catch (error) {

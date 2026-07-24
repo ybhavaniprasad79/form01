@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Search, Plus } from 'lucide-react';
+import { Trophy, Search, Plus, Filter, RotateCw } from 'lucide-react';
 
 function Marks() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,6 +24,8 @@ function Marks() {
   const [editRoundName, setEditRoundName] = useState('');
   const [editRoundOutOf, setEditRoundOutOf] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState('ALL');
+  const [allProblemStatements, setAllProblemStatements] = useState([]);
   const updateTimeoutRef = useRef(null);
 
   const handleLogout = () => {
@@ -78,6 +80,7 @@ function Marks() {
       const availableRounds = data.rounds || [];
       setRounds(availableRounds);
       setOutOfByRound(data.outOfByRound || {});
+      setAllProblemStatements(data.problemStatements || []);
       setTeams(data.data || []);
       setSelectedRound((prev) => {
         if (prev && availableRounds.includes(prev)) {
@@ -307,9 +310,30 @@ function Marks() {
     return [...teams].sort((a, b) => (b.total || 0) - (a.total || 0));
   }, [teams]);
 
+  const themesList = useMemo(() => {
+    const set = new Set(allProblemStatements);
+    teams.forEach((t) => {
+      const th = t.theme || t.selectedProblemStatement?.title;
+      if (th) set.add(th);
+    });
+    return ["ALL", ...Array.from(set).sort()];
+  }, [teams, allProblemStatements]);
+
+  const filteredTeams = useMemo(() => {
+    return sortedTeams.filter((team) => {
+      const matchesSearch = team.teamName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const teamTheme = team.theme || team.selectedProblemStatement?.title || "Unassigned";
+      const matchesTheme =
+        selectedTheme === "ALL" || teamTheme === selectedTheme;
+      return matchesSearch && matchesTheme;
+    });
+  }, [sortedTeams, searchQuery, selectedTheme]);
+
   const podium = useMemo(() => {
-    return sortedTeams.slice(0, 3);
-  }, [sortedTeams]);
+    return filteredTeams.slice(0, 3);
+  }, [filteredTeams]);
 
   const getRankMedal = (rankIndex) => {
     if (rankIndex === 0) return { label: "🥇 GOLD", color: "bg-comic-yellow border border-black" };
@@ -574,6 +598,16 @@ function Marks() {
             <motion.button
               whileHover={{ scale: 1.01 }}
               type="button"
+              onClick={fetchMarksBoard}
+              disabled={loading}
+              className="bg-comic-cyan text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2.5px_2.5px_0_#111] hover:scale-102 transition-transform cursor-pointer flex items-center gap-1.5"
+              title="Sync & Refresh Leaderboard"
+            >
+              <RotateCw size={14} className={loading ? "animate-spin" : ""} /> REFRESH
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              type="button"
               onClick={() => setShowModal(true)}
               className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2.5px_2.5px_0_#111] hover:scale-102 transition-transform cursor-pointer flex items-center gap-1"
             >
@@ -628,6 +662,9 @@ function Marks() {
                         </span>
                       )}
                       <h4 className="text-base tracking-wide leading-none">{team.teamName}</h4>
+                      <p className="text-[10px] font-bangers text-comic-blue mt-1 flex items-center gap-1">
+                        🎯 {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
+                      </p>
                     </div>
 
                     {/* Pulsing Score Sticker */}
@@ -701,21 +738,77 @@ function Marks() {
           </div>
         ) : (
           <>
-            {/* Search filter */}
-            <div className="mb-5 bg-white border-3 border-black p-3 rounded-2xl shadow-[3px_3px_0_#000] relative bg-halftone-dots-white">
+            {/* Search and Theme filter */}
+            <div className="mb-5 bg-white border-3 border-black p-4 rounded-2xl shadow-[3px_3px_0_#000] relative bg-halftone-dots-white">
               <div className="absolute top-0 right-0 bg-comic-yellow border-b-2 border-l-2 border-black px-3 py-0.5 font-bangers text-[9px] text-black">
-                SCANNER
+                SCANNER & FILTER
               </div>
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Scan alliance title..."
-                  className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg pl-9 pr-4 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
-                />
+              <div className="flex flex-col md:flex-row gap-3 items-center">
+                {/* Search Input */}
+                <div className="relative flex-1 w-full flex items-center">
+                  <Search className="absolute left-3 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Scan alliance title..."
+                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg pl-9 pr-4 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
+                  />
+                </div>
+
+                {/* Theme / Problem Statement Filter Dropdown */}
+                <div className="relative w-full md:w-80 flex items-center">
+                  <Filter className="absolute left-3 w-4 h-4 text-comic-blue pointer-events-none z-10" />
+                  <select
+                    value={selectedTheme}
+                    onChange={(e) => setSelectedTheme(e.target.value)}
+                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg pl-9 pr-8 focus:bg-comic-yellow/10 font-luckiest text-xs text-black appearance-none cursor-pointer"
+                  >
+                    <option value="ALL">ALL PROBLEM STATEMENTS ({teams.length})</option>
+                    {themesList
+                      .filter((t) => t !== "ALL")
+                      .map((theme) => {
+                        const count = teams.filter(
+                          (t) =>
+                            (t.theme || t.selectedProblemStatement?.title || "Unassigned") ===
+                            theme
+                        ).length;
+                        return (
+                          <option key={theme} value={theme}>
+                            {theme.toUpperCase()} ({count})
+                          </option>
+                        );
+                      })}
+                  </select>
+                  <div className="absolute right-3 pointer-events-none text-xs font-bangers text-black">
+                    ▼
+                  </div>
+                </div>
               </div>
+
+              {/* Quick Theme Filter Chips */}
+              {themesList.length > 2 && (
+                <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t-2 border-dashed border-black/20 text-xs font-bangers">
+                  <span className="text-gray-500 text-[10px] mr-1">QUICK FILTER:</span>
+                  {themesList.map((theme) => {
+                    const isSelected = selectedTheme === theme;
+                    return (
+                      <button
+                        key={theme}
+                        type="button"
+                        onClick={() => setSelectedTheme(theme)}
+                        className={`px-2.5 py-0.5 rounded-lg border-2 border-black transition-all cursor-pointer text-[11px] ${
+                          isSelected
+                            ? 'bg-comic-yellow text-black shadow-[1.5px_1.5px_0_#000] scale-105 font-bold'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {theme === "ALL" ? "ALL PROBLEM STATEMENTS" : theme}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Scoreboard Table */}
@@ -725,6 +818,7 @@ function Marks() {
                   <thead>
                     <tr className="bg-comic-blue border-b-3 border-black text-white font-bangers text-sm tracking-wider">
                       <th className="px-4 py-3 text-left border-r-2 border-black">ALLIANCE TEAM NAME</th>
+                      <th className="px-4 py-3 text-left border-r-2 border-black">PROBLEM STATEMENT / THEME</th>
                       <th className="px-4 py-3 text-center border-r-2 border-black">
                         {selectedRound
                           ? `${selectedRound.toUpperCase()} (MAX: ${Number.isFinite(selectedRoundOutOf) ? selectedRoundOutOf : '-'})`
@@ -734,67 +828,69 @@ function Marks() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedTeams
-                      .filter((team) =>
-                        team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((team, index) => {
-                        const roundValue = selectedRound ? team.roundMarks?.[selectedRound] ?? 0 : 0;
-                        const rankIdx = teams.findIndex(t => t.teamName === team.teamName);
+                    {filteredTeams.map((team, index) => {
+                      const roundValue = selectedRound ? team.roundMarks?.[selectedRound] ?? 0 : 0;
+                      const rankIdx = teams.findIndex(t => t.teamName === team.teamName);
 
-                        return (
-                          <tr
-                            key={team._id}
-                            className={`border-b-2 border-black transition-colors hover:bg-[#fffbe6] ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              }`}
-                          >
-                            <td className="px-4 py-3 border-r-2 border-black font-luckiest text-sm text-black flex items-center gap-2 text-left">
-                              {rankIdx < 3 ? (
-                                <span className="text-base leading-none">
-                                  {rankIdx === 0 ? "🥇" : rankIdx === 1 ? "🥈" : "🥉"}
-                                </span>
-                              ) : (
-                                <span className="font-bangers text-[9px] text-gray-400 border border-gray-300 rounded px-1.5 min-w-[20px] text-center inline-block">
-                                  #{rankIdx + 1}
-                                </span>
-                              )}
-                              {team.teamName}
-                            </td>
+                      return (
+                        <tr
+                          key={team._id}
+                          className={`border-b-2 border-black transition-colors hover:bg-[#fffbe6] ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                        >
+                          <td className="px-4 py-3 border-r-2 border-black font-luckiest text-sm text-black flex items-center gap-2 text-left">
+                            {rankIdx < 3 ? (
+                              <span className="text-base leading-none">
+                                {rankIdx === 0 ? "🥇" : rankIdx === 1 ? "🥈" : "🥉"}
+                              </span>
+                            ) : (
+                              <span className="font-bangers text-[9px] text-gray-400 border border-gray-300 rounded px-1.5 min-w-[20px] text-center inline-block">
+                                #{rankIdx + 1}
+                              </span>
+                            )}
+                            {team.teamName}
+                          </td>
 
-                            <td className="px-4 py-3 border-r-2 border-black text-center">
-                              {selectedRound ? (
-                                <div className="inline-flex py-0.5 px-2 bg-gray-50 border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000] focus-within:bg-comic-yellow/10 transition-colors">
-                                  <input
-                                    className="w-14 p-0 bg-transparent border-0 text-center text-black font-luckiest text-sm outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                    style={{ MozAppearance: 'textfield' }}
-                                    type="number"
-                                    value={roundValue}
-                                    onChange={(e) => handleMarkChange(team.teamName, selectedRound, e.target.value)}
-                                    disabled={saving}
-                                  />
-                                </div>
-                              ) : (
-                                <span className="text-gray-500 font-bangers text-xs italic">SELECT TAB</span>
-                              )}
-                            </td>
+                          <td className="px-4 py-3 border-r-2 border-black text-left">
+                            <span className="inline-block bg-comic-cyan/20 border border-black px-2.5 py-0.5 rounded-md font-bangers text-xs text-black">
+                              🎯 {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
+                            </span>
+                          </td>
 
-                            <td className="px-4 py-3 text-center font-luckiest text-base text-comic-red">
-                              <motion.div
-                                key={team.total}
-                                animate={{ scale: [1, 1.05, 1] }}
-                                className="inline-block bg-comic-yellow/20 border border-dashed border-black px-3.5 py-1 rounded-lg shadow-[1.5px_1.5px_0_#000]"
-                              >
-                                {team.total ?? 0}
-                              </motion.div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                          <td className="px-4 py-3 border-r-2 border-black text-center">
+                            {selectedRound ? (
+                              <div className="inline-flex py-0.5 px-2 bg-gray-50 border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000] focus-within:bg-comic-yellow/10 transition-colors">
+                                <input
+                                  className="w-14 p-0 bg-transparent border-0 text-center text-black font-luckiest text-sm outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  style={{ MozAppearance: 'textfield' }}
+                                  type="number"
+                                  value={roundValue}
+                                  onChange={(e) => handleMarkChange(team.teamName, selectedRound, e.target.value)}
+                                  disabled={saving}
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-gray-500 font-bangers text-xs italic">SELECT TAB</span>
+                            )}
+                          </td>
+
+                          <td className="px-4 py-3 text-center font-luckiest text-base text-comic-red">
+                            <motion.div
+                              key={team.total}
+                              animate={{ scale: [1, 1.05, 1] }}
+                              className="inline-block bg-comic-yellow/20 border border-dashed border-black px-3.5 py-1 rounded-lg shadow-[1.5px_1.5px_0_#000]"
+                            >
+                              {team.total ?? 0}
+                            </motion.div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-                {teams.filter((team) => team.teamName.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                {filteredTeams.length === 0 && (
                   <div className="p-6 text-center text-gray-500 font-bangers tracking-wider uppercase">
-                    NO ALLIANCE COORDINATES MATCH "{searchQuery}"
+                    NO ALLIANCE COORDINATES MATCH SEARCH "{searchQuery}" {selectedTheme !== "ALL" ? `AND PROBLEM STATEMENT "${selectedTheme}"` : ""}
                   </div>
                 )}
               </div>
