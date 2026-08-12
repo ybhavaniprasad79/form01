@@ -1,0 +1,779 @@
+/* 
+  =========================================
+  Campus Creative Club CSS Styling System
+  Dual Theme: Sunset Canvas & Sunset Sketch
+  =========================================
+*/
+
+/* -----------------------------------------
+   1. Theme Variables & Base Resets
+   ----------------------------------------- */
+:root {
+  /* Default: Sunset Canvas (Beach Golden Hour Theme) */
+  --primary: #F97316;       /* Sunset Orange */
+  --primary-hover: #EA580C;
+  --secondary: #FDBA74;     /* Warm Peach */
+  --accent-light: #FFE8D6;  /* Soft Peach */
+  --highlight: #FCD34D;     /* Golden Sand */
+  
+  --bg-main: #FFFCFA;       /* Warm White */
+  --bg-section: #FFF7F0;    /* Cream */
+  --bg-alt: #FFF1E6;        /* Sand */
+  --bg-card: #FFFFFF;       /* Pure White */
+  
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  
+  --accent-blue: #0ea5e9;   /* Ocean Blue */
+  --accent-green: #10b981;  /* Sea Green */
+  --accent-coral: #f43f5e;  /* Coral Pink */
+  
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-handwritten: 'Caveat', cursive;
+  
+  --border-radius: 20px;
+  --border-radius-sm: 12px;
+  --border-radius-lg: 32px;
+  
+  --border-style: 1px solid rgba(249, 115, 22, 0.12);
+  --box-shadow: 0 10px 30px rgba(249, 115, 22, 0.04), 0 1px 8px rgba(0, 0, 0, 0.02);
+  --box-shadow-hover: 0 20px 35px rgba(249, 115, 22, 0.09), 0 4px 12px rgba(249, 115, 22, 0.02);
+  --card-glow: 0 0 20px rgba(249, 115, 22, 0.15);
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sunset Sketch Theme Class Override */
+.theme-sketch {
+  --primary: #F97316;
+  --primary-hover: #EA580C;
+  --secondary: #FDBA74;
+  --accent-light: #FFF1E6;
+  --highlight: #FCD34D;
+  
+  --bg-main: #FFFCFA;
+  --bg-section: #FFF7F0;
+  --bg-alt: #FFF1E6;
+  --bg-card: #FFFFFF;
+  
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  
+  --font-heading: 'Kalam', cursive;
+  --font-body: 'Patrick Hand', cursive;
+  --font-handwritten: 'Caveat', cursive;
+  
+  --border-radius: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-lg: 16px;
+  
+  --border-style: 2px solid #1F2937;
+  --box-shadow: 5px 5px 0px #1F2937;
+  --box-shadow-hover: 8px 8px 0px #1F2937;
+  
+  --transition: all 0.2s ease-in-out;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease;
+}
+
+/* Sunset Sketch graph paper background */
+.theme-sketch-bg {
+  background-color: #FFFCFA;
+  background-image: 
+    linear-gradient(rgba(249, 115, 22, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 3.5rem;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+p {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+}
+
+/* -----------------------------------------
+   2. Layout & Grid Utilities
+   ----------------------------------------- */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section {
+  padding: 80px 0;
+}
+
+.section-alt {
+  background-color: var(--bg-section);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  h1 { font-size: 2.75rem; }
+  h2 { font-size: 1.85rem; }
+}
+
+@media (max-width: 640px) {
+  .grid-4, .grid-3 { grid-template-columns: 1fr; }
+  .section { padding: 48px 0; }
+  h1 { font-size: 2.25rem; }
+}
+
+/* -----------------------------------------
+   3. Buttons & Interactive Elements
+   ----------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+}
+
+/* Theme Sketch Button Defaults */
+.theme-sketch .btn {
+  border-radius: var(--border-radius-sm);
+  border: var(--border-style);
+  box-shadow: 3px 3px 0px #1F2937;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.theme-sketch .btn-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1F2937;
+}
+
+.theme-sketch .btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1F2937;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.theme-sketch .btn-secondary {
+  background-color: #FFFFFF;
+  color: var(--text-primary);
+  border: var(--border-style);
+}
+
+.theme-sketch .btn-secondary:hover {
+  background-color: var(--bg-alt);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1F2937;
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--primary);
+  padding: 0;
+  border-radius: 0;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+
+.btn-text:hover {
+  border-bottom-color: var(--primary);
+  gap: 12px;
+}
+
+/* -----------------------------------------
+   4. Premium Cards (Dynamic Styling)
+   ----------------------------------------- */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius);
+  border: var(--border-style);
+  padding: 32px;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+.theme-sketch .card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+/* Accent Glow for Sunset Canvas */
+:not(.theme-sketch) .card-glow-hover:hover {
+  box-shadow: var(--box-shadow-hover), var(--card-glow);
+}
+
+/* -----------------------------------------
+   5. Decorative Elements (Sketch vs Canvas)
+   ----------------------------------------- */
+
+/* Polaroid Style Image Wrapper (Sketch Theme) */
+.polaroid-frame {
+  background: #FFFFFF;
+  padding: 16px 16px 40px 16px;
+  box-shadow: var(--box-shadow);
+  border: var(--border-style);
+  border-radius: var(--border-radius-sm);
+  position: relative;
+  display: inline-block;
+  transform: rotate(var(--rot, 0deg));
+  transition: var(--transition);
+}
+
+.polaroid-frame:hover {
+  transform: rotate(0deg) scale(1.03);
+}
+
+/* Masking tape on Polaroid */
+.polaroid-frame::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 90px;
+  height: 25px;
+  background-color: rgba(253, 186, 116, 0.6); /* Warm Peach semi-transparent */
+  backdrop-filter: blur(1px);
+  border: 1px dashed rgba(31, 41, 55, 0.2);
+  z-index: 10;
+  display: none;
+}
+
+.theme-sketch .polaroid-frame::before {
+  display: block;
+}
+
+/* Handwritten annotations */
+.handwritten-label {
+  font-family: var(--font-handwritten);
+  font-size: 1.5rem;
+  color: var(--primary);
+  text-align: center;
+  margin-top: 12px;
+  display: none;
+}
+
+.theme-sketch .handwritten-label {
+  display: block;
+}
+
+/* Sticky Note Widget (Sketch Theme) */
+.sticky-note {
+  background-color: #FFF9DB; /* soft sticky note yellow */
+  border: 1px solid #E9ECEF;
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 2px 8px 12px rgba(0, 0, 0, 0.05);
+  transform: rotate(-1.5deg);
+  position: relative;
+}
+
+.theme-sketch .sticky-note {
+  border: var(--border-style);
+  box-shadow: var(--box-shadow);
+}
+
+.sticky-note::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 10px;
+  background: rgba(31, 41, 55, 0.08);
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Paperclip representation */
+.paperclip {
+  position: absolute;
+  top: -18px;
+  right: 15px;
+  width: 14px;
+  height: 40px;
+  border: 2px solid #9CA3AF;
+  border-radius: 10px;
+  background: transparent;
+  transform: rotate(15deg);
+  z-index: 20;
+  display: none;
+}
+
+.theme-sketch .paperclip {
+  display: block;
+}
+
+.paperclip::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 1px;
+  width: 6px;
+  height: 25px;
+  border: 2px solid #9CA3AF;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+}
+
+/* -----------------------------------------
+   6. Navigation Layout
+   ----------------------------------------- */
+.navbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(255, 252, 250, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: var(--border-style);
+  transition: var(--transition);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+}
+
+.nav-link {
+  padding: 8px 16px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+}
+
+.theme-sketch .nav-link {
+  border-radius: var(--border-radius-sm);
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--primary);
+  background-color: var(--accent-light);
+}
+
+.theme-sketch .nav-link.active {
+  border: var(--border-style);
+  background-color: var(--highlight);
+  box-shadow: 2px 2px 0px #1F2937;
+  color: var(--text-primary);
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: var(--border-style);
+  background-color: var(--bg-card);
+  cursor: pointer;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+  color: var(--primary);
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.08);
+}
+
+.theme-sketch .theme-toggle-btn {
+  border-radius: var(--border-radius-sm);
+}
+
+/* Mobile Menu */
+.menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+@media (max-width: 1024px) {
+  .menu-btn { 
+    display: flex !important; 
+  }
+  .nav-links {
+    display: none !important;
+  }
+  .desktop-actions {
+    display: none !important;
+  }
+}
+
+/* -----------------------------------------
+   7. Form Inputs & Control
+   ----------------------------------------- */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 14px 20px;
+  font-family: var(--font-body);
+  border-radius: var(--border-radius-sm);
+  border: var(--border-style);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: var(--transition);
+  outline: none;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
+}
+
+.theme-sketch .form-input:focus, 
+.theme-sketch .form-select:focus, 
+.theme-sketch .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 3px 3px 0 #1f2937;
+}
+
+/* -----------------------------------------
+   8. Specific Page Styles & Animation Layouts
+   ----------------------------------------- */
+
+/* Wave Divider */
+.wave-divider {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  background-color: transparent;
+}
+
+.wave-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 48px;
+}
+
+/* Carousel/Grid container for Reels */
+.reel-mockup {
+  position: relative;
+  width: 320px;
+  height: 568px;
+  border-radius: 36px;
+  border: 12px solid #1F2937;
+  overflow: hidden;
+  background-color: #000000;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  margin: 0 auto;
+}
+
+.theme-sketch .reel-mockup {
+  border: var(--border-style);
+  border-radius: var(--border-radius-sm);
+}
+
+/* Polaroid Masonry Gallery */
+.masonry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* Achievements timeline */
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-left: 32px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--accent-light);
+}
+
+.theme-sketch .timeline::before {
+  left: 6px;
+  border-left: 2px dashed #1F2937;
+  background: transparent;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 40px;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -32px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  border: 3px solid var(--bg-main);
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+
+.theme-sketch .timeline-dot {
+  border-radius: 0;
+  transform: rotate(45deg);
+  border: 2px solid #1F2937;
+  background-color: var(--highlight);
+  box-shadow: none;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.theme-sketch .badge {
+  border-radius: var(--border-radius-sm);
+  border: var(--border-style);
+}
+
+.badge-blue { background-color: rgba(14, 165, 233, 0.12); color: var(--accent-blue); }
+.badge-green { background-color: rgba(16, 185, 129, 0.12); color: var(--accent-green); }
+.badge-coral { background-color: rgba(244, 63, 94, 0.12); color: var(--accent-coral); }
+.badge-orange { background-color: rgba(249, 115, 22, 0.12); color: var(--primary); }
+
+/* Certificate Pinned Sheet layout */
+.certificate-preview-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.theme-sketch .certificate-preview-card {
+  border: var(--border-style);
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius-sm);
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Notification Popups */
+.alert-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--bg-card);
+  border: var(--border-style);
+  border-radius: var(--border-radius-sm);
+  padding: 16px 24px;
+  box-shadow: var(--box-shadow-hover);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 5000;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Graph / Attendance Ring styling */
+.attendance-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.attendance-progress svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.attendance-circle-bg {
+  fill: none;
+  stroke: var(--accent-light);
+  stroke-width: 12;
+}
+
+.attendance-circle-fg {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-in-out;
+}
+
+.attendance-value {
+  position: absolute;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
