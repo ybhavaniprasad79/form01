@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const xlsx = require("xlsx");
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 const { connect } = require("./connect");
 const {
@@ -136,7 +138,7 @@ app.post("/api/admin/problems/config", async (req, res) => {
     const updated = await AppSettings.findOneAndUpdate(
       { key: "problemStatementsEnabled" },
       { $set: { enabled: normalizedEnabled, updatedAt: new Date() } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     ).lean();
 
     return res.status(200).json({
@@ -1453,7 +1455,7 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
         slotsTaken: { $lt: problemLimit },
       },
       { $inc: { slotsTaken: 1 } },
-      { new: true, projection: { _id: 1, slotsTaken: 1 } },
+      { returnDocument: "after", projection: { _id: 1, slotsTaken: 1 } },
     ).lean();
 
     if (!reserved) {
@@ -1480,7 +1482,7 @@ app.post("/api/team/:teamKey/select-problem", async (req, res) => {
         },
       },
       {
-        new: true,
+        returnDocument: "after",
         projection: {
           teamName: 1,
           selectedProblemStatement: 1,
@@ -1622,14 +1624,14 @@ app.post("/api/team/:teamKey/submit-form/:formIndex", async (req, res) => {
 // PUT endpoint for team registration form submission
 app.put("/api/register", async (req, res) => {
   try {
-    const { teamName, teamLeader, teamMember1, teamMember2, payment } =
+    const { teamName, teamLeader, teamMember1, teamMember2, teamMember3, payment } =
       req.body;
 
     // Validate required fields
-    if (!teamName || !teamLeader || !teamMember1 || !teamMember2) {
+    if (!teamName || !teamLeader || !teamMember1 || !teamMember2 || !teamMember3) {
       return res.status(400).json({
         success: false,
-        message: "Team name and all team members information are required",
+        message: "Team name and all 4 team members information are required",
       });
     }
 
@@ -1655,8 +1657,10 @@ app.put("/api/register", async (req, res) => {
       });
     }
 
-    // Check if team name already exists
-    const existingTeam = await TeamRegistration.findOne({ teamName });
+    // Check if team name already exists (case-insensitive)
+    const existingTeam = await TeamRegistration.findOne({
+      teamName: { $regex: new RegExp(`^${escapeRegex(teamName.trim())}$`, "i") },
+    });
     if (existingTeam) {
       return res.status(400).json({
         success: false,
@@ -1665,9 +1669,9 @@ app.put("/api/register", async (req, res) => {
       });
     }
 
-    // Check if transaction ID already exists
+    // Check if transaction ID already exists (case-insensitive)
     const existingTransaction = await TeamRegistration.findOne({
-      "payment.transactionId": payment.transactionId,
+      "payment.transactionId": { $regex: new RegExp(`^${escapeRegex(payment.transactionId.trim())}$`, "i") },
     });
     if (existingTransaction) {
       return res.status(400).json({
@@ -1698,7 +1702,7 @@ app.put("/api/register", async (req, res) => {
     }
 
     // Collect all registration numbers
-    const regNos = [teamLeader.regNo, teamMember1.regNo, teamMember2.regNo];
+    const regNos = [teamLeader.regNo, teamMember1.regNo, teamMember2.regNo, teamMember3.regNo];
 
     // Check for duplicates within the same team
     const uniqueRegNos = new Set(regNos);
@@ -1732,6 +1736,7 @@ app.put("/api/register", async (req, res) => {
       teamLeader,
       teamMember1,
       teamMember2,
+      teamMember3,
       payment: {
         transactionId: payment.transactionId.trim(),
         receiptUrl: payment.receiptUrl,
@@ -1780,12 +1785,84 @@ app.put("/api/register", async (req, res) => {
   }
 });
 
-// POST endpoint for downloading all team data as Excel (password protected)
-app.post("/api/download-teams", async (req, res) => {
+// Helper classifier functions for student data
+const isHostelMember = (m) => String(m?.residenceType || "").trim().toLowerCase() === "hosteler";
+const isDayScholarMember = (m) => !isHostelMember(m);
+const isFemaleMember = (m) => {
+  const g = String(m?.gender || "").trim().toLowerCase();
+  return g.includes("female") || g.includes("girl") || g === "f";
+};
+const isMaleMember = (m) => {
+  const g = String(m?.gender || "").trim().toLowerCase();
+  return (g.includes("male") || g.includes("boy") || g === "m") && !isFemaleMember(m);
+};
+
+// GET / POST endpoint to get categorized download statistics
+app.post("/api/download-stats", async (req, res) => {
   try {
     const { password } = req.body;
+    const DOWNLOAD_PASSWORD = process.env.DOWNLOAD_PASSWORD;
 
-    // Check password (use environment variable for security)
+    if (!password || password !== DOWNLOAD_PASSWORD) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    const teams = await TeamRegistration.find().sort({ createdAt: -1 });
+
+    let totalStudents = 0;
+    let hostelGirls = 0;
+    let hostelBoys = 0;
+    let dayScholarGirls = 0;
+    let dayScholarBoys = 0;
+
+    teams.forEach((t) => {
+      const members = [t.teamLeader, t.teamMember1, t.teamMember2, t.teamMember3].filter(
+        (m) => m && m.name && m.name.trim()
+      );
+
+      members.forEach((m) => {
+        totalStudents++;
+        if (isHostelMember(m)) {
+          if (isFemaleMember(m)) hostelGirls++;
+          else if (isMaleMember(m)) hostelBoys++;
+          else hostelBoys++; // fallback
+        } else {
+          if (isFemaleMember(m)) dayScholarGirls++;
+          else if (isMaleMember(m)) dayScholarBoys++;
+          else dayScholarBoys++; // fallback
+        }
+      });
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalTeams: teams.length,
+        totalStudents,
+        hostelGirls,
+        hostelBoys,
+        dayScholarGirls,
+        dayScholarBoys,
+      },
+    });
+  } catch (error) {
+    console.error("Stats error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching download statistics",
+      error: error.message,
+    });
+  }
+});
+
+// POST endpoint for downloading categorized team/student data as Excel (.xlsx)
+app.post("/api/download-teams", async (req, res) => {
+  try {
+    const { password, category = "all" } = req.body;
+
     const DOWNLOAD_PASSWORD = process.env.DOWNLOAD_PASSWORD;
 
     if (!password || password !== DOWNLOAD_PASSWORD) {
@@ -1805,89 +1882,132 @@ app.post("/api/download-teams", async (req, res) => {
       });
     }
 
-    // Format data for Excel
-    const excelData = [];
-    teams.forEach((team, index) => {
-      // Add team leader
-      excelData.push({
-        "S.No": index + 1,
-        "Team Name": team.teamName,
-        "Member Type": "Team Leader",
-        Name: team.teamLeader.name,
-        "Reg No": team.teamLeader.regNo,
-        "Phone No": team.teamLeader.phoneNo,
-        email: team.teamLeader.regNo + "@klu.ac.in",
-        Year: team.teamLeader.year,
-        Branch: team.teamLeader.branch,
-        Section: team.teamLeader.section,
-        "Transaction ID": team.payment.transactionId,
-        "Payment Status": team.payment.status,
-        "Receipt URL": team.payment.receiptUrl,
-        "Registered On": team.submittedAt
-          ? new Date(team.submittedAt).toLocaleString()
-          : "N/A",
-      });
+    let excelData = [];
+    let sheetName = "Team Registrations";
+    let filePrefix = "Master_Team_Registrations";
 
-      // Add team member 1
-      excelData.push({
-        "S.No": "",
-        "Team Name": "",
-        "Member Type": "Team Member 1",
-        Name: team.teamMember1.name,
-        "Reg No": team.teamMember1.regNo,
-        "Phone No": team.teamMember1.phoneNo,
-        email: team.teamMember1.regNo + "@klu.ac.in",
-        Year: team.teamMember1.year,
-        Branch: team.teamMember1.branch,
-        Section: team.teamMember1.section,
-        "Transaction ID": "",
-        "Payment Status": "",
-        "Registered On": "",
-      });
+    if (category === "all" || category === "master") {
+      sheetName = "All Team Registrations";
+      filePrefix = "Master_Team_Registrations";
 
-      // Add team member 2
-      excelData.push({
-        "S.No": "",
-        "Team Name": "",
-        "Member Type": "Team Member 2",
-        Name: team.teamMember2.name,
-        "Reg No": team.teamMember2.regNo,
-        "Phone No": team.teamMember2.phoneNo,
-        email: team.teamMember2.regNo + "@klu.ac.in",
-        Year: team.teamMember2.year,
-        Branch: team.teamMember2.branch,
-        Section: team.teamMember2.section,
-        "Transaction ID": "",
-        "Payment Status": "",
-        "Registered On": "",
-      });
-
-      // Add team member 3 if present (for legacy registrations)
-      if (team.teamMember3 && team.teamMember3.name) {
-        excelData.push({
-          "S.No": "",
-          "Team Name": "",
-          "Member Type": "Team Member 3",
-          Name: team.teamMember3.name,
-          "Reg No": team.teamMember3.regNo,
-          "Phone No": team.teamMember3.phoneNo,
-          email: team.teamMember3.regNo + "@klu.ac.in",
-          Year: team.teamMember3.year,
-          Branch: team.teamMember3.branch,
-          Section: team.teamMember3.section,
-          "Transaction ID": "",
-          "Payment Status": "",
-          "Registered On": "",
+      teams.forEach((team, index) => {
+        const getMemberExcelRow = (m, memberType, isLeader) => ({
+          "S.No": isLeader ? index + 1 : "",
+          "Team Name": isLeader ? team.teamName : "",
+          "Member Role": memberType,
+          "Student Name": m?.name || "",
+          "Reg No": m?.regNo || "",
+          Gender: m?.gender || "",
+          "Residence Type": m?.residenceType === "hosteler" ? "Hosteler" : "Day Scholar",
+          "Hostel Name": m?.residenceType === "hosteler" ? (m?.hostelName || "") : "N/A",
+          "Room No": m?.residenceType === "hosteler" ? (m?.roomNo || "") : "N/A",
+          "Warden Name": m?.residenceType === "hosteler" ? (m?.wardenName || "") : "N/A",
+          "Warden Phone No": m?.residenceType === "hosteler" ? (m?.wardenPhoneNo || "") : "N/A",
+          "Student Phone": m?.phoneNo || "",
+          Email: m?.regNo ? `${m.regNo}@klu.ac.in` : "",
+          Year: m?.year || "",
+          Branch: m?.branch || "",
+          Section: m?.section || "",
+          "Transaction ID": isLeader ? team.payment.transactionId : "",
+          "Payment Status": isLeader ? team.payment.status : "",
+          "Receipt URL": isLeader ? team.payment.receiptUrl : "",
+          "Registered On": isLeader && team.submittedAt
+            ? new Date(team.submittedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+            : "",
         });
+
+        if (team.teamLeader) {
+          excelData.push(getMemberExcelRow(team.teamLeader, "Team Leader", true));
+        }
+        if (team.teamMember1) {
+          excelData.push(getMemberExcelRow(team.teamMember1, "Member 1", false));
+        }
+        if (team.teamMember2) {
+          excelData.push(getMemberExcelRow(team.teamMember2, "Member 2", false));
+        }
+        if (team.teamMember3 && team.teamMember3.name) {
+          excelData.push(getMemberExcelRow(team.teamMember3, "Member 3", false));
+        }
+      });
+    } else {
+      // Categorized member-wise exports
+      let filterFn = null;
+
+      if (category === "hostel-girls") {
+        sheetName = "Hostel Girls";
+        filePrefix = "Hostel_Girls_Registrations";
+        filterFn = (m) => isHostelMember(m) && isFemaleMember(m);
+      } else if (category === "hostel-boys") {
+        sheetName = "Hostel Boys";
+        filePrefix = "Hostel_Boys_Registrations";
+        filterFn = (m) => isHostelMember(m) && isMaleMember(m);
+      } else if (category === "dayscholar-girls") {
+        sheetName = "Day Scholar Girls";
+        filePrefix = "DayScholar_Girls_Registrations";
+        filterFn = (m) => isDayScholarMember(m) && isFemaleMember(m);
+      } else if (category === "dayscholar-boys") {
+        sheetName = "Day Scholar Boys";
+        filePrefix = "DayScholar_Boys_Registrations";
+        filterFn = (m) => isDayScholarMember(m) && isMaleMember(m);
       }
-    });
+
+      let serialNo = 1;
+
+      teams.forEach((team) => {
+        const checkAndPush = (m, roleName) => {
+          if (m && m.name && filterFn && filterFn(m)) {
+            excelData.push({
+              "S.No": serialNo++,
+              "Student Name": m.name || "",
+              "Reg No": m.regNo || "",
+              Gender: m.gender || "",
+              "Residence Type": isHostelMember(m) ? "Hosteler" : "Day Scholar",
+              "Hostel Name": isHostelMember(m) ? (m.hostelName || "N/A") : "N/A",
+              "Room No": isHostelMember(m) ? (m.roomNo || "N/A") : "N/A",
+              "Warden Name": isHostelMember(m) ? (m.wardenName || "N/A") : "N/A",
+              "Warden Phone No": isHostelMember(m) ? (m.wardenPhoneNo || "N/A") : "N/A",
+              "Student Phone": m.phoneNo || "",
+              Email: m.regNo ? `${m.regNo}@klu.ac.in` : "",
+              Year: m.year || "",
+              Branch: m.branch || "",
+              Section: m.section || "",
+              "Team Name": team.teamName,
+              "Team Role": roleName,
+              "Payment Status": team.payment?.status || "pending",
+              "Transaction ID": team.payment?.transactionId || "",
+              "Registered On": team.submittedAt
+                ? new Date(team.submittedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+                : "",
+            });
+          }
+        };
+
+        checkAndPush(team.teamLeader, "Team Leader");
+        checkAndPush(team.teamMember1, "Member 1");
+        checkAndPush(team.teamMember2, "Member 2");
+        checkAndPush(team.teamMember3, "Member 3");
+      });
+    }
+
+    if (excelData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No records found matching the "${sheetName}" category`,
+      });
+    }
 
     // Create workbook and worksheet
     const wb = xlsx.utils.book_new();
     const ws = xlsx.utils.json_to_sheet(excelData);
 
+    // Set auto column width for clean Excel presentation
+    const colWidths = Object.keys(excelData[0] || {}).map((k) => ({
+      wch: Math.max(k.length + 4, 14),
+    }));
+    ws["!cols"] = colWidths;
+
     // Add worksheet to workbook
-    xlsx.utils.book_append_sheet(wb, ws, "Team Registrations");
+    xlsx.utils.book_append_sheet(wb, ws, sheetName);
 
     // Generate buffer
     const excelBuffer = xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
@@ -1899,10 +2019,10 @@ app.post("/api/download-teams", async (req, res) => {
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=team_registrations_${Date.now()}.xlsx`,
+      `attachment; filename=${filePrefix}_${Date.now()}.xlsx`,
     );
 
-    // Send file
+    // Send Excel buffer
     res.send(excelBuffer);
   } catch (error) {
     console.error("Download error:", error);
@@ -2114,13 +2234,84 @@ app.post("/api/toggle-registration", async (req, res) => {
         enabled,
         updatedAt: new Date(),
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
 
     res.status(200).json({
       success: true,
       enabled: settings.enabled,
       message: `Registrations ${settings.enabled ? "enabled" : "disabled"} successfully`,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// POST endpoint to upload a new QR code image
+app.post("/api/upload-qr", upload.single('qrCode'), async (req, res) => {
+  try {
+    const password = req.body.password;
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({ success: false, message: "Invalid password" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+    
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "team-registrations/qr",
+          resource_type: "auto",
+          allowed_formats: ["jpg", "jpeg", "png", "webp"],
+          timeout: 60000,
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        },
+      );
+
+      const streamifier = require("streamifier");
+      const stream = streamifier.createReadStream(req.file.buffer);
+
+      stream.on("error", (error) => {
+        uploadStream.destroy();
+        reject(error);
+      });
+
+      stream.pipe(uploadStream);
+    });
+
+    const result = await uploadPromise;
+
+    // Save to AppSettings
+    await AppSettings.findOneAndUpdate(
+      { key: "paymentQr" },
+      { qrUrl: result.secure_url, updatedAt: new Date() },
+      { upsert: true, returnDocument: "after" }
+    );
+
+    res.status(200).json({ success: true, message: "QR Code updated successfully", url: result.secure_url });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
+// GET endpoint to get payment QR URL
+app.get("/api/payment-qr", async (req, res) => {
+  try {
+    const settings = await AppSettings.findOne({ key: "paymentQr" });
+    res.status(200).json({
+      success: true,
+      url: settings ? settings.qrUrl : "/payment.png", // fallback
     });
   } catch (error) {
     res.status(500).json({
@@ -2185,7 +2376,7 @@ app.post("/api/update-max-teams", async (req, res) => {
         maxTeams,
         updatedAt: new Date(),
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
 
     res.status(200).json({

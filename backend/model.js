@@ -38,6 +38,36 @@ const memberSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    gender: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    residenceType: {
+      type: String,
+      enum: ["hosteler", "dayScholar", ""],
+      default: "dayScholar",
+    },
+    hostelName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    roomNo: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    wardenName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    wardenPhoneNo: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   { _id: false },
 );
@@ -66,6 +96,7 @@ const teamRegistrationSchema = new mongoose.Schema({
   },
   teamMember3: {
     type: memberSchema,
+    required: [true, "Team member 3 information is required"],
   },
   payment: {
     transactionId: {
@@ -130,7 +161,7 @@ const appSettingsSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    enum: ["registrationStatus", "maxTeams", "problemStatementsEnabled"],
+    enum: ["registrationStatus", "maxTeams", "problemStatementsEnabled", "paymentQr"],
   },
   enabled: {
     type: Boolean,
@@ -139,6 +170,10 @@ const appSettingsSchema = new mongoose.Schema({
   maxTeams: {
     type: Number,
     default: 50,
+  },
+  qrUrl: {
+    type: String,
+    default: "",
   },
   updatedAt: {
     type: Date,

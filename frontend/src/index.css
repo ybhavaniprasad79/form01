@@ -1,326 +1,140 @@
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-bangers: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-poppins: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-outfit: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-jakarta: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-luckiest: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-fredoka: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  --font-comic: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --font-serif-luxury: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --font-cinzel: "Cinzel", "Playfair Display", serif;
+  --font-cormorant: "Cormorant Garamond", Georgia, serif;
+  --font-sans-modern: "Plus Jakarta Sans", "Montserrat", sans-serif;
+  --font-montserrat: "Montserrat", sans-serif;
 
-  --color-sky-blue: #199CA4;
-  --color-cyan-custom: #5EC0CA;
-  --color-bright-orange: #E53A22;
-  --color-coral-orange: #DE3C46;
-  --color-accent-yellow: #F9B735;
-  --color-light-gray: #F5F7FA;
+  /* Aliased fonts for compatibility */
+  --font-bangers: "Cinzel", "Playfair Display", serif;
+  --font-poppins: "Plus Jakarta Sans", sans-serif;
+  --font-outfit: "Plus Jakarta Sans", sans-serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-luckiest: "Playfair Display", serif;
+  --font-fredoka: "Plus Jakarta Sans", sans-serif;
+  --font-comic: "Plus Jakarta Sans", sans-serif;
 
-  /* Re-mapped existing colors to updated palette to prevent broken color mappings */
-  --color-comic-cyan: #5EC0CA;
-  --color-comic-yellow: #F9B735;
-  --color-comic-red: #DE3C46;
-  --color-comic-orange: #E53A22;
-  --color-comic-purple: #F17F9A;
-  --color-comic-blue: #199CA4;
-  --color-comic-green: #22C55E;
-  --color-comic-lime: #F9B735;
+  /* THREADATHON Exact Logo Color Palette (#880A45 & #14216F) */
+  --color-thread-pink: #880A45;
+  --color-thread-pink-light: #B31C63;
+  --color-thread-blue: #14216F;
+  --color-thread-blue-light: #2A3FB0;
+  --color-thread-magenta: #880A45;
+  --color-thread-indigo: #14216F;
+  --color-thread-violet: #14216F;
+  --color-thread-purple: #14216F;
+
+  --color-gold-light: #B31C63;
+  --color-gold-main: #880A45;
+  --color-gold-dark: #14216F;
+  --color-gold-rich: #14216F;
+  --color-gold-metallic: #880A45;
+  --color-champagne: #1A1230;
+  --color-champagne-light: #241A40;
+  --color-silk-ivory: #FDFBFF;
+  --color-noir-deep: #070410;
+  --color-noir-card: #0F0A24;
+  --color-noir-surface: #150E32;
+  --color-noir-border: #2D1F50;
+  --color-blush-rose: #B31C63;
+  --color-burgundy: #880A45;
+  --color-emerald-luxury: #10B981;
+  --color-emerald-light: #34D399;
+
+  /* Re-mapped existing utility colors */
+  --color-sky-blue: #14216F;
+  --color-cyan-custom: #14216F;
+  --color-bright-orange: #880A45;
+  --color-coral-orange: #880A45;
+  --color-accent-yellow: #B31C63;
+  --color-light-gray: #150E32;
+
+  --color-comic-cyan: #14216F;
+  --color-comic-yellow: #B31C63;
+  --color-comic-red: #880A45;
+  --color-comic-orange: #14216F;
+  --color-comic-purple: #14216F;
+  --color-comic-blue: #14216F;
+  --color-comic-green: #10B981;
+  --color-comic-lime: #34D399;
 }
 
-/* Comic-inspired conics-gradient radial burst backgrounds */
-.bg-comic-rays-blue {
-  background-color: #199CA4;
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+/* Luxury Dark Glassmorphism Classes */
+.fashion-card,
+.glass-panel,
+.ultra-glass {
+  background: linear-gradient(135deg, rgba(16, 14, 24, 0.75) 0%, rgba(4, 3, 8, 0.90) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.16),
+    0 25px 60px -15px rgba(0, 0, 0, 0.95) !important;
+  border-radius: 1.75rem;
 }
 
-.bg-comic-rays-yellow {
-  background-color: #FFFDF0;
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+.fashion-card-dark,
+.glass-panel-dark {
+  background: linear-gradient(135deg, rgba(12, 10, 18, 0.80) 0%, rgba(2, 2, 5, 0.95) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.12),
+    0 25px 60px -15px rgba(0, 0, 0, 0.98) !important;
+  border-radius: 1.75rem;
 }
 
-.bg-comic-rays-red {
-  background-color: #FFF5F5;
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+.glass-inner,
+.glass-card {
+  background: linear-gradient(135deg, rgba(18, 15, 28, 0.70) 0%, rgba(6, 5, 12, 0.85) 100%) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 30px -5px rgba(0, 0, 0, 0.8) !important;
 }
 
-.bg-comic-rays-purple {
-  background-color: #F8F0FC;
-  background-image: url('/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+.glass-input {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #FFFFFF !important;
 }
 
-/* Extremely Subtle Halftone Textures (3% opacity) */
-.bg-halftone-dots {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 15%, transparent 16%);
-  background-size: 16px 16px;
+.glass-input:focus {
+  background: rgba(0, 0, 0, 0.85) !important;
+  border-color: #880A45 !important;
+  box-shadow: 0 0 0 3px rgba(136, 10, 69, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
 }
 
-.bg-halftone-dots-white {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 15%, transparent 16%);
-  background-size: 16px 16px;
+/* Custom Sleek Scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #880A45 #000000;
 }
 
-.bg-halftone-dots-yellow {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 15%, transparent 16%);
-  background-size: 16px 16px;
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
 }
 
-/* Simplified Outline & Shadow Styles */
-.comic-border {
-  border: 3px solid #000000 !important;
+::-webkit-scrollbar-track {
+  background: #000000;
 }
 
-.comic-shadow {
-  box-shadow: 4px 4px 0px #000000 !important;
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #880A45 0%, #14216F 100%);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.comic-shadow-large {
-  box-shadow: 6px 6px 0px #000000 !important;
-}
-
-.comic-shadow-sm {
-  box-shadow: 2px 2px 0px #000000 !important;
-}
-
-.comic-text-stroke {
-  -webkit-text-stroke: 1.5px #000000;
-  color: #ffffff;
-}
-
-.comic-text-stroke-sm {
-  -webkit-text-stroke: 1px #000000;
-}
-
-.comic-title-shadow {
-  text-shadow: 2px 2px 0px #000000;
-}
-
-.comic-title-shadow-lg {
-  text-shadow: 3px 3px 0px #000000;
-}
-
-/* Clean Speech Bubble Triangle styles */
-.speech-bubble {
-  position: relative;
-  background: #ffffff;
-  border: 3px solid #000000;
-  border-radius: 1.25rem;
-}
-
-.speech-bubble::after,
-.speech-bubble::before {
-  content: '';
-  position: absolute;
-  border-style: solid;
-  display: block;
-  width: 0;
-}
-
-.speech-bubble-bottom::after {
-  bottom: -15px;
-  left: 40px;
-  border-width: 15px 15px 0;
-  border-color: #ffffff transparent;
-}
-
-.speech-bubble-bottom::before {
-  bottom: -20px;
-  left: 38px;
-  border-width: 18px 18px 0;
-  border-color: #000000 transparent;
-  z-index: -1;
-}
-
-.speech-bubble-left::after {
-  left: -15px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 15px 15px 15px 0;
-  border-color: transparent #ffffff;
-}
-
-.speech-bubble-left::before {
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 18px 18px 18px 0;
-  border-color: transparent #000000;
-  z-index: -1;
-}
-
-/* Font helpers */
-.font-bangers {
-  font-family: "Bangers", system-ui;
-}
-
-.font-luckiest {
-  font-family: "Luckiest Guy", system-ui;
-}
-
-.font-fredoka {
-  font-family: "Fredoka", system-ui;
-}
-
-.font-comic {
-  font-family: "Comic Neue", system-ui;
-}
-
-body {
-  font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
-  font-weight: 700;
-  background-color: #F5F7FA;
-  color: #111111;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5 {
-  font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif !important;
-  font-weight: 700 !important;
-  font-style: italic !important;
-  text-transform: uppercase !important;
-}
-
-/* Gentle floating animations */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-8px);
-  }
-
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes twinkle {
-
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-.animate-twinkle {
-  animation: twinkle 2s ease-in-out infinite;
-}
-
-/* Clean Hover Transitions */
-.comic-card-hover {
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-}
-
-.comic-card-hover:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0px #111111 !important;
-}
-
-.comic-btn-hover {
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-}
-
-.comic-btn-hover:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0px #111111 !important;
-}
-
-.comic-btn-hover:active {
-  transform: translate(1px, 1px);
-  box-shadow: 2px 2px 0px #111111 !important;
-}
-
-.bg-stripes-comic {
-  background: repeating-linear-gradient(45deg,
-      #111111,
-      #111111 6px,
-      #ffffff 6px,
-      #ffffff 12px);
-}
-
-/* Global Comic Forms */
-.comic-input {
-  background-color: #ffffff !important;
-  border: 3px solid #111111 !important;
-  border-radius: 0.5rem !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.comic-input:focus {
-  border-color: #E53A22 !important;
-  box-shadow: 0 0 0 3px rgba(229, 58, 34, 0.45) !important;
-  background-color: #ffffff !important;
-}
-
-/* Global Comic Buttons */
-.comic-btn-primary {
-  background-color: #E53A22 !important;
-  color: #ffffff !important;
-  border: 3px solid #111111 !important;
-  font-family: "Luckiest Guy", system-ui !important;
-  text-transform: uppercase !important;
-  box-shadow: 3px 3px 0px #111111 !important;
-  transition: all 0.15s ease-in-out !important;
-  cursor: pointer;
-}
-
-.comic-btn-primary:hover {
-  background-color: #DE3C46 !important;
-  transform: translate(-1px, -1px);
-  box-shadow: 4.5px 4.5px 0px #111111 !important;
-}
-
-.comic-btn-primary:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1.5px 1.5px 0px #111111 !important;
-}
-
-.comic-btn-secondary {
-  background-color: #199CA4 !important;
-  color: #ffffff !important;
-  border: 3px solid #111111 !important;
-  font-family: "Luckiest Guy", system-ui !important;
-  text-transform: uppercase !important;
-  box-shadow: 3px 3px 0px #111111 !important;
-  transition: all 0.15s ease-in-out !important;
-  cursor: pointer;
-}
-
-.comic-btn-secondary:hover {
-  background-color: #5EC0CA !important;
-  transform: translate(-1px, -1px);
-  box-shadow: 4.5px 4.5px 0px #111111 !important;
-}
-
-.comic-btn-secondary:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1.5px 1.5px 0px #111111 !important;
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #A80E56 0%, #1E34A8 100%);
+  border-color: rgba(255, 255, 255, 0.35);
 }

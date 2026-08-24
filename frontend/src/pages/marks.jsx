@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Search, Plus, Filter, RotateCw } from 'lucide-react';
+import { Crown, Search, Plus, Filter, RotateCw, Trophy, AlertTriangle, Check, Sparkles, Gem, Award, LogOut, Edit3 } from 'lucide-react';
+import FashionBackground from '../components/FashionBackground';
 
 function Marks() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,7 +37,7 @@ function Marks() {
 
   const handlePasswordSubmit = async () => {
     if (!adminPassword.trim()) {
-      setAuthError('Please enter password');
+      setAuthError('Please enter jury passcode');
       return;
     }
 
@@ -54,7 +55,7 @@ function Marks() {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Invalid password');
+        throw new Error(data.message || 'Invalid jury passcode');
       }
 
       setIsAuthenticated(true);
@@ -103,27 +104,31 @@ function Marks() {
 
   const handleCreateRound = async () => {
     if (!newRound.trim()) {
-      setError('Please enter a round name');
+      setError('Round title is required');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
     const numericOutOf = Number(newRoundOutOf);
-    if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
-      setError('Please enter valid out of marks (minimum 1)');
+    if (!numericOutOf || numericOutOf <= 0) {
+      setError('Please provide a valid maximum score for this round');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
     setSaving(true);
     setError('');
-    setMessage('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/marks/round`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/rounds`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ roundName: newRound.trim(), outOf: numericOutOf })
+        body: JSON.stringify({
+          roundName: newRound.trim(),
+          outOf: numericOutOf
+        })
       });
 
       const data = await response.json();
@@ -131,29 +136,17 @@ function Marks() {
         throw new Error(data.message || 'Failed to create round');
       }
 
-      const createdRound = data.round;
-      const createdRoundOutOf = Number(data.outOf) || numericOutOf;
-      setRounds((prev) => [...prev, createdRound]);
+      setRounds((prev) => [...prev, newRound.trim()]);
       setOutOfByRound((prev) => ({
         ...prev,
-        [createdRound]: createdRoundOutOf
+        [newRound.trim()]: numericOutOf
       }));
-      setSelectedRound(createdRound);
-      setTeams((prev) =>
-        prev.map((team) => ({
-          ...team,
-          roundMarks: {
-            ...(team.roundMarks || {}),
-            [createdRound]: 0
-          },
-          total: team.total || 0
-        }))
-      );
+      setSelectedRound(newRound.trim());
       setNewRound('');
       setNewRoundOutOf('');
-      setMessage('Round created successfully');
-      setTimeout(() => setMessage(''), 2000);
       setShowModal(false);
+      setMessage('New evaluation round created successfully');
+      setTimeout(() => setMessage(''), 2000);
     } catch (err) {
       setError(err.message || 'Unable to create round');
       setTimeout(() => setError(''), 3000);
@@ -164,28 +157,28 @@ function Marks() {
 
   const handleEditRound = async () => {
     if (!editRoundName.trim()) {
-      setError('Please enter a round name');
+      setError('Round title is required');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
     const numericOutOf = Number(editRoundOutOf);
-    if (!Number.isFinite(numericOutOf) || numericOutOf < 1) {
-      setError('Please enter valid out of marks (minimum 1)');
+    if (!numericOutOf || numericOutOf <= 0) {
+      setError('Please provide a valid maximum score');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
     setSaving(true);
     setError('');
-    setMessage('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/marks/round`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/rounds/${encodeURIComponent(editingRound)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          oldRoundName: editingRound,
           newRoundName: editRoundName.trim(),
           outOf: numericOutOf
         })
@@ -196,10 +189,8 @@ function Marks() {
         throw new Error(data.message || 'Failed to update round');
       }
 
-      // Update rounds list
       setRounds((prev) => prev.map(r => r === editingRound ? editRoundName.trim() : r));
 
-      // Update outOfByRound
       setOutOfByRound((prev) => {
         const updated = { ...prev };
         if (editingRound !== editRoundName.trim()) {
@@ -209,7 +200,6 @@ function Marks() {
         return updated;
       });
 
-      // Update teams with new round name
       setTeams((prev) =>
         prev.map((team) => {
           if (editingRound !== editRoundName.trim()) {
@@ -227,12 +217,11 @@ function Marks() {
         })
       );
 
-      // Update selected round if it was the one being edited
       if (selectedRound === editingRound) {
         setSelectedRound(editRoundName.trim());
       }
 
-      setMessage('Round updated successfully');
+      setMessage('Evaluation round updated successfully');
       setTimeout(() => setMessage(''), 2000);
       setShowEditModal(false);
       setEditingRound('');
@@ -293,10 +282,10 @@ function Marks() {
 
         const data = await response.json();
         if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Failed to update mark');
+          throw new Error(data.message || 'Failed to update score');
         }
       } catch (err) {
-        setError(err.message || 'Unable to update mark');
+        setError(err.message || 'Unable to update score');
         setTimeout(() => setError(''), 3000);
       } finally {
         setSaving(false);
@@ -336,35 +325,35 @@ function Marks() {
   }, [filteredTeams]);
 
   const getRankMedal = (rankIndex) => {
-    if (rankIndex === 0) return { label: "🥇 GOLD", color: "bg-comic-yellow border border-black" };
-    if (rankIndex === 1) return { label: "🥈 SILVER", color: "bg-gray-100 border border-black" };
-    if (rankIndex === 2) return { label: "🥉 BRONZE", color: "bg-comic-orange/15 border border-black text-[#8C3C25]" };
+    if (rankIndex === 0) return { label: "👑 GRAND DESIGNER (1ST)", color: "bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-bold" };
+    if (rankIndex === 1) return { label: "✦ PREMIER HACKATHON (2ND)", color: "bg-white/10 text-white border border-white/20 font-bold" };
+    if (rankIndex === 2) return { label: "✦ 2ND RUNNER UP (3RD)", color: "bg-white/5 text-gray-300 border border-white/10 font-bold" };
     return null;
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
+      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+        {/* Pitch Black Fashion Tech Grid Background */}
+        <FashionBackground />
+
         <Navbar />
-        <div className="flex-grow flex items-center justify-center px-4">
+        <div className="flex-grow flex items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 relative z-10">
           <motion.div
-            initial={{ scale: 0.98 }}
-            animate={{ scale: 1 }}
-            className="relative w-full max-w-lg bg-white border-3 border-black rounded-2xl p-6 md:p-8 shadow-[4px_4px_0_#000] overflow-hidden bg-halftone-dots-white text-center"
+            initial={{ scale: 0.98, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative w-full max-w-lg bg-[#0B0616]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center overflow-hidden"
           >
-            <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
-              SCORE VAULT
+            <div className="absolute top-0 right-0 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white border-b border-l border-white/20 px-4 py-1.5 font-['Cinzel'] text-xs tracking-widest font-bold rounded-tr-3xl shadow-sm">
+              JURY AUTHENTICATION
             </div>
 
-            <div className="relative text-center mt-4">
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-comic-yellow border-3 border-black shadow-[2px_2px_0_#000] mb-3">
-                <Trophy size={22} className="stroke-[2.5] text-black" />
-              </div>
-              <h1 className="text-3xl font-luckiest text-black tracking-tight leading-none mb-1">
-                ARENA GATE
+            <div className="relative text-center mt-3 flex flex-col items-center">
+              <h1 className="text-2xl sm:text-3xl font-['Montserrat'] font-black text-white tracking-tight uppercase leading-none mb-2">
+                JURY SCORING BOARD
               </h1>
-              <p className="text-xs font-semibold text-gray-700 max-w-xs mx-auto">
-                Authenticate coordinate key to manage score boards and rounds.
+              <p className="text-xs text-gray-300 max-w-xs mx-auto leading-relaxed font-normal">
+                Authenticate your jury access key to evaluate competition rounds and update scoreboards.
               </p>
             </div>
 
@@ -376,15 +365,15 @@ function Marks() {
               className="relative mt-6 space-y-4 text-left"
             >
               <div>
-                <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                  SECRET ACCESS PASSWORD
+                <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                  JURY ACCESS KEY
                 </label>
                 <input
                   type="password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full h-11 comic-input bg-gray-50 text-black border-3 border-black rounded-lg px-4 font-luckiest tracking-wide focus:bg-comic-yellow/10"
-                  placeholder="Enter passcode key"
+                  className="w-full h-11 bg-black/60 backdrop-blur-md text-white border border-white/15 rounded-xl px-4 focus:border-[#880A45] focus:bg-black/80 outline-none transition font-medium text-xs shadow-xs"
+                  placeholder="Enter jury passcode"
                   required
                 />
               </div>
@@ -394,20 +383,22 @@ function Marks() {
                   <motion.div
                     initial={{ scale: 0.98, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="rounded-xl border-3 border-black bg-comic-red p-3 text-white font-bangers text-xs shadow-[2px_2px_0_#000]"
+                    className="rounded-xl border border-rose-500/40 bg-rose-950/80 p-3 text-rose-200 font-['Cinzel'] text-xs tracking-wider shadow-sm flex items-center gap-2"
                   >
-                    💥 OOPS! {authError}
+                    <AlertTriangle size={16} className="text-rose-400" />
+                    <span>{authError}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <motion.button
                 whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={authenticating}
-                className="w-full h-12 rounded-xl text-lg flex items-center justify-center gap-2 comic-btn-primary"
+                className="w-full h-12 rounded-xl font-['Cinzel'] font-bold text-xs tracking-widest bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 uppercase"
               >
-                {authenticating ? "OPENING GATE..." : "OPEN MARKS ARENA"}
+                {authenticating ? "OPENING JURY VAULT..." : "ENTER JURY ARENA »"}
               </motion.button>
             </form>
           </motion.div>
@@ -418,259 +409,128 @@ function Marks() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black justify-center items-center">
-        <p className="font-luckiest text-2xl text-white comic-title-shadow animate-pulse">SYNCHRONIZING SCOREBOARDS...</p>
+      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] justify-center items-center relative overflow-hidden">
+        <FashionBackground />
+        <p className="relative z-10 font-['Cinzel'] text-base sm:text-xl text-gray-200 tracking-widest font-bold drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+          SYNCHRONIZING HACKATHON SCOREBOARDS...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+      {/* Interactive Pitch Black Tech Background with Grid */}
+      <FashionBackground />
+
       <Navbar />
 
-      {/* Create Round Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative max-w-md w-full bg-white border-3 border-black p-5 rounded-2xl shadow-[6px_6px_0_#000] bg-halftone-dots-white text-left"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute -top-3.5 left-6 bg-comic-yellow border-2 border-black text-black font-bangers text-[10px] px-2.5 py-0.5 rounded shadow-[1.5px_1.5px_0_#000]">
-                NEW STAGE
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute -top-3.5 right-4 bg-comic-red text-white border-2 border-black font-bangers text-[10px] px-3 py-0.5 rounded shadow-[1.5px_1.5px_0_#000] cursor-pointer"
-              >
-                ✕ CLOSE
-              </button>
+      {/* Full-Page Expanded Main Canvas */}
+      <div className="flex-grow w-full px-4 sm:px-8 md:px-12 pt-24 sm:pt-28 relative z-10">
 
-              <h3 className="text-xl font-luckiest text-black mb-3.5 mt-2">ADD MISSION ROUND</h3>
+        {/* TopHeader Bar with [#880A45] -> [#14216F] Ambient Glow */}
+        <header className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden shadow-[0_12px_35px_rgba(0,0,0,0.85)] text-left">
+          <div className="absolute -top-20 -left-20 w-72 h-72 bg-[#880A45]/30 rounded-full blur-[90px] pointer-events-none" />
+          <div className="absolute -bottom-20 right-0 w-72 h-72 bg-[#14216F]/30 rounded-full blur-[90px] pointer-events-none" />
 
-              <div className="space-y-3.5 text-xs font-semibold text-gray-800">
-                <div>
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">ROUND NAME</label>
-                  <input
-                    type="text"
-                    value={newRound}
-                    onChange={(e) => setNewRound(e.target.value)}
-                    placeholder="e.g., ROUND 1, SEMI FINALS"
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !saving) handleCreateRound();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">MAX VALUE MARKS</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={newRoundOutOf}
-                    onChange={(e) => setNewRoundOutOf(e.target.value)}
-                    placeholder="e.g., 10, 20, 50"
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs"
-                  />
-                </div>
-                <div className="flex gap-3 pt-3 border-t-2 border-dashed border-black font-bangers text-base">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 bg-white border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000]"
-                  >
-                    ABORT
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    type="button"
-                    onClick={handleCreateRound}
-                    disabled={saving}
-                    className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
-                  >
-                    {saving ? 'CONFIGURING...' : '✓ INITIATE'}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit Round Modal */}
-      <AnimatePresence>
-        {showEditModal && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative max-w-md w-full bg-white border-3 border-black p-5 rounded-2xl shadow-[6px_6px_0_#000] bg-halftone-dots-white text-left"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute -top-3.5 left-6 bg-comic-yellow border-2 border-black text-black font-bangers text-[10px] px-2.5 py-0.5 rounded shadow-[1.5px_1.5px_0_#000]">
-                EDIT STAGE
-              </div>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="absolute -top-3.5 right-4 bg-comic-red text-white border-2 border-black font-bangers text-[10px] px-3 py-0.5 rounded shadow-[1.5px_1.5px_0_#000] cursor-pointer"
-              >
-                ✕ CLOSE
-              </button>
-
-              <h3 className="text-xl font-luckiest text-black mb-3.5 mt-2">EDIT MISSION ROUND</h3>
-
-              <div className="space-y-3.5 text-xs font-semibold text-gray-800">
-                <div>
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">ROUND NAME</label>
-                  <input
-                    type="text"
-                    value={editRoundName}
-                    onChange={(e) => setEditRoundName(e.target.value)}
-                    placeholder="e.g., ROUND 1, SEMI FINALS"
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !saving) handleEditRound();
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">MAX VALUE MARKS</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editRoundOutOf}
-                    onChange={(e) => setEditRoundOutOf(e.target.value)}
-                    placeholder="e.g., 10, 20, 50"
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
-                  />
-                </div>
-                <div className="flex gap-3 pt-3 border-t-2 border-dashed border-black font-bangers text-base">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    type="button"
-                    onClick={() => setShowEditModal(false)}
-                    className="flex-1 bg-white border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000]"
-                  >
-                    ABORT
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    type="button"
-                    onClick={handleEditRound}
-                    disabled={saving}
-                    className="flex-1 bg-comic-lime text-black border-3 border-black rounded-lg py-1.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer"
-                  >
-                    {saving ? 'UPDATING...' : '✓ UPDATE'}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
-
-        {/* Title & Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
-          <div className="space-y-0.5 text-left">
-            <h1 className="text-2xl font-luckiest text-black tracking-wider leading-none">
-              SCORE ARENA LEADERBOARD
+          <div className="relative z-10">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-['Montserrat'] font-black tracking-tight uppercase mb-1 text-white">
+              HACKATHON JURY LEADERBOARD
             </h1>
-            <p className="font-bangers text-xs text-comic-red tracking-widest uppercase mt-1">
-              RECORD MARKS AND REVIEW ROUND METRICS
+            <p className="bg-gradient-to-r from-pink-300 via-rose-200 to-indigo-300 bg-clip-text text-transparent font-['Cinzel'] text-xs tracking-widest font-bold uppercase">
+              Evaluation Scoring Matrix & Team Standings
             </p>
           </div>
-          <div className="flex items-center gap-2.5 font-bangers text-base">
-            <motion.button
-              whileHover={{ scale: 1.01 }}
+
+          <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0 relative z-10 font-['Cinzel'] text-xs font-bold">
+            <button
               type="button"
               onClick={handleLogout}
-              className="rounded-xl px-4 py-1.5 comic-btn-secondary"
+              className="px-4 sm:px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 transition-colors uppercase tracking-wider flex items-center gap-2 cursor-pointer"
             >
-              LOGOUT
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.01 }}
+              <LogOut className="h-3.5 w-3.5" />
+              Logout
+            </button>
+            <button
               type="button"
               onClick={fetchMarksBoard}
               disabled={loading}
-              className="bg-comic-cyan text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2.5px_2.5px_0_#111] hover:scale-102 transition-transform cursor-pointer flex items-center gap-1.5"
+              className="px-4 sm:px-5 py-2 rounded-xl bg-[#880A45] hover:bg-[#9E0D52] text-white transition-all shadow-sm uppercase tracking-wider flex items-center gap-2 cursor-pointer border border-[#880A45]/40"
               title="Sync & Refresh Leaderboard"
             >
-              <RotateCw size={14} className={loading ? "animate-spin" : ""} /> REFRESH
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.01 }}
+              <RotateCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+            <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2.5px_2.5px_0_#111] hover:scale-102 transition-transform cursor-pointer flex items-center gap-1"
+              className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white transition-all shadow-md uppercase tracking-wider flex items-center gap-2 cursor-pointer border border-[#880A45]/50"
             >
-              <Plus size={14} /> CREATE ROUND
-            </motion.button>
+              <Plus className="h-3.5 w-3.5" />
+              Create Round
+            </button>
           </div>
-        </div>
+        </header>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000] mb-6">
-            💥 OOPS! {error}
+          <div className="bg-rose-950/80 border border-rose-500/40 rounded-2xl p-4 text-rose-200 font-['Cinzel'] text-xs tracking-wider shadow-sm mb-6 flex items-center gap-2 text-left">
+            <AlertTriangle size={16} className="text-rose-400" />
+            <span>{error}</span>
           </div>
         )}
         {/* Global Success Banner */}
         {message && (
-          <div className="bg-comic-lime border-3 border-black rounded-2xl p-4 text-black font-bangers text-base shadow-[3px_3px_0_#000] mb-6">
-            🔥 SUCCESS: {message}
+          <div className="bg-emerald-950/80 border border-emerald-500/40 rounded-2xl p-4 text-emerald-200 font-['Cinzel'] text-xs tracking-wider shadow-sm mb-6 flex items-center gap-2 text-left">
+            <Check size={16} className="text-emerald-400" />
+            <span>{message}</span>
           </div>
         )}
 
-        {/* DYNAMIC COMIC SCOREBOARD AT TOP */}
+        {/* HACKATHON PODIUM SCOREBOARD */}
         {podium.length > 0 && (
-          <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white mb-6">
-            <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-0.5 text-white font-bangers text-[10px] rounded-tr-2xl">
-              TOP GLORY SCOREBOARD
+          <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative mb-8 text-left">
+            <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
+              Hackathon Podium
             </div>
 
-            <h3 className="text-xl font-luckiest text-black text-left mb-4 flex items-center gap-2">
-              🏆 ARENA LEADERS
+            <h3 className="text-lg sm:text-xl font-['Montserrat'] font-black text-white text-left mb-4 flex items-center gap-2 uppercase tracking-wide mt-1">
+              <Crown className="w-5 h-5 text-amber-300" /> HACKATHON LAUREATES
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-luckiest text-black">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {podium.map((team, idx) => {
                 const medal = getRankMedal(idx);
-                const bgColors = [
-                  "bg-comic-yellow/15 border-comic-yellow",
-                  "bg-gray-100/50 border-gray-400",
-                  "bg-comic-orange/10 border-comic-orange"
-                ];
+                const isGrand = idx === 0;
 
                 return (
                   <motion.div
                     key={team._id}
                     whileHover={{ y: -2 }}
-                    className={`border-3 border-black rounded-xl p-3 flex items-center justify-between shadow-[2px_2px_0_#000] ${bgColors[idx]}`}
+                    className={`border rounded-2xl p-4 flex items-center justify-between transition-all backdrop-blur-md ${
+                      isGrand
+                        ? "bg-[#180D22]/95 border-l-4 border-l-[#880A45] border-t border-r border-b border-[#880A45]/35 shadow-[0_0_20px_rgba(136,10,69,0.18)]"
+                        : "bg-white/5 border border-white/10 hover:border-white/20"
+                    }`}
                   >
                     <div className="text-left">
                       {medal && (
-                        <span className={`inline-block font-bangers text-[9px] border border-black rounded px-1.5 py-0.25 shadow-[1px_1px_0_#000] mb-1 ${medal.color}`}>
+                        <span className={`inline-block font-['Cinzel'] text-[9px] font-bold rounded-full px-2.5 py-0.5 mb-1.5 ${medal.color}`}>
                           {medal.label}
                         </span>
                       )}
-                      <h4 className="text-base tracking-wide leading-none">{team.teamName}</h4>
-                      <p className="text-[10px] font-bangers text-comic-blue mt-1 flex items-center gap-1">
-                        🎯 {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
+                      <h4 className="font-['Montserrat'] font-bold text-base text-white leading-tight">
+                        {team.teamName}
+                      </h4>
+                      <p className="text-[10px] font-['Cinzel'] text-pink-300 font-semibold mt-1 flex items-center gap-1">
+                        ✦ {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
                       </p>
                     </div>
 
-                    {/* Pulsing Score Sticker */}
-                    <div className="bg-white border-2 border-black rounded-lg p-1.5 text-center min-w-[60px] shadow-[1.5px_1.5px_0_#000]">
-                      <span className="font-bangers text-xl text-comic-red block leading-none">{team.total ?? 0}</span>
-                      <span className="text-[8px] font-comic font-bold text-gray-500 block leading-none mt-0.5">PTS</span>
+                    {/* Total Score Badge */}
+                    <div className="bg-black/60 border border-white/15 rounded-xl p-2 text-center min-w-[65px] shadow-sm">
+                      <span className="font-['Cinzel'] font-bold text-xl text-white block leading-none">{team.total ?? 0}</span>
+                      <span className="text-[8px] font-['Cinzel'] font-bold text-pink-300 tracking-widest block leading-none mt-1 uppercase">PTS</span>
                     </div>
                   </motion.div>
                 );
@@ -680,38 +540,39 @@ function Marks() {
         )}
 
         {/* Dynamic Rounds Selector Tabs */}
-        <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white mb-6 text-left">
-          <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
-            ROUND SELECT
+        <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] mb-8 text-left relative">
+          <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
+            Active Stage Select
           </div>
 
-          <h3 className="text-base font-luckiest text-black mb-3">ACTIVE STAGE</h3>
+          <h3 className="text-[10px] font-['Cinzel'] font-bold text-gray-400 tracking-widest uppercase mb-3 mt-1">
+            EVALUATION ROUNDS
+          </h3>
 
           {rounds.length === 0 ? (
-            <p className="text-gray-600 font-semibold italic text-xs">
-              No battle stages configured yet. Click "+ CREATE ROUND" to deploy one!
+            <p className="text-gray-400 font-normal italic text-xs">
+              No evaluation stages deployed yet. Click "+ CREATE ROUND" above to initialize a judging stage.
             </p>
           ) : (
-            <div className="flex gap-2 flex-wrap font-luckiest text-sm">
+            <div className="flex gap-2.5 flex-wrap font-['Cinzel'] text-xs font-bold">
               {rounds.map((round) => {
                 const isSelected = selectedRound === round;
                 return (
-                  <div key={round} className="flex gap-1.5 items-center">
+                  <div key={round} className="flex gap-1 items-center">
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       type="button"
                       onClick={() => setSelectedRound(round)}
-                      className={`px-4 py-1.5 border-3 border-black rounded-xl shadow-[2.5px_2.5px_0_#111] cursor-pointer transition-all ${isSelected
-                          ? 'bg-bright-orange text-white'
-                          : 'bg-white text-black hover:bg-light-gray'
-                        }`}
+                      className={`px-5 py-2 rounded-xl cursor-pointer transition-all uppercase tracking-wider ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-md border border-[#880A45]/50'
+                          : 'bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10'
+                      }`}
                     >
                       {round.toUpperCase()}
                     </motion.button>
 
-                    {/* Pencil Edit button styled in comic theme */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
+                    <button
                       type="button"
                       onClick={() => {
                         setEditingRound(round);
@@ -719,11 +580,11 @@ function Marks() {
                         setEditRoundOutOf(String(outOfByRound[round] || ''));
                         setShowEditModal(true);
                       }}
-                      className="px-2.5 py-1.5 rounded-xl bg-comic-cyan border-3 border-black text-black shadow-[2px_2px_0_#000] hover:bg-cyan-400 transition-all cursor-pointer text-xs"
-                      title="Edit stage"
+                      className="p-2 rounded-xl bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10 transition cursor-pointer text-xs"
+                      title="Edit stage parameters"
                     >
-                      ✏️
-                    </motion.button>
+                      <Edit3 className="w-3.5 h-3.5 text-pink-300" />
+                    </button>
                   </div>
                 );
               })}
@@ -731,40 +592,37 @@ function Marks() {
           )}
         </div>
 
-        {/* Table Arena */}
+        {/* Table & Controls Section */}
         {teams.length === 0 ? (
-          <div className="bg-white border-3 border-black rounded-2xl p-6 shadow-[4px_4px_0_#000] text-center font-luckiest text-lg text-black">
-            NO ALLIANCES LOGGED IN ARENA RECORDERS YET.
+          <div className="bg-[#0B0616]/90 border border-dashed border-white/15 rounded-2xl p-8 text-center font-['Cinzel'] text-xs text-gray-400 font-semibold tracking-wider uppercase">
+            NO TEAMS ENROLLED IN HACKATHON JURY DATABASE YET.
           </div>
         ) : (
           <>
             {/* Search and Theme filter */}
-            <div className="mb-5 bg-white border-3 border-black p-4 rounded-2xl shadow-[3px_3px_0_#000] relative bg-halftone-dots-white">
-              <div className="absolute top-0 right-0 bg-comic-yellow border-b-2 border-l-2 border-black px-3 py-0.5 font-bangers text-[9px] text-black">
-                SCANNER & FILTER
-              </div>
-              <div className="flex flex-col md:flex-row gap-3 items-center">
+            <div className="mb-6 bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative text-left">
+              <div className="flex flex-col md:flex-row gap-4 items-center">
                 {/* Search Input */}
                 <div className="relative flex-1 w-full flex items-center">
-                  <Search className="absolute left-3 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3.5 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Scan alliance title..."
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg pl-9 pr-4 focus:bg-comic-yellow/10 font-semibold text-xs text-black"
+                    placeholder="Search by team name..."
+                    className="w-full h-11 bg-black/60 backdrop-blur-md border border-white/15 rounded-xl pl-10 pr-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
                   />
                 </div>
 
-                {/* Theme / Problem Statement Filter Dropdown */}
+                {/* Theme Filter Dropdown */}
                 <div className="relative w-full md:w-80 flex items-center">
-                  <Filter className="absolute left-3 w-4 h-4 text-comic-blue pointer-events-none z-10" />
+                  <Filter className="absolute left-3.5 w-4 h-4 text-pink-300 pointer-events-none z-10" />
                   <select
                     value={selectedTheme}
                     onChange={(e) => setSelectedTheme(e.target.value)}
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg pl-9 pr-8 focus:bg-comic-yellow/10 font-luckiest text-xs text-black appearance-none cursor-pointer"
+                    className="w-full h-11 bg-black/60 backdrop-blur-md border border-white/15 rounded-xl pl-10 pr-8 focus:border-[#880A45] outline-none font-['Cinzel'] font-bold text-xs text-white appearance-none cursor-pointer"
                   >
-                    <option value="ALL">ALL PROBLEM STATEMENTS ({teams.length})</option>
+                    <option value="ALL">ALL DESIGN BRIEFS ({teams.length})</option>
                     {themesList
                       .filter((t) => t !== "ALL")
                       .map((theme) => {
@@ -780,7 +638,7 @@ function Marks() {
                         );
                       })}
                   </select>
-                  <div className="absolute right-3 pointer-events-none text-xs font-bangers text-black">
+                  <div className="absolute right-3.5 pointer-events-none text-xs text-pink-300">
                     ▼
                   </div>
                 </div>
@@ -788,8 +646,8 @@ function Marks() {
 
               {/* Quick Theme Filter Chips */}
               {themesList.length > 2 && (
-                <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t-2 border-dashed border-black/20 text-xs font-bangers">
-                  <span className="text-gray-500 text-[10px] mr-1">QUICK FILTER:</span>
+                <div className="flex items-center gap-1.5 flex-wrap mt-3.5 pt-3.5 border-t border-white/10 text-xs">
+                  <span className="text-gray-400 font-['Cinzel'] text-[10px] font-bold mr-1 uppercase">FILTER:</span>
                   {themesList.map((theme) => {
                     const isSelected = selectedTheme === theme;
                     return (
@@ -797,13 +655,13 @@ function Marks() {
                         key={theme}
                         type="button"
                         onClick={() => setSelectedTheme(theme)}
-                        className={`px-2.5 py-0.5 rounded-lg border-2 border-black transition-all cursor-pointer text-[11px] ${
+                        className={`px-3 py-1 rounded-full transition-all cursor-pointer font-['Cinzel'] text-[10px] font-bold ${
                           isSelected
-                            ? 'bg-comic-yellow text-black shadow-[1.5px_1.5px_0_#000] scale-105 font-bold'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-sm'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                         }`}
                       >
-                        {theme === "ALL" ? "ALL PROBLEM STATEMENTS" : theme}
+                        {theme === "ALL" ? "ALL BRIEFS" : theme}
                       </button>
                     );
                   })}
@@ -811,20 +669,20 @@ function Marks() {
               )}
             </div>
 
-            {/* Scoreboard Table */}
-            <div className="bg-white border-3 border-black rounded-2xl shadow-[4px_4px_0_#000] overflow-hidden">
+            {/* Scoreboard Table Glass Card */}
+            <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.85)] overflow-hidden">
               <div className="overflow-x-auto text-xs">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-comic-blue border-b-3 border-black text-white font-bangers text-sm tracking-wider">
-                      <th className="px-4 py-3 text-left border-r-2 border-black">ALLIANCE TEAM NAME</th>
-                      <th className="px-4 py-3 text-left border-r-2 border-black">PROBLEM STATEMENT / THEME</th>
-                      <th className="px-4 py-3 text-center border-r-2 border-black">
+                    <tr className="bg-black/70 text-gray-300 font-['Cinzel'] text-xs tracking-wider border-b border-white/15">
+                      <th className="px-4 py-3.5 text-left border-r border-white/10">TEAM NAME</th>
+                      <th className="px-4 py-3.5 text-left border-r border-white/10">DESIGN BRIEF ASSIGNMENT</th>
+                      <th className="px-4 py-3.5 text-center border-r border-white/10">
                         {selectedRound
                           ? `${selectedRound.toUpperCase()} (MAX: ${Number.isFinite(selectedRoundOutOf) ? selectedRoundOutOf : '-'})`
                           : 'SELECT ACTIVE STAGE'}
                       </th>
-                      <th className="px-4 py-3 text-center">TOTAL ARENA SCORE</th>
+                      <th className="px-4 py-3.5 text-center">GRAND TOTAL SCORE</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -835,33 +693,32 @@ function Marks() {
                       return (
                         <tr
                           key={team._id}
-                          className={`border-b-2 border-black transition-colors hover:bg-[#fffbe6] ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                            }`}
+                          className="border-b border-white/10 transition-colors hover:bg-white/5"
                         >
-                          <td className="px-4 py-3 border-r-2 border-black font-luckiest text-sm text-black flex items-center gap-2 text-left">
+                          <td className="px-4 py-3.5 border-r border-white/10 font-['Montserrat'] font-bold text-sm text-white flex items-center gap-2 text-left">
                             {rankIdx < 3 ? (
                               <span className="text-base leading-none">
                                 {rankIdx === 0 ? "🥇" : rankIdx === 1 ? "🥈" : "🥉"}
                               </span>
                             ) : (
-                              <span className="font-bangers text-[9px] text-gray-400 border border-gray-300 rounded px-1.5 min-w-[20px] text-center inline-block">
+                              <span className="font-['Cinzel'] text-[10px] text-gray-400 border border-white/10 rounded px-1.5 min-w-[20px] text-center inline-block">
                                 #{rankIdx + 1}
                               </span>
                             )}
                             {team.teamName}
                           </td>
 
-                          <td className="px-4 py-3 border-r-2 border-black text-left">
-                            <span className="inline-block bg-comic-cyan/20 border border-black px-2.5 py-0.5 rounded-md font-bangers text-xs text-black">
-                              🎯 {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
+                          <td className="px-4 py-3.5 border-r border-white/10 text-left">
+                            <span className="inline-block bg-[#880A45]/30 border border-[#880A45]/50 px-2.5 py-1 rounded-lg font-['Cinzel'] font-bold text-[11px] text-pink-300">
+                              ✦ {team.theme || team.selectedProblemStatement?.title || "Unassigned"}
                             </span>
                           </td>
 
-                          <td className="px-4 py-3 border-r-2 border-black text-center">
+                          <td className="px-4 py-3.5 border-r border-white/10 text-center">
                             {selectedRound ? (
-                              <div className="inline-flex py-0.5 px-2 bg-gray-50 border-2 border-black rounded-lg shadow-[1.5px_1.5px_0_#000] focus-within:bg-comic-yellow/10 transition-colors">
+                              <div className="inline-flex py-1 px-2.5 bg-black/60 border border-white/15 rounded-xl focus-within:border-[#880A45] transition-all">
                                 <input
-                                  className="w-14 p-0 bg-transparent border-0 text-center text-black font-luckiest text-sm outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  className="w-14 p-0 bg-transparent border-0 text-center text-white font-['Cinzel'] font-bold text-sm outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                   style={{ MozAppearance: 'textfield' }}
                                   type="number"
                                   value={roundValue}
@@ -870,17 +727,17 @@ function Marks() {
                                 />
                               </div>
                             ) : (
-                              <span className="text-gray-500 font-bangers text-xs italic">SELECT TAB</span>
+                              <span className="text-gray-400 font-['Cinzel'] text-xs italic">SELECT ROUND</span>
                             )}
                           </td>
 
-                          <td className="px-4 py-3 text-center font-luckiest text-base text-comic-red">
+                          <td className="px-4 py-3.5 text-center font-['Cinzel'] font-bold text-base text-white">
                             <motion.div
                               key={team.total}
                               animate={{ scale: [1, 1.05, 1] }}
-                              className="inline-block bg-comic-yellow/20 border border-dashed border-black px-3.5 py-1 rounded-lg shadow-[1.5px_1.5px_0_#000]"
+                              className="inline-block bg-[#880A45]/25 border border-[#880A45]/50 px-4 py-1 rounded-full shadow-sm text-pink-200"
                             >
-                              {team.total ?? 0}
+                              {team.total ?? 0} PTS
                             </motion.div>
                           </td>
                         </tr>
@@ -889,8 +746,8 @@ function Marks() {
                   </tbody>
                 </table>
                 {filteredTeams.length === 0 && (
-                  <div className="p-6 text-center text-gray-500 font-bangers tracking-wider uppercase">
-                    NO ALLIANCE COORDINATES MATCH SEARCH "{searchQuery}" {selectedTheme !== "ALL" ? `AND PROBLEM STATEMENT "${selectedTheme}"` : ""}
+                  <div className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
+                    NO TEAMS FOUND MATCHING "{searchQuery}" {selectedTheme !== "ALL" ? `AND BRIEF "${selectedTheme}"` : ""}
                   </div>
                 )}
               </div>
@@ -898,6 +755,150 @@ function Marks() {
           </>
         )}
       </div>
+
+      {/* Create Round Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-md w-full bg-[#0B0616]/95 backdrop-blur-2xl border border-white/20 p-6 sm:p-8 rounded-3xl shadow-2xl text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-['Cinzel'] text-[10px] font-bold tracking-widest px-3 py-0.5 rounded-lg shadow-sm">
+                NEW EVALUATION STAGE
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute -top-3.5 right-4 bg-black/80 text-gray-300 border border-white/20 font-['Cinzel'] text-[10px] font-bold px-3 py-1 rounded-lg shadow-sm cursor-pointer hover:bg-white/10 transition"
+              >
+                ✕ CLOSE
+              </button>
+
+              <h3 className="text-xl font-['Montserrat'] font-bold text-white mb-3.5 mt-2 uppercase">
+                ADD HACKATHON EVALUATION ROUND
+              </h3>
+
+              <div className="space-y-4 text-xs font-medium">
+                <div>
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                    ROUND TITLE
+                  </label>
+                  <input
+                    type="text"
+                    value={newRound}
+                    onChange={(e) => setNewRound(e.target.value)}
+                    placeholder="e.g. Round 1: Concept & Silhouette"
+                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !saving) handleCreateRound();
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                    MAXIMUM SCORE (OUT OF)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newRoundOutOf}
+                    onChange={(e) => setNewRoundOutOf(e.target.value)}
+                    placeholder="e.g. 50 or 100"
+                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCreateRound}
+                  disabled={saving}
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-['Cinzel'] font-bold tracking-widest uppercase transition cursor-pointer shadow-md"
+                >
+                  {saving ? "INITIALIZING STAGE..." : "ESTABLISH ROUND »"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Round Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-md w-full bg-[#0B0616]/95 backdrop-blur-2xl border border-white/20 p-6 sm:p-8 rounded-3xl shadow-2xl text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-['Cinzel'] text-[10px] font-bold tracking-widest px-3 py-0.5 rounded-lg shadow-sm">
+                EDIT STAGE
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="absolute -top-3.5 right-4 bg-black/80 text-gray-300 border border-white/20 font-['Cinzel'] text-[10px] font-bold px-3 py-1 rounded-lg shadow-sm cursor-pointer hover:bg-white/10 transition"
+              >
+                ✕ CLOSE
+              </button>
+
+              <h3 className="text-xl font-['Montserrat'] font-bold text-white mb-3.5 mt-2 uppercase">
+                MODIFY EVALUATION STAGE
+              </h3>
+
+              <div className="space-y-4 text-xs font-medium">
+                <div>
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                    ROUND TITLE
+                  </label>
+                  <input
+                    type="text"
+                    value={editRoundName}
+                    onChange={(e) => setEditRoundName(e.target.value)}
+                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                    MAXIMUM EVALUATION SCORE
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editRoundOutOf}
+                    onChange={(e) => setEditRoundOutOf(e.target.value)}
+                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
+                  />
+                </div>
+                <div className="flex gap-3 pt-3 border-t border-white/15 font-['Cinzel'] text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-xl py-2.5 transition cursor-pointer uppercase"
+                  >
+                    CANCEL
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={handleEditRound}
+                    disabled={saving}
+                    className="flex-1 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl py-2.5 shadow-md transition cursor-pointer font-bold uppercase"
+                  >
+                    {saving ? 'UPDATING...' : 'SAVE MODIFICATIONS'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

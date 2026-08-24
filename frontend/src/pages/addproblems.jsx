@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Sparkles, Key, AlertTriangle, FileText, Check, Plus, RefreshCw, Trash2, Edit, Users, Eye, Download } from "lucide-react";
+import { Crown, Sparkles, AlertTriangle, FileText, Check, Plus, RotateCw, Trash2, Edit3, Users, Eye, Download, LogOut } from "lucide-react";
+import FashionBackground from "../components/FashionBackground";
 
 const VIEW_MODES = {
   problems: "problems",
@@ -102,26 +103,7 @@ const AddProblems = () => {
   const [isLoadingProblems, setIsLoadingProblems] = useState(false);
   const [problemsLoadError, setProblemsLoadError] = useState("");
 
-  const [selectedTeams, setSelectedTeams] = useState([]);
-  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
-  const [teamsLoadError, setTeamsLoadError] = useState("");
-
-  const [teamSearch, setTeamSearch] = useState("");
-  const [studentProblemPopup, setStudentProblemPopup] = useState(null);
-  const [manageSubmissionsPopup, setManageSubmissionsPopup] = useState(null);
-
-  const filteredTeams = useMemo(() => {
-    const q = teamSearch.trim().toLowerCase();
-    if (!q) return selectedTeams;
-
-    return selectedTeams.filter((t) => {
-      const teamName = String(t?.teamName || "").toLowerCase();
-      const leaderName = String(t?.teamLeader?.name || "").toLowerCase();
-      return teamName.includes(q) || leaderName.includes(q);
-    });
-  }, [selectedTeams, teamSearch]);
-
-  const [editingId, setEditingId] = useState(null);
+  const [editingProblemId, setEditingProblemId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editThemePng, setEditThemePng] = useState("");
   const [editShortDescription, setEditShortDescription] = useState("");
@@ -130,11 +112,12 @@ const AddProblems = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState("");
 
-  const canSave = useMemo(() => {
-    return Boolean(
-      title.trim() && shortDescription.trim() && isVerified && !isSaving,
-    );
-  }, [title, shortDescription, isVerified, isSaving]);
+  const [selectedTeams, setSelectedTeams] = useState([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+  const [teamsLoadError, setTeamsLoadError] = useState("");
+  const [teamSearch, setTeamSearch] = useState("");
+  const [studentProblemPopup, setStudentProblemPopup] = useState(null);
+  const [manageSubmissionsPopup, setManageSubmissionsPopup] = useState(null);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -143,7 +126,7 @@ const AddProblems = () => {
 
     const normalized = password.trim();
     if (!normalized) {
-      setVerifyError("Enter admin key.");
+      setVerifyError("Please enter the administrator key.");
       return;
     }
 
@@ -160,8 +143,7 @@ const AddProblems = () => {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.success) {
-        setVerifyError(data?.message || "Invalid admin key.");
-        setIsVerified(false);
+        setVerifyError(data?.message || "Invalid administrator passcode.");
         return;
       }
 
@@ -169,63 +151,54 @@ const AddProblems = () => {
       setIsVerified(true);
     } catch {
       setVerifyError("Unable to connect to the server.");
-      setIsVerified(false);
     } finally {
       setIsVerifying(false);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_KEY_STORAGE);
+    setIsVerified(false);
+    setPassword("");
+    setVerifyError("");
+  };
+
   const loadConfigAndProblems = async () => {
-    setProblemsLoadError("");
-    setToggleError("");
     setIsLoadingProblems(true);
+    setProblemsLoadError("");
+
     try {
       const [configRes, problemsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/problems/config`),
-        fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/admin/problems?password=${encodeURIComponent(
-            password.trim(),
-          )}`,
-        ),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/config/problems-enabled`),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/problems?password=${encodeURIComponent(password.trim())}`),
       ]);
 
-      const configData = await configRes.json().catch(() => null);
+      const [configData, problemsData] = await Promise.all([
+        configRes.json().catch(() => null),
+        problemsRes.json().catch(() => null),
+      ]);
+
       if (configRes.ok && configData?.success) {
-        setProblemsEnabled(Boolean(configData.enabled));
+        setProblemsEnabled(Boolean(configData?.enabled));
       }
 
-      const problemsData = await problemsRes.json().catch(() => null);
-      if (
-        !problemsRes.ok ||
-        !problemsData?.success ||
-        !Array.isArray(problemsData?.data)
-      ) {
-        setProblemsLoadError(
-          problemsData?.message || "Failed to load problem statements.",
-        );
-        setProblems([]);
+      if (!problemsRes.ok || !problemsData?.success) {
+        setProblemsLoadError(problemsData?.message || "Failed to load design briefs.");
         return;
       }
 
-      setProblems(problemsData.data);
+      setProblems(Array.isArray(problemsData?.data) ? problemsData.data : []);
     } catch {
       setProblemsLoadError("Unable to connect to the server.");
-      setProblems([]);
     } finally {
       setIsLoadingProblems(false);
     }
   };
 
-  useEffect(() => {
-    if (!isVerified) return;
-    if (viewMode === VIEW_MODES.problems) loadConfigAndProblems();
-    if (viewMode === VIEW_MODES.students) loadSelectedTeams();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVerified, viewMode]);
-
   const loadSelectedTeams = async () => {
-    setTeamsLoadError("");
     setIsLoadingTeams(true);
+    setTeamsLoadError("");
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
@@ -234,27 +207,38 @@ const AddProblems = () => {
       );
       const data = await response.json().catch(() => null);
 
-      if (!response.ok || !data?.success || !Array.isArray(data?.data)) {
-        setTeamsLoadError(data?.message || "Failed to load teams.");
-        setSelectedTeams([]);
+      if (!response.ok || !data?.success) {
+        setTeamsLoadError(data?.message || "Failed to load team lists.");
         return;
       }
 
-      setSelectedTeams(data.data);
+      setSelectedTeams(Array.isArray(data?.data) ? data.data : []);
     } catch {
       setTeamsLoadError("Unable to connect to the server.");
-      setSelectedTeams([]);
     } finally {
       setIsLoadingTeams(false);
     }
   };
 
+  useEffect(() => {
+    if (!isVerified) return;
+    if (viewMode === VIEW_MODES.problems) {
+      loadConfigAndProblems();
+    } else if (viewMode === VIEW_MODES.students) {
+      loadSelectedTeams();
+    }
+  }, [isVerified, viewMode]);
+
+  const showProblems = () => setViewMode(VIEW_MODES.problems);
+  const showStudents = () => setViewMode(VIEW_MODES.students);
+
   const handleToggleProblems = async (nextEnabled) => {
-    setToggleError("");
     setIsToggling(true);
+    setToggleError("");
+
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/problems/config`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/config/problems-enabled`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -267,11 +251,11 @@ const AddProblems = () => {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.success) {
-        setToggleError(data?.message || "Failed to update toggle.");
+        setToggleError(data?.message || "Failed to update portal availability.");
         return;
       }
 
-      setProblemsEnabled(Boolean(data.enabled));
+      setProblemsEnabled(Boolean(data?.enabled));
     } catch {
       setToggleError("Unable to connect to the server.");
     } finally {
@@ -279,65 +263,81 @@ const AddProblems = () => {
     }
   };
 
-  const startEditing = (p) => {
-    setUpdateError("");
-    setEditingId(p._id);
-    setEditTitle(String(p.title || ""));
-    setEditThemePng(String(p.themePng || ""));
-    setEditShortDescription(String(p.shortDescription || ""));
-    setEditFullDescription(String(p.fullDescription || ""));
-    setEditLimit(Number(p.limit || 7));
-    setActiveModal("edit");
-  };
+  const handleDelete = async (problemId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to permanently delete this hackathon design brief?",
+    );
+    if (!confirmDelete) return;
 
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditTitle("");
-    setEditThemePng("");
-    setEditShortDescription("");
-    setEditFullDescription("");
-    setEditLimit(7);
-    setUpdateError("");
-    setActiveModal(null);
-  };
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/problems/${encodeURIComponent(
+          problemId,
+        )}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        },
+      );
+      const data = await response.json().catch(() => null);
 
-  const showStudents = () => {
-    setActiveModal(null);
-    setSaveError("");
-    setSaveMessage("");
-    setUpdateError("");
-    setProblemsLoadError("");
-    setToggleError("");
-    setTeamSearch("");
-    setStudentProblemPopup(null);
-    setViewMode(VIEW_MODES.students);
-  };
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to delete brief.");
+        return;
+      }
 
-  const showProblems = () => {
-    setTeamsLoadError("");
-    setStudentProblemPopup(null);
-    setViewMode(VIEW_MODES.problems);
+      setProblems((prev) => prev.filter((p) => p._id !== problemId));
+    } catch {
+      alert("Unable to connect to the server.");
+    }
   };
 
   const openCreate = () => {
+    setActiveModal("create");
     setSaveError("");
     setSaveMessage("");
-    setActiveModal("create");
+    setTitle("");
+    setThemePng("");
+    setShortDescription("");
+    setFullDescription("");
+    setLimit(7);
   };
 
   const closeCreate = () => {
     setActiveModal(null);
+    setSaveError("");
+  };
+
+  const startEditing = (p) => {
+    setActiveModal("edit");
+    setEditingProblemId(p._id);
+    setEditTitle(p.title || "");
+    setEditThemePng(p.themePng || "");
+    setEditShortDescription(p.shortDescription || "");
+    setEditFullDescription(p.fullDescription || "");
+    setEditLimit(p.limit || 7);
+    setUpdateError("");
+  };
+
+  const cancelEditing = () => {
+    setActiveModal(null);
+    setEditingProblemId(null);
+    setUpdateError("");
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setUpdateError("");
-    if (!editingId) return;
+    if (!editingProblemId) return;
 
     setIsUpdating(true);
+    setUpdateError("");
+
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/problems/${encodeURIComponent(editingId)}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/problems/${encodeURIComponent(
+          editingProblemId,
+        )}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -352,6 +352,7 @@ const AddProblems = () => {
         },
       );
       const data = await response.json().catch(() => null);
+
       if (!response.ok || !data?.success) {
         setUpdateError(data?.message || "Failed to update problem statement.");
         return;
@@ -366,41 +367,17 @@ const AddProblems = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    setUpdateError("");
-
-    const ok = window.confirm("Delete this problem statement?");
-    if (!ok) return;
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/problems/${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: password.trim() }),
-        },
-      );
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.success) {
-        setUpdateError(data?.message || "Failed to delete problem statement.");
-        return;
-      }
-
-      if (editingId === id) cancelEditing();
-      await loadConfigAndProblems();
-    } catch {
-      setUpdateError("Unable to connect to the server.");
-    }
-  };
-
   const handleResetProblem = async (teamId, teamName) => {
-    const ok = window.confirm(`Reset the selected problem statement for team "${teamName}"? This will free up one slot for that problem statement.`);
-    if (!ok) return;
+    const confirmReset = window.confirm(
+      `Are you sure you want to unlock the design brief for "${teamName}"?`,
+    );
+    if (!confirmReset) return;
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(teamId)}/reset-problem`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(
+          teamId,
+        )}/reset-problem`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -408,12 +385,12 @@ const AddProblems = () => {
         },
       );
       const data = await response.json().catch(() => null);
+
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to reset problem statement.");
+        alert(data?.message || "Failed to reset brief selection.");
         return;
       }
 
-      alert("Problem statement reset successfully!");
       await loadSelectedTeams();
     } catch {
       alert("Unable to connect to the server.");
@@ -423,8 +400,9 @@ const AddProblems = () => {
   const handleAddFormSlot = async () => {
     if (!manageSubmissionsPopup) return;
     try {
+      const teamName = manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/add-form`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/add-form`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -433,25 +411,24 @@ const AddProblems = () => {
       );
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to add form slot.");
+        alert(data?.message || "Failed to append submission slot.");
         return;
       }
       setManageSubmissionsPopup(data.data);
-      await loadSelectedTeams();
+      setSelectedTeams((prev) => prev.map((t) => (t._id === data.data._id ? data.data : t)));
     } catch {
       alert("Unable to connect to the server.");
     }
   };
 
-
   const handleResetForm = async (idx) => {
     if (!manageSubmissionsPopup) return;
-    const confirmReset = window.confirm("Reset (unlock) this form submission?");
+    const confirmReset = window.confirm(`Unlock Submission Slot #${idx + 1} for this team?`);
     if (!confirmReset) return;
-
     try {
+      const teamName = manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/reset-form/${idx}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/reset-form/${idx}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -460,12 +437,11 @@ const AddProblems = () => {
       );
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to reset form.");
+        alert(data?.message || "Failed to unlock submission.");
         return;
       }
       setManageSubmissionsPopup(data.data);
-      await loadSelectedTeams();
-      alert("Form unlocked successfully!");
+      setSelectedTeams((prev) => prev.map((t) => (t._id === data.data._id ? data.data : t)));
     } catch {
       alert("Unable to connect to the server.");
     }
@@ -473,16 +449,12 @@ const AddProblems = () => {
 
   const handleRemoveForm = async (idx) => {
     if (!manageSubmissionsPopup) return;
-    if ((manageSubmissionsPopup.submissions?.length || 0) <= 1) {
-      alert("A team must have at least one submission form.");
-      return;
-    }
-    const confirmRemove = window.confirm(`Remove form #${idx + 1}? This action cannot be undone.`);
+    const confirmRemove = window.confirm(`Permanently remove Submission Slot #${idx + 1}?`);
     if (!confirmRemove) return;
-
     try {
+      const teamName = manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/team/${encodeURIComponent(manageSubmissionsPopup._id)}/remove-form/${idx}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/remove-form/${idx}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -491,12 +463,11 @@ const AddProblems = () => {
       );
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to remove form.");
+        alert(data?.message || "Failed to remove submission.");
         return;
       }
       setManageSubmissionsPopup(data.data);
-      await loadSelectedTeams();
-      alert("Form removed successfully!");
+      setSelectedTeams((prev) => prev.map((t) => (t._id === data.data._id ? data.data : t)));
     } catch {
       alert("Unable to connect to the server.");
     }
@@ -509,7 +480,6 @@ const AddProblems = () => {
     try {
       let teamsToExport = Array.isArray(targetTeams) && targetTeams.length > 0 ? targetTeams : selectedTeams;
 
-      // If teams are not loaded in state yet, fetch them from backend
       if (!teamsToExport || teamsToExport.length === 0) {
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
@@ -530,9 +500,9 @@ const AddProblems = () => {
 
       const headers = [
         "Team Name",
-        "Problem Statement",
-        "Submission Link",
-        "Submission Note"
+        "Selected Fashion Design Brief",
+        "Submission Links",
+        "Design Notes"
       ];
 
       const cleanVal = (val) => {
@@ -550,7 +520,6 @@ const AddProblems = () => {
 
         const submissions = Array.isArray(t?.submissions) ? t.submissions : [];
 
-        // Extract submission links
         const linksArr = submissions
           .map((sub, i) => {
             const link = (sub?.canvaFigmaLink || "").trim();
@@ -559,7 +528,6 @@ const AddProblems = () => {
           })
           .filter(Boolean);
 
-        // Extract submission notes
         const notesArr = submissions
           .map((sub, i) => {
             const note = (sub?.note || "").trim();
@@ -588,7 +556,7 @@ const AddProblems = () => {
       link.setAttribute("href", encodedUri);
       link.setAttribute(
         "download",
-        `all_teams_submissions_${new Date().toISOString().slice(0, 10)}.csv`
+        `team_submissions_${new Date().toISOString().slice(0, 10)}.csv`
       );
       document.body.appendChild(link);
       link.click();
@@ -600,6 +568,23 @@ const AddProblems = () => {
       setIsExporting(false);
     }
   };
+
+  const filteredTeams = useMemo(() => {
+    const q = teamSearch.trim().toLowerCase();
+    if (!q) return selectedTeams;
+    return selectedTeams.filter((t) => {
+      const name = String(t?.teamName || "").toLowerCase();
+      const leader = String(t?.teamLeader?.name || "").toLowerCase();
+      const problem = String(
+        t?.selectedProblemStatement?.title ||
+        t?.selectedProblemStatement?.name ||
+        "",
+      ).toLowerCase();
+      return name.includes(q) || leader.includes(q) || problem.includes(q);
+    });
+  }, [selectedTeams, teamSearch]);
+
+  const canSave = Boolean(title.trim() && shortDescription.trim());
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -632,7 +617,7 @@ const AddProblems = () => {
         return;
       }
 
-      setSaveMessage("Problem statement added.");
+      setSaveMessage("Design brief added successfully.");
       setTitle("");
       setThemePng("");
       setShortDescription("");
@@ -648,87 +633,44 @@ const AddProblems = () => {
     }
   };
 
-  // const getProblemDifficulty = (id, title) => {
-  //   const val = (title.length + id.charCodeAt(id.length - 1)) % 3;
-  //   if (val === 0) return { label: "HARD", color: "bg-comic-red text-white" };
-  //   if (val === 1) return { label: "MEDIUM", color: "bg-comic-orange text-black" };
-  //   return { label: "EASY", color: "bg-comic-lime text-black" };
-  // };
-
   return (
-    <div className="min-h-screen bg-comic-rays-blue bg-halftone-dots flex flex-col font-comic select-none pb-16 text-black">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+      {/* Pitch Black Fashion Tech Background */}
+      <FashionBackground />
+
       <Navbar />
-      <div className="max-w-6xl mx-auto w-full px-4 mt-8 flex-grow">
 
-        {/* Simple Page Header */}
-        <div className="relative mb-8 text-center">
-          <div className="bg-white border-3 border-black px-6 py-3 rounded-2xl shadow-[4px_4px_0_#000] inline-block">
-            <h2 className="font-luckiest text-2xl md:text-4xl text-black tracking-wide leading-none">
-              PROBLEM VAULT PANEL
-            </h2>
-            <p className="font-bangers text-sm text-comic-red tracking-widest mt-1 uppercase">
-              PROBLEM STATEMENT CONFIGURATION CONSOLE
-            </p>
-          </div>
-        </div>
-
-        {/* Global Error Banner */}
-        <AnimatePresence>
-          {problemsLoadError && (
-            <motion.div
-              initial={{ scale: 0.98, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
-            >
-              💥 ERROR: {problemsLoadError}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {updateError && (
-            <motion.div
-              initial={{ scale: 0.98, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="mb-5 bg-comic-red border-3 border-black rounded-2xl p-4 text-white font-bangers text-base shadow-[3px_3px_0_#000]"
-            >
-              💥 ERROR: {updateError}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="flex-grow w-full px-4 sm:px-8 md:px-12 pt-24 sm:pt-28 relative z-10">
 
         {/* Password Accreditation Gate */}
         {!isVerified ? (
           <div className="min-h-[calc(100vh-260px)] flex items-center justify-center">
             <motion.div
-              initial={{ scale: 0.98 }}
-              animate={{ scale: 1 }}
-              className="relative w-full max-w-lg bg-white border-3 border-black rounded-2xl p-6 md:p-8 shadow-[4px_4px_0_#000] overflow-hidden bg-halftone-dots-white text-center"
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative w-full max-w-lg bg-[#0B0616]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-center overflow-hidden"
             >
-              <div className="absolute top-0 right-0 bg-comic-red border-b-3 border-l-3 border-black px-4 py-1 text-white font-bangers text-xs rounded-tr-2xl">
-                COMMAND SECURE
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white border-b border-l border-white/20 px-4 py-1.5 font-['Cinzel'] text-xs tracking-widest font-bold rounded-tr-3xl shadow-sm">
+                ADMIN CONSOLE
               </div>
 
-              <div className="relative text-center mt-4">
-                <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-comic-yellow border-3 border-black shadow-[2px_2px_0_#000] mb-3">
-                  <Shield size={22} className="stroke-[2.5] text-black" />
-                </div>
-                <h1 className="text-3xl font-luckiest text-black tracking-tight leading-none mb-1">
-                  ADMIN PASSCODE
+              <div className="relative text-center mt-3 flex flex-col items-center">
+                <h1 className="text-2xl sm:text-3xl font-['Montserrat'] font-black text-white tracking-tight uppercase leading-none mb-2">
+                  ADMINISTRATIVE LOGIN
                 </h1>
-                <p className="text-xs font-semibold text-gray-700 max-w-xs mx-auto">
-                  Provide validation keys to manage the active hackathon problem statements.
+                <p className="text-xs text-gray-300 max-w-xs mx-auto leading-relaxed font-normal">
+                  Provide validation credentials to manage hackathon collections and design briefs.
                 </p>
               </div>
 
               <form onSubmit={handleVerify} className="relative mt-6 space-y-4 text-left">
                 <div>
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                    ADMIN VAULT PASSWORD
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                    ADMINISTRATOR PASSCODE
                   </label>
                   <input
                     type="password"
-                    className="w-full h-11 comic-input bg-gray-50 text-black border-3 border-black rounded-lg px-4 font-luckiest tracking-wide focus:bg-comic-yellow/10"
+                    className="w-full h-11 bg-black/60 backdrop-blur-md text-white border border-white/15 rounded-xl px-4 focus:border-[#880A45] focus:bg-black/80 outline-none transition font-medium text-xs shadow-xs"
                     placeholder="Enter admin password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -741,20 +683,22 @@ const AddProblems = () => {
                     <motion.div
                       initial={{ scale: 0.98, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="rounded-xl border-3 border-black bg-comic-red p-3 text-white font-bangers text-sm shadow-[2px_2px_0_#000]"
+                      className="rounded-xl border border-rose-500/40 bg-rose-950/80 p-3 text-rose-200 font-['Cinzel'] text-xs tracking-wider shadow-sm flex items-center gap-2"
                     >
-                      💥 OOPS! {verifyError}
+                      <AlertTriangle size={16} className="text-rose-400" />
+                      <span>{verifyError}</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 <motion.button
                   whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isVerifying}
-                  className="w-full h-12 rounded-xl text-lg flex items-center justify-center gap-2 comic-btn-primary"
+                  className="w-full h-12 rounded-xl font-['Cinzel'] font-bold text-xs tracking-widest bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 uppercase"
                 >
-                  {isVerifying ? "UNLOCKING PORTALS..." : "OPEN PROBLEM PANEL"}
+                  {isVerifying ? "AUTHENTICATING..." : "ENTER JURY ARENA »"}
                 </motion.button>
               </form>
             </motion.div>
@@ -763,194 +707,202 @@ const AddProblems = () => {
           /* Main console view */
           <div className="space-y-6">
 
-            {/* Top Toolbar */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-3 border-black p-5 rounded-2xl shadow-[4px_4px_0_#000] relative bg-halftone-dots-white">
-              <div className="space-y-0.5 text-left">
-                <div className="text-xl font-luckiest text-black tracking-wider leading-none">
-                  ADMIN CONSOLE DECK
-                </div>
-                <div className="font-bangers text-xs text-comic-red tracking-widest uppercase mt-1">
-                  MANAGE MISSION FILES & TEAM SELECTIONS
-                </div>
+            {/* TopHeader Bar with [#880A45] -> [#14216F] Glow */}
+            <header className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden shadow-[0_12px_35px_rgba(0,0,0,0.85)] text-left">
+              <div className="absolute -top-20 -left-20 w-72 h-72 bg-[#880A45]/30 rounded-full blur-[90px] pointer-events-none" />
+              <div className="absolute -bottom-20 right-0 w-72 h-72 bg-[#14216F]/30 rounded-full blur-[90px] pointer-events-none" />
+
+              <div className="relative z-10">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-['Montserrat'] font-black tracking-tight uppercase mb-1 text-white">
+                  COLLECTIONS CONSOLE DECK
+                </h1>
+                <p className="bg-gradient-to-r from-pink-300 via-rose-200 to-indigo-300 bg-clip-text text-transparent font-['Cinzel'] text-xs tracking-widest font-bold uppercase">
+                  MANAGE HACKATHON BRIEFS & TEAM SELECTIONS
+                </p>
               </div>
 
-              {/* Action Buttons styled as stickers */}
-              <div className="flex flex-wrap items-center gap-2.5 font-bangers text-base">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0 relative z-10 font-['Cinzel'] text-xs font-bold">
                 {viewMode === VIEW_MODES.problems ? (
                   <>
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
+                    <button
                       type="button"
                       onClick={openCreate}
-                      className="bg-comic-lime text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
+                      className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white transition-all shadow-md uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/50"
                     >
-                      <Plus size={14} /> ADD PROBLEM STATEMENT
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
+                      <Plus size={14} /> ADD DESIGN BRIEF
+                    </button>
+                    <button
                       type="button"
                       onClick={showStudents}
-                      className="bg-comic-cyan text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
+                      className="px-4 sm:px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 transition-colors uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Users size={14} /> TEAM ROSTERS
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
+                      <Users size={14} /> TEAM LISTS
+                    </button>
+                    <button
                       type="button"
                       onClick={loadConfigAndProblems}
                       disabled={isLoadingProblems}
-                      className="bg-white text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1.5"
+                      className="px-4 sm:px-5 py-2 rounded-xl bg-[#880A45] hover:bg-[#9E0D52] text-white transition-all shadow-sm uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/40"
                     >
-                      <RefreshCw size={12} className={isLoadingProblems ? "animate-spin" : ""} /> REFRESH
-                    </motion.button>
+                      <RotateCw size={12} className={isLoadingProblems ? "animate-spin" : ""} /> REFRESH
+                    </button>
                   </>
                 ) : (
                   <>
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
+                    <button
                       type="button"
                       onClick={showProblems}
-                      className="bg-comic-yellow text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1"
+                      className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white transition-all shadow-md uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/50"
                     >
-                      <FileText size={14} /> PROBLEM STATEMENTS VAULT
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
+                      <FileText size={14} /> DESIGN BRIEFS VAULT
+                    </button>
+                    <button
                       type="button"
                       onClick={loadSelectedTeams}
                       disabled={isLoadingTeams}
-                      className="bg-white text-black border-3 border-black rounded-xl px-4 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer flex items-center gap-1.5"
+                      className="px-4 sm:px-5 py-2 rounded-xl bg-[#880A45] hover:bg-[#9E0D52] text-white transition-all shadow-sm uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/40"
                     >
-                      <RefreshCw size={12} className={isLoadingTeams ? "animate-spin" : ""} /> REFRESH
-                    </motion.button>
+                      <RotateCw size={12} className={isLoadingTeams ? "animate-spin" : ""} /> REFRESH
+                    </button>
                   </>
                 )}
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-comic-green/10 border-2 border-black px-3 py-1 font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
-                  <span className="h-2 w-2 rounded-full bg-comic-green" />
-                  AUTHENTICATED
-                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="px-4 sm:px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 transition-colors uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogOut size={12} /> LOGOUT
+                </button>
               </div>
             </header>
+
+            {/* Global Error Banners */}
+            <AnimatePresence>
+              {problemsLoadError && (
+                <motion.div
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="mb-5 bg-rose-950/80 border border-rose-500/40 rounded-2xl p-4 text-rose-200 font-['Cinzel'] text-xs tracking-wide shadow-md flex items-center gap-2 text-left"
+                >
+                  <AlertTriangle size={18} className="text-rose-400" />
+                  <span>{problemsLoadError}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ----------------- PROBLEMS TAB ----------------- */}
             {viewMode === VIEW_MODES.problems && (
               <div className="space-y-6">
 
                 {/* Enable toggle control widget */}
-                <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
-                  <div className="absolute top-0 right-0 bg-comic-cyan border-b-3 border-l-3 border-black px-4 py-0.5 text-black font-bangers text-[10px] rounded-tr-2xl">
-                    ACTIVE CONTROLS
+                <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative text-left">
+                  <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
+                    Brief Access Control
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
                     <div>
-                      <h3 className="text-xl font-luckiest text-black">STUDENT ACCESS LINK</h3>
-                      <p className="text-xs font-semibold text-gray-700">Toggle whether problem statements are visible for students to lock onto.</p>
+                      <h3 className="text-lg sm:text-xl font-['Montserrat'] font-bold text-white uppercase">TEAM SELECTION PORTAL</h3>
+                      <p className="text-xs text-gray-300 font-normal">Toggle whether design briefs are publicly visible for teams to claim.</p>
                     </div>
 
                     <label className="inline-flex items-center gap-3 cursor-pointer">
-                      <span className="font-luckiest text-base text-black">
-                        {problemsEnabled ? "ACTIVE!" : "DISABLED!"}
+                      <span className="font-['Cinzel'] font-bold text-xs tracking-wider text-white">
+                        {problemsEnabled ? "PORTAL ACTIVE" : "PORTAL SUSPENDED"}
                       </span>
                       <button
                         type="button"
                         disabled={isToggling}
                         onClick={() => handleToggleProblems(!problemsEnabled)}
-                        className={`relative inline-flex h-9 w-18 items-center rounded-full border-3 border-black transition ${problemsEnabled ? "bg-comic-green" : "bg-comic-red"
-                          }`}
+                        className={`relative inline-flex h-8 w-16 items-center rounded-full border transition cursor-pointer ${
+                          problemsEnabled ? "bg-emerald-950 border-emerald-500" : "bg-gray-800 border-white/20"
+                        }`}
                         aria-label="Toggle problem statements"
                       >
                         <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white border-2 border-black transition-transform ${problemsEnabled ? "translate-x-9" : "translate-x-1"
-                            }`}
+                          className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                            problemsEnabled ? "translate-x-8" : "translate-x-1"
+                          }`}
                         />
                       </button>
                     </label>
                   </div>
 
                   {toggleError && (
-                    <div className="mt-3 bg-comic-red border-3 border-black rounded-lg p-2.5 text-white font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
-                      💥 OOPS! {toggleError}
+                    <div className="mt-3 bg-rose-950/80 border border-rose-500/40 rounded-xl p-3 text-rose-200 font-['Cinzel'] text-xs tracking-wider shadow-sm">
+                      💥 {toggleError}
                     </div>
                   )}
                 </div>
 
-                {/* List of Problem Statements as Comic Mission Folders */}
-                <div className="bg-white border-3 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
-                  <div className="absolute top-0 right-0 bg-comic-purple border-b-3 border-l-3 border-black px-4 py-0.5 text-white font-bangers text-[10px] rounded-tr-2xl">
-                    MISSION FILES
+                {/* List of Problem Statements */}
+                <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative text-left">
+                  <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
+                    Collections Directory
                   </div>
 
-                  <h3 className="text-2xl font-luckiest text-black mb-5">ALL ACTIVE MISSION FILES</h3>
+                  <h3 className="text-lg sm:text-xl font-['Montserrat'] font-bold text-white mb-5 mt-1 uppercase">
+                    PUBLISHED FASHION DESIGN BRIEFS
+                  </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {problems.length ? (
                       problems.map((p) => {
-                        // const difficulty = getProblemDifficulty(p._id, p.title);
                         const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
                         const slotsLeft = problemLimit - (p.slotsTaken || 0);
 
                         return (
-                          /* Problem Card Styled like a Top Secret Folder File */
                           <div
                             key={p._id}
-                            className="bg-white border-3 border-black rounded-2xl p-5 shadow-[3px_3px_0_#000] relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#000] flex flex-col justify-between"
+                            className="bg-black/60 border border-white/15 rounded-2xl p-5 shadow-md hover:border-[#880A45]/50 transition-all flex flex-col justify-between"
                           >
-                            <div className="absolute top-0 right-0 bg-comic-yellow border-b-2 border-l-2 border-black px-3 py-0.5 font-bangers text-[9px] text-black">
-                              CLASSIFIED
-                            </div>
-
                             <div className="space-y-2 text-left">
                               <div className="flex justify-between items-center mb-1">
-                                {/* <span className={`font-bangers text-[10px] px-2 py-0.25 border border-black rounded shadow-[1px_1px_0_#000] ${difficulty.color}`}>
-                                  {difficulty.label}
-                                </span> */}
-                                <span className="font-bangers text-[10px] bg-comic-cyan border border-black text-black px-2 py-0.25 rounded shadow-[1px_1px_0_#000]">
-                                  SLOTS LEFT: {slotsLeft} / {problemLimit}
+                                <span className="font-['Cinzel'] text-[10px] font-bold bg-[#880A45]/30 border border-[#880A45]/50 text-pink-300 px-2.5 py-0.5 rounded-full">
+                                  SLOTS AVAILABLE: {slotsLeft} / {problemLimit}
                                 </span>
                               </div>
 
-                              <h4 className="font-luckiest text-base text-black leading-tight tracking-wide border-b-2 border-black pb-1">
+                              <h4 className="font-['Montserrat'] text-base sm:text-lg font-bold text-white leading-tight border-b border-white/10 pb-2 uppercase">
                                 {p.title}
                               </h4>
 
                               {p.themePng && (
-                                <div className="w-full h-24 border border-black rounded-lg overflow-hidden my-2 bg-gray-100">
-                                  <img src={p.themePng} alt={p.title} className="w-full h-full object-cover" />
+                                <div className="w-full h-32 border border-white/10 rounded-xl overflow-hidden my-2 bg-black/80 p-1">
+                                  <img src={p.themePng} alt={p.title} className="w-full h-full object-cover rounded-lg" />
                                 </div>
                               )}
 
-                              <p className="text-xs font-semibold text-gray-700 leading-relaxed font-comic line-clamp-3 mb-3">
+                              <p className="text-xs text-gray-300 leading-relaxed font-normal line-clamp-3 mb-3">
                                 {p.shortDescription}
                               </p>
                             </div>
 
                             {/* Edit / Delete Action buttons */}
-                            <div className="flex items-center gap-2.5 mt-3 pt-2 border-t border-gray-200 font-bangers text-xs">
-                              <motion.button
-                                whileHover={{ scale: 1.01 }}
+                            <div className="flex items-center gap-2.5 mt-3 pt-3 border-t border-white/10 font-['Cinzel'] text-xs font-bold">
+                              <button
                                 type="button"
                                 onClick={() => startEditing(p)}
-                                className="flex-1 bg-comic-cyan hover:bg-[#1eb6e5] text-black border-2 border-black rounded-lg py-1 shadow-[1.5px_1.5px_0_#000] cursor-pointer flex items-center justify-center gap-1"
+                                className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-xl py-2 shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition uppercase"
                               >
-                                <Edit size={12} /> EDIT FILE
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.01 }}
+                                <Edit3 size={12} /> EDIT BRIEF
+                              </button>
+                              <button
                                 type="button"
                                 onClick={() => handleDelete(p._id)}
-                                className="flex-1 bg-comic-red hover:bg-[#eb2419] text-white border-2 border-black rounded-lg py-1 shadow-[1.5px_1.5px_0_#000] cursor-pointer flex items-center justify-center gap-1"
+                                className="flex-1 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 rounded-xl py-2 shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition uppercase"
                               >
-                                <Trash2 size={12} /> SCRAP FILE
-                              </motion.button>
+                                <Trash2 size={12} /> DELETE BRIEF
+                              </button>
                             </div>
                           </div>
                         );
                       })
                     ) : (
-                      <div className="col-span-2 border-2 border-dashed border-black rounded-2xl p-6 text-center bg-gray-50">
-                        <p className="font-luckiest text-base text-black">NO ACTIVE MISSIONS LOGGED</p>
-                        <p className="text-xs font-semibold text-gray-500 mt-1">Click the "ADD PROBLEM STATEMENT" button above to log a new problem folder.</p>
+                      <div className="col-span-2 border border-dashed border-white/15 rounded-2xl p-8 text-center bg-black/40">
+                        <p className="font-['Montserrat'] font-bold text-base text-white uppercase">NO FASHION DESIGN BRIEFS LOGGED</p>
+                        <p className="text-xs text-gray-400 mt-1 font-mono">Click "ADD DESIGN BRIEF" above to register a new collection problem statement.</p>
                       </div>
                     )}
                   </div>
@@ -960,88 +912,85 @@ const AddProblems = () => {
 
             {/* ----------------- TEAMS TAB ----------------- */}
             {viewMode === VIEW_MODES.students && (
-              <div className="bg-white border-3 border-black rounded-2xl p-5 md:p-6 shadow-[4px_4px_0_#000] relative bg-halftone-dots-white text-left">
-                <div className="absolute top-0 right-0 bg-comic-purple border-b-3 border-l-3 border-black px-4 py-0.5 text-white font-bangers text-[10px] rounded-tr-2xl">
-                  TEAM FILES
+              <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative text-left">
+                <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
+                  Team Lists
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-5 mt-1">
                   <div>
-                    <h3 className="text-2xl font-luckiest text-black">ALLIANCE TARGET LOGS</h3>
-                    <p className="text-xs font-semibold text-gray-700">Check team coordinates and active target choices.</p>
+                    <h3 className="text-lg sm:text-xl font-['Montserrat'] font-bold text-white uppercase">REGISTERED TEAM ASSIGNMENTS</h3>
+                    <p className="text-xs text-gray-300 font-normal">Review team selection logs, design links, and submission files.</p>
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
+                  <div className="flex items-center gap-3">
+                    <button
                       type="button"
                       onClick={() => exportSubmissionsToCSV()}
                       disabled={isExporting}
-                      className="bg-comic-lime text-black border-2 border-black rounded-xl px-3.5 py-1 shadow-[2px_2px_0_#000] font-bangers text-sm cursor-pointer flex items-center gap-1.5 hover:bg-green-400 transition-colors"
+                      className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-4 py-2 font-['Cinzel'] text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-md hover:opacity-90 transition uppercase"
                       title="Download all teams and submissions as CSV"
                     >
                       <Download size={14} className={isExporting ? "animate-spin" : ""} />
                       {isExporting ? "GENERATING CSV..." : "EXPORT ALL TEAMS (CSV)"}
-                    </motion.button>
-                    <div className="font-bangers text-base bg-comic-yellow border-2 border-black rounded-xl px-3.5 py-0.5 shadow-[1.5px_1.5px_0_#000]">
+                    </button>
+                    <div className="font-['Cinzel'] text-xs font-bold bg-black/60 border border-white/15 rounded-xl px-4 py-2 text-pink-300">
                       TOTAL TEAMS: {selectedTeams.length}
                     </div>
                   </div>
                 </div>
 
-                {/* Team Search filter input */}
+                {/* Team Search filter */}
                 <div className="mb-5">
-                  <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                    SEARCH REGISTERED ALLIANCES
+                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase">
+                    SEARCH REGISTERED TEAMS
                   </label>
                   <input
-                    className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-4 focus:bg-comic-yellow/10 font-semibold text-sm"
-                    placeholder="Search by team title or leader name..."
+                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
+                    placeholder="Search by team title or lead designer..."
                     value={teamSearch}
                     onChange={(e) => setTeamSearch(e.target.value)}
                     autoComplete="off"
                   />
-                  <div className="mt-1.5 text-xs font-bangers text-gray-500 tracking-wider">
-                    FILTERING SHOWS: {filteredTeams.length} OF {selectedTeams.length} FILES
+                  <div className="mt-1.5 text-xs text-gray-400 font-mono">
+                    Showing {filteredTeams.length} of {selectedTeams.length} registered teams
                   </div>
                 </div>
 
-                {/* Verification Table */}
-                <div className="overflow-x-auto border-3 border-black rounded-xl shadow-[3px_3px_0_#000] bg-white">
+                {/* Table */}
+                <div className="overflow-x-auto border border-white/15 rounded-xl bg-black/40">
                   <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr className="bg-comic-blue border-b-3 border-black text-white font-bangers text-sm tracking-wider">
-                        <th className="px-3.5 py-2.5 text-left border-r-2 border-black">ALLIANCE TEAM NAME</th>
-                        <th className="px-3.5 py-2.5 text-left border-r-2 border-black">TEAM LEADER</th>
-                        <th className="px-3.5 py-2.5 text-left border-r-2 border-black">SELECTED MISSION PROBLEM STATEMENT</th>
-                        <th className="px-3.5 py-2.5 text-center border-r-2 border-black">TIME SECURED</th>
-                        <th className="px-3.5 py-2.5 text-center">ACTION</th>
+                      <tr className="bg-black/70 text-gray-300 font-['Cinzel'] text-xs tracking-wider border-b border-white/15">
+                        <th className="px-4 py-3 text-left border-r border-white/10">TEAM NAME</th>
+                        <th className="px-4 py-3 text-left border-r border-white/10">TEAM LEADER</th>
+                        <th className="px-4 py-3 text-left border-r border-white/10">SELECTED DESIGN BRIEF</th>
+                        <th className="px-4 py-3 text-center border-r border-white/10">TIME LOCKED</th>
+                        <th className="px-4 py-3 text-center">ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredTeams.length ? (
-                        filteredTeams.map((t, idx) => {
+                        filteredTeams.map((t) => {
                           const problemTitle =
                             t?.selectedProblemStatement?.title ||
                             t?.selectedProblemStatement?.name ||
-                            "-";
+                            "Not Selected";
                           return (
                             <tr
                               key={t._id}
-                              className={`border-b-2 border-black hover:bg-[#fffbe6] transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                }`}
+                              className="border-b border-white/10 hover:bg-white/5 text-white transition-colors"
                             >
-                              <td className="px-3 py-3 border-r-2 border-black font-luckiest text-black">{t.teamName}</td>
-                              <td className="px-3 py-3 border-r-2 border-black font-semibold text-gray-800">{t?.teamLeader?.name || "-"}</td>
-                              <td className="px-3 py-3 border-r-2 border-black font-semibold text-[11px] text-gray-700">{problemTitle}</td>
-                              <td className="px-3 py-3 border-r-2 border-black text-center font-bangers text-[10px] text-gray-500 tracking-wider">
+                              <td className="px-4 py-3.5 border-r border-white/10 font-['Montserrat'] font-bold text-sm text-white">{t.teamName}</td>
+                              <td className="px-4 py-3.5 border-r border-white/10 font-medium text-gray-200">{t?.teamLeader?.name || "-"}</td>
+                              <td className="px-4 py-3.5 border-r border-white/10 font-medium text-xs text-gray-300">{problemTitle}</td>
+                              <td className="px-4 py-3.5 border-r border-white/10 text-center text-[11px] text-gray-400 font-mono">
                                 {t?.selectedProblemSelectedAt
                                   ? new Date(t.selectedProblemSelectedAt).toLocaleString()
                                   : "-"}
                               </td>
-                              <td className="px-3 py-3 text-center font-bangers text-[10px]">
-                                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                                  <motion.button
-                                    whileHover={{ scale: 1.02 }}
+                              <td className="px-4 py-3.5 text-center font-['Cinzel'] text-[10px] font-bold">
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                  <button
                                     type="button"
                                     onClick={() => {
                                       const problem = t?.selectedProblemStatement;
@@ -1053,26 +1002,24 @@ const AddProblems = () => {
                                         problem,
                                       });
                                     }}
-                                    className="bg-comic-blue hover:bg-blue-600 text-white border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                    className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition uppercase"
                                   >
-                                    <Eye size={10} /> VIEW PROBLEM
-                                  </motion.button>
-                                  <motion.button
-                                    whileHover={{ scale: 1.02 }}
+                                    <Eye size={11} /> VIEW BRIEF
+                                  </button>
+                                  <button
                                     type="button"
                                     onClick={() => handleResetProblem(t._id, t.teamName)}
-                                    className="bg-comic-red hover:bg-red-600 text-white border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                    className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition uppercase"
                                   >
-                                    <RefreshCw size={10} /> RESET
-                                  </motion.button>
-                                  <motion.button
-                                    whileHover={{ scale: 1.02 }}
+                                    <RotateCw size={11} /> RESET
+                                  </button>
+                                  <button
                                     type="button"
                                     onClick={() => setManageSubmissionsPopup(t)}
-                                    className="bg-comic-lime hover:bg-green-500 text-black border-2 border-black rounded px-2 py-0.5 shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                                    className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition shadow-sm uppercase"
                                   >
-                                    <FileText size={10} /> SUBMISSIONS ({t.submissions?.length || 0})
-                                  </motion.button>
+                                    <FileText size={11} /> SUBMISSIONS ({t.submissions?.length || 0})
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -1080,12 +1027,12 @@ const AddProblems = () => {
                         })
                       ) : (
                         <tr>
-                          <td colSpan={5} className="p-6 text-center text-gray-500 font-bangers tracking-wide uppercase">
+                          <td colSpan={5} className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
                             {isLoadingTeams
-                              ? "LOADING TEAM TARGET FILES..."
+                              ? "LOADING TEAM LISTS..."
                               : selectedTeams.length
-                                ? "NO ALLIANCE MEETS QUERY PARAMETERS"
-                                : "NO ALLIANCE HAS LOCKED A PROBLEM STATEMENT YET"}
+                                ? "NO TEAMS FOUND MATCHING CRITERIA"
+                                : "NO TEAMS HAVE LOCKED A BRIEF YET"}
                           </td>
                         </tr>
                       )}
@@ -1095,96 +1042,88 @@ const AddProblems = () => {
               </div>
             )}
 
-            {/* Back button */}
-            <div className="mt-8 text-center">
-              <motion.a
-                whileHover={{ scale: 1.02 }}
-                href="/"
-                className="inline-block bg-white border-3 border-black rounded-xl px-5 py-1.5 font-luckiest text-xs text-black shadow-[3px_3px_0_#000] hover:bg-gray-50 transition"
-              >
-                ← BACK TO LAUNCH DECK
-              </motion.a>
-            </div>
-
           </div>
         )}
       </div>
 
-      {/* 1. Student problem statement details modal (speech bubble style) */}
+      {/* 1. Team problem statement details modal */}
       <AnimatePresence>
         {viewMode === VIEW_MODES.students && studentProblemPopup && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.75 }}
+              animate={{ opacity: 0.7 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60"
+              className="absolute inset-0 bg-black backdrop-blur-sm"
               onClick={() => setStudentProblemPopup(null)}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-xl bg-white border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0_#000] bg-halftone-dots-white max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-xl bg-[#0B0616]/95 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[85vh] overflow-y-auto text-left"
             >
-              <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3 mb-3 text-left">
+              <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                 <div>
-                  <span className="font-bangers text-[10px] text-comic-red uppercase leading-none block mb-0.5">
-                    ALLIANCE COORDINATE LOCK: {studentProblemPopup.teamName}
+                  <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold uppercase tracking-widest block mb-1">
+                    TEAM ASSIGNMENT: {studentProblemPopup.teamName}
                   </span>
-                  <h3 className="text-xl font-luckiest tracking-wide text-black leading-tight">
-                    {studentProblemPopup.problem?.title || "Problem Statement"}
+                  <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight">
+                    {studentProblemPopup.problem?.title || "Design Brief"}
                   </h3>
                   {studentProblemPopup.leaderName && (
-                    <p className="text-xs font-semibold text-gray-500 mt-1">Leader: {studentProblemPopup.leaderName}</p>
+                    <p className="text-xs text-gray-400 mt-1 font-normal">Team Leader: {studentProblemPopup.leaderName}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={() => setStudentProblemPopup(null)}
-                  className="bg-comic-red text-white border-2 border-black font-bangers text-base rounded w-7 h-7 flex items-center justify-center shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                  className="bg-white/10 hover:bg-white/15 text-gray-300 font-['Cinzel'] font-bold rounded-full w-8 h-8 flex items-center justify-center transition cursor-pointer"
                 >
-                  ×
+                  ✕
                 </button>
               </div>
 
-              <div className="space-y-3.5 text-xs font-semibold text-gray-800 leading-relaxed font-comic text-left">
-                <div className="bg-comic-yellow/5 border border-dashed border-black p-3 rounded-lg">
-                  <span className="font-bangers text-[10px] text-comic-red block mb-0.5">OBJECTIVE SUMMARY</span>
+              <div className="space-y-4 text-xs text-gray-300 leading-relaxed font-normal">
+                <div className="bg-black/60 border border-white/10 p-4 rounded-xl">
+                  <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold block mb-1 uppercase tracking-wider">
+                    COLLECTION SUMMARY
+                  </span>
                   <p>{studentProblemPopup.problem.shortDescription}</p>
                 </div>
                 {studentProblemPopup.problem.fullDescription && (
-                  <div className="bg-gray-50 border border-black p-3 rounded-lg">
-                    <span className="font-bangers text-[10px] text-gray-500 block mb-0.5">FULL PROBLEM STATEMENT DETAILS</span>
+                  <div className="bg-black/40 border border-white/10 p-4 rounded-xl">
+                    <span className="font-['Cinzel'] text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">
+                      FULL DESIGN SPECIFICATIONS & GUIDELINES
+                    </span>
                     <p className="whitespace-pre-wrap">{studentProblemPopup.problem.fullDescription}</p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-5 flex justify-end font-bangers text-base">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
+              <div className="mt-6 flex justify-end font-['Cinzel'] text-xs font-bold">
+                <button
                   type="button"
                   onClick={() => setStudentProblemPopup(null)}
-                  className="bg-white border-3 border-black rounded-lg px-4 py-1.5 shadow-[2px_2px_0_#000] hover:bg-gray-50 text-black cursor-pointer"
+                  className="bg-white/10 hover:bg-white/15 text-gray-300 rounded-xl px-5 py-2.5 transition cursor-pointer uppercase"
                 >
                   CLOSE
-                </motion.button>
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* 2. Admin Create/Edit Modal (explosive scale-up dialog) */}
+      {/* 2. Admin Create/Edit Modal */}
       <AnimatePresence>
         {viewMode === VIEW_MODES.problems && activeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.75 }}
+              animate={{ opacity: 0.7 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60"
+              className="absolute inset-0 bg-black backdrop-blur-sm"
               onClick={() => (activeModal === "edit" ? cancelEditing() : closeCreate())}
             />
 
@@ -1192,63 +1131,61 @@ const AddProblems = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-xl bg-white border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0_#000] bg-halftone-dots-white max-h-[85vh] overflow-y-auto text-left"
+              className="relative w-full max-w-xl bg-[#0B0616]/95 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[85vh] overflow-y-auto text-left"
             >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3 mb-4">
+              <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                 <div>
-                  <span className="font-bangers text-[10px] text-comic-red uppercase leading-none block mb-0.5">
-                    ADMIN PROBLEM STATEMENT OVERRIDE
+                  <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold uppercase tracking-widest block mb-1">
+                    HACKATHON BRIEFS MANAGEMENT
                   </span>
-                  <h3 className="text-xl font-luckiest tracking-wide text-black leading-tight">
-                    {activeModal === "edit" ? "EDIT PROBLEM PROBLEM STATEMENT" : "CREATE NEW PROBLEM STATEMENT"}
+                  <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight uppercase">
+                    {activeModal === "edit" ? "EDIT DESIGN BRIEF" : "CREATE NEW DESIGN BRIEF"}
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => (activeModal === "edit" ? cancelEditing() : closeCreate())}
-                  className="bg-comic-red text-white border-2 border-black font-bangers text-base rounded w-7 h-7 flex items-center justify-center shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                  className="bg-white/10 hover:bg-white/15 text-gray-300 font-['Cinzel'] font-bold rounded-full w-8 h-8 flex items-center justify-center transition cursor-pointer"
                 >
-                  ×
+                  ✕
                 </button>
               </div>
 
-              {/* Form Content */}
               {activeModal === "create" ? (
-                <form onSubmit={handleSave} className="space-y-4 text-xs">
+                <form onSubmit={handleSave} className="space-y-4 text-xs font-medium">
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      PROBLEM STATEMENT TITLE
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      DESIGN BRIEF TITLE
                     </label>
                     <input
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Secure Vault Protocol Challenge"
+                      placeholder="e.g. Avant-Garde Sustainable Silk Eveningwear"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      THEME PNG IMAGE URL
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      THEME PNG / COVER IMAGE URL
                     </label>
                     <input
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
                       value={themePng}
                       onChange={(e) => setThemePng(e.target.value)}
-                      placeholder="e.g., https://example.com/logo.png"
+                      placeholder="e.g. https://images.unsplash.com/... or /fashion_tech_hero.jpg"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      SELECTION LIMIT (MAX TEAMS)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      TEAM SELECTION LIMIT (MAX TEAMS)
                     </label>
                     <input
                       type="number"
                       min="1"
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold animate-none"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-bold text-xs text-white"
                       value={limit}
                       onChange={(e) => setLimit(Number(e.target.value))}
                       required
@@ -1256,72 +1193,73 @@ const AddProblems = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      SHORT SUMMARY (SHOWN ON TRADING CARDS)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      COLLECTION SUMMARY (SHOWN ON BRIEF CARDS)
                     </label>
                     <textarea
                       rows={3}
-                      className="w-full rounded-lg border-3 border-black bg-gray-50 px-3 py-2 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full rounded-xl border border-white/15 bg-black/60 px-4 py-2.5 focus:border-[#880A45] outline-none font-medium text-xs text-white resize-none"
                       value={shortDescription}
                       onChange={(e) => setShortDescription(e.target.value)}
-                      placeholder="A short summary of target objectives..."
+                      placeholder="A concise summary of aesthetic and technical design objectives..."
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      FULL INSTRUCTION SHEET (PROBLEM STATEMENT POPUP VIEW)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      FULL INSTRUCTION SHEET & SPECIFICATIONS
                     </label>
                     <textarea
                       rows={5}
-                      className="w-full rounded-lg border-3 border-black bg-gray-50 px-3 py-2 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full rounded-xl border border-white/15 bg-black/60 px-4 py-2.5 focus:border-[#880A45] outline-none font-medium text-xs text-white resize-none"
                       value={fullDescription}
                       onChange={(e) => setFullDescription(e.target.value)}
-                      placeholder="Detailed target specifications and guidelines..."
+                      placeholder="Detailed hackathon criteria, fabric specifications, presentation deliverables..."
                     />
                   </div>
 
                   {saveError && (
-                    <div className="bg-comic-red border-3 border-black rounded-lg p-2.5 text-white font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
-                      💥 OOPS! {saveError}
+                    <div className="bg-rose-950/80 border border-rose-500/40 rounded-xl p-3 text-rose-200 font-['Cinzel'] text-xs">
+                      💥 {saveError}
                     </div>
                   )}
 
                   {saveMessage && (
-                    <div className="bg-comic-lime border-3 border-black rounded-lg p-2.5 text-black font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
-                      🔥 SUCCESS: {saveMessage}
+                    <div className="bg-emerald-950/80 border border-emerald-500/40 rounded-xl p-3 text-emerald-200 font-['Cinzel'] text-xs">
+                      ✓ {saveMessage}
                     </div>
                   )}
 
-                  <div className="flex justify-end gap-3 font-bangers text-base pt-3 border-t-2 border-black">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
+                  <div className="flex justify-end gap-3 font-['Cinzel'] text-xs font-bold pt-4 border-t border-white/10">
+                    <button
                       type="button"
                       onClick={closeCreate}
-                      className="bg-white border-3 border-black rounded-lg px-4.5 py-1 shadow-[2px_2px_0_#000] hover:bg-gray-50 text-black cursor-pointer"
+                      className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-xl px-5 py-2.5 transition cursor-pointer uppercase"
                     >
-                      ABORT
-                    </motion.button>
+                      CANCEL
+                    </button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={!canSave}
-                      className={`border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer ${canSave ? "bg-comic-lime text-black hover:bg-comic-green" : "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed"
-                        }`}
+                      className={`rounded-xl px-6 py-2.5 transition-all cursor-pointer uppercase ${
+                        canSave ? "bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-md" : "bg-gray-800 text-gray-400 opacity-60 cursor-not-allowed"
+                      }`}
                     >
-                      {isSaving ? "LOGGING PROBLEM STATEMENT..." : "✓ CREATE PROBLEM STATEMENT"}
+                      {isSaving ? "SAVING BRIEF..." : "✓ CREATE DESIGN BRIEF"}
                     </motion.button>
                   </div>
                 </form>
               ) : (
-                <form onSubmit={handleUpdate} className="space-y-4 text-xs">
+                <form onSubmit={handleUpdate} className="space-y-4 text-xs font-medium">
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      PROBLEM STATEMENT TITLE
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      DESIGN BRIEF TITLE
                     </label>
                     <input
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                       required
@@ -1329,25 +1267,25 @@ const AddProblems = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      THEME PNG IMAGE URL
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      THEME PNG / COVER IMAGE URL
                     </label>
                     <input
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
                       value={editThemePng}
                       onChange={(e) => setEditThemePng(e.target.value)}
-                      placeholder="e.g., https://example.com/logo.png"
+                      placeholder="e.g., https://example.com/cover.png"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      SELECTION LIMIT (MAX TEAMS)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      TEAM SELECTION LIMIT (MAX TEAMS)
                     </label>
                     <input
                       type="number"
                       min="1"
-                      className="w-full h-10 comic-input bg-gray-50 border-3 border-black rounded-lg px-3.5 focus:bg-comic-yellow/10 font-semibold animate-none"
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-bold text-xs text-white"
                       value={editLimit}
                       onChange={(e) => setEditLimit(Number(e.target.value))}
                       required
@@ -1355,12 +1293,12 @@ const AddProblems = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      SHORT SUMMARY (SHOWN ON TRADING CARDS)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      COLLECTION SUMMARY (SHOWN ON BRIEF CARDS)
                     </label>
                     <textarea
                       rows={3}
-                      className="w-full rounded-lg border-3 border-black bg-gray-50 px-3 py-2 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full rounded-xl border border-white/15 bg-black/60 px-4 py-2.5 focus:border-[#880A45] outline-none font-medium text-xs text-white resize-none"
                       value={editShortDescription}
                       onChange={(e) => setEditShortDescription(e.target.value)}
                       required
@@ -1368,39 +1306,39 @@ const AddProblems = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bangers tracking-wider text-black mb-1">
-                      FULL INSTRUCTION SHEET (PROBLEM STATEMENT POPUP VIEW)
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
+                      FULL INSTRUCTION SHEET & SPECIFICATIONS
                     </label>
                     <textarea
                       rows={5}
-                      className="w-full rounded-lg border-3 border-black bg-gray-50 px-3 py-2 focus:bg-comic-yellow/10 font-semibold"
+                      className="w-full rounded-xl border border-white/15 bg-black/60 px-4 py-2.5 focus:border-[#880A45] outline-none font-medium text-xs text-white resize-none"
                       value={editFullDescription}
                       onChange={(e) => setEditFullDescription(e.target.value)}
                     />
                   </div>
 
                   {updateError && (
-                    <div className="bg-comic-red border-3 border-black rounded-lg p-2.5 text-white font-bangers text-xs shadow-[1.5px_1.5px_0_#000]">
-                      💥 OOPS! {updateError}
+                    <div className="bg-rose-950/80 border border-rose-500/40 rounded-xl p-3 text-rose-200 font-['Cinzel'] text-xs">
+                      💥 {updateError}
                     </div>
                   )}
 
-                  <div className="flex justify-end gap-3 font-bangers text-base pt-3 border-t-2 border-black">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
+                  <div className="flex justify-end gap-3 font-['Cinzel'] text-xs font-bold pt-4 border-t border-white/10">
+                    <button
                       type="button"
                       onClick={cancelEditing}
-                      className="bg-white border-3 border-black rounded-lg px-4.5 py-1 shadow-[2px_2px_0_#000] hover:bg-gray-50 text-black cursor-pointer"
+                      className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-xl px-5 py-2.5 transition cursor-pointer uppercase"
                     >
-                      ABORT
-                    </motion.button>
+                      CANCEL
+                    </button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={isUpdating}
-                      className="bg-comic-cyan hover:bg-[#1eb4e3] text-black border-3 border-black rounded-lg px-5 py-1.5 shadow-[2px_2px_0_#000] cursor-pointer"
+                      className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-6 py-2.5 shadow-md transition-all cursor-pointer uppercase"
                     >
-                      {isUpdating ? "UPDATING PROBLEM STATEMENT..." : "✓ SAVE CHANGES"}
+                      {isUpdating ? "SAVING CHANGES..." : "✓ SAVE CHANGES"}
                     </motion.button>
                   </div>
                 </form>
@@ -1416,120 +1354,121 @@ const AddProblems = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.75 }}
+              animate={{ opacity: 0.7 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60"
+              className="absolute inset-0 bg-black backdrop-blur-sm"
               onClick={() => setManageSubmissionsPopup(null)}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-2xl bg-white border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0_#000] bg-halftone-dots-white max-h-[85vh] overflow-y-auto text-left"
+              className="relative w-full max-w-2xl bg-[#0B0616]/95 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[85vh] overflow-y-auto text-left"
             >
-              <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3 mb-4">
+              <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                 <div>
-                  <span className="font-bangers text-[10px] text-comic-red uppercase leading-none block mb-0.5">
-                    ALLIANCE SUBMISSION MANAGER
+                  <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold uppercase tracking-widest block mb-1">
+                    TEAM SUBMISSIONS MANAGEMENT
                   </span>
-                  <h3 className="text-xl font-luckiest tracking-wide text-black leading-tight">
+                  <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight uppercase">
                     TEAM: {manageSubmissionsPopup.teamName}
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setManageSubmissionsPopup(null)}
-                  className="bg-comic-red text-white border-2 border-black font-bangers text-base rounded w-7 h-7 flex items-center justify-center shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                  className="bg-white/10 hover:bg-white/15 text-gray-300 font-['Cinzel'] font-bold rounded-full w-8 h-8 flex items-center justify-center transition cursor-pointer"
                 >
-                  ×
+                  ✕
                 </button>
               </div>
 
               <div className="flex justify-between items-center mb-4">
-                <span className="font-semibold text-xs text-gray-700">Manage links, notes, status, or add extra submissions.</span>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
+                <span className="text-xs text-gray-300 font-normal">Review links, designer moodboards, or append submission slots.</span>
+                <button
                   type="button"
                   onClick={handleAddFormSlot}
-                  className="bg-comic-lime text-black border-2 border-black rounded px-3 py-1 font-bangers text-xs shadow-[1.5px_1.5px_0_#000] cursor-pointer inline-flex items-center gap-1"
+                  className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-4 py-1.5 font-['Cinzel'] text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-md uppercase"
                 >
-                  <Plus size={10} /> ADD ANOTHER FORM
-                </motion.button>
+                  <Plus size={12} /> ADD SUBMISSION SLOT
+                </button>
               </div>
 
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {(!manageSubmissionsPopup.submissions || manageSubmissionsPopup.submissions.length === 0) ? (
-                  <div className="border-2 border-dashed border-black rounded-lg p-5 text-center bg-gray-50">
-                    <span className="font-luckiest text-sm text-black">NO SUBMISSION FORMS YET</span>
-                    <p className="text-[10px] font-semibold text-gray-500 mt-1">Click the "ADD ANOTHER FORM" button above to initialize a submission form for this team.</p>
+                  <div className="border border-dashed border-white/15 rounded-2xl p-6 text-center bg-black/60">
+                    <span className="font-['Montserrat'] font-bold text-sm text-white uppercase">NO SUBMISSION FORMS LOGGED</span>
+                    <p className="text-xs text-gray-400 mt-1 font-mono">Click "ADD SUBMISSION SLOT" above to generate a new submission form for this team.</p>
                   </div>
                 ) : (
                   manageSubmissionsPopup.submissions.map((sub, idx) => (
-                    <div key={idx} className="border-2 border-black p-4 rounded-xl shadow-[2px_2px_0_#000] bg-white">
-                      <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-1">
-                        <span className="font-luckiest text-sm text-black">FORM #{idx + 1}</span>
+                    <div key={idx} className="border border-white/15 p-4 sm:p-5 rounded-2xl bg-black/60">
+                      <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                        <span className="font-['Cinzel'] font-bold text-xs text-white">FORM #{idx + 1}</span>
                         <div className="flex items-center gap-2">
-                          <span className={`text-[10px] border px-2 py-0.5 rounded font-bangers tracking-wider ${sub.isSubmitted ? 'bg-comic-green/20 border-comic-green text-green-700' : 'bg-comic-yellow/20 border-comic-yellow text-amber-700'}`}>
-                            {sub.isSubmitted ? 'SUBMITTED' : 'PENDING'}
+                          <span className={`text-[10px] font-['Cinzel'] font-bold px-2.5 py-0.5 rounded-full ${
+                            sub.isSubmitted ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40' : 'bg-[#880A45]/30 text-pink-300 border border-[#880A45]/50'
+                          }`}>
+                            {sub.isSubmitted ? '✓ SUBMITTED' : 'PENDING'}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-3 text-left">
                         <div>
-                          <label className="block text-[10px] font-bangers tracking-wider text-black mb-1">
-                            CANVA / FIGMA LINK
+                          <label className="block text-[10px] font-['Cinzel'] font-bold tracking-wider text-gray-400 mb-1 uppercase">
+                            CANVA / FIGMA PROJECT URL
                             {sub.canvaFigmaLink && (
                               <a
                                 href={sub.canvaFigmaLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ml-2 text-comic-blue hover:underline font-comic"
+                                className="ml-2 text-pink-300 hover:underline font-medium"
                               >
-                                [OPEN LINK ↗]
+                                [OPEN PROJECT ↗]
                               </a>
                             )}
                           </label>
                           <input
                             type="text"
                             readOnly
-                            className="w-full h-8 comic-input bg-gray-100 border-2 border-black rounded-md px-2.5 font-semibold text-xs text-gray-600 cursor-default"
-                            value={sub.canvaFigmaLink || "No link submitted yet."}
+                            className="w-full h-9 bg-black/60 border border-white/15 rounded-xl px-3 font-medium text-xs text-gray-200 cursor-default"
+                            value={sub.canvaFigmaLink || "No design link submitted yet."}
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bangers tracking-wider text-black mb-1">SUBMISSION NOTE / REMARKS</label>
+                          <label className="block text-[10px] font-['Cinzel'] font-bold tracking-wider text-gray-400 mb-1 uppercase">
+                            DESIGN NOTES / REMARKS
+                          </label>
                           <textarea
                             rows={2}
                             readOnly
-                            className="w-full rounded-md border-2 border-black bg-gray-100 px-2.5 py-1.5 font-semibold text-xs text-gray-600 cursor-default"
-                            value={sub.note || "No notes added."}
+                            className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 font-medium text-xs text-gray-200 cursor-default resize-none"
+                            value={sub.note || "No design notes provided."}
                           />
                         </div>
 
-                        <div className="flex items-center justify-end pt-2 border-t border-gray-100 gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.01 }}
+                        <div className="flex items-center justify-end pt-2 border-t border-white/10 gap-2 font-['Cinzel'] text-[10px] font-bold">
+                          <button
                             type="button"
                             onClick={() => handleResetForm(idx)}
-                            className="bg-comic-red hover:bg-red-600 text-white border-2 border-black rounded px-2.5 py-1 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer"
+                            className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-lg px-3 py-1 cursor-pointer transition uppercase"
                           >
                             RESET (UNLOCK)
-                          </motion.button>
-                          <motion.button
-                            whileHover={manageSubmissionsPopup.submissions.length > 1 ? { scale: 1.01 } : {}}
+                          </button>
+                          <button
                             type="button"
                             disabled={manageSubmissionsPopup.submissions.length <= 1}
                             onClick={() => handleRemoveForm(idx)}
-                            className={`border-2 border-black rounded px-2.5 py-1 font-bangers text-[10px] shadow-[1.5px_1.5px_0_#000] cursor-pointer ${
+                            className={`rounded-lg px-3 py-1 cursor-pointer transition uppercase ${
                               manageSubmissionsPopup.submissions.length <= 1
-                                ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60 shadow-none border-gray-300"
-                                : "bg-coral-orange hover:bg-red-700 text-white"
+                                ? "bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
+                                : "bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40"
                             }`}
                           >
                             REMOVE
-                          </motion.button>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1537,15 +1476,14 @@ const AddProblems = () => {
                 )}
               </div>
 
-              <div className="mt-5 flex justify-end font-bangers text-base border-t-2 border-black pt-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
+              <div className="mt-6 flex justify-end font-['Cinzel'] text-xs font-bold border-t border-white/10 pt-4">
+                <button
                   type="button"
                   onClick={() => setManageSubmissionsPopup(null)}
-                  className="bg-white border-3 border-black rounded-lg px-4.5 py-1.5 shadow-[2px_2px_0_#000] hover:bg-gray-50 text-black cursor-pointer"
+                  className="bg-white/10 hover:bg-white/15 text-gray-300 rounded-xl px-5 py-2.5 transition cursor-pointer uppercase"
                 >
                   CLOSE
-                </motion.button>
+                </button>
               </div>
             </motion.div>
           </div>
