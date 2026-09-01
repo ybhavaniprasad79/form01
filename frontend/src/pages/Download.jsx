@@ -257,10 +257,10 @@ const Download = () => {
         }
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update status');
+        throw new Error(data?.message || `Failed to update status (${response.status})`);
       }
 
       setStatusEdits((prev) => ({

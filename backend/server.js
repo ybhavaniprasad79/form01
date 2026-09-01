@@ -105,7 +105,7 @@ const getProblemStatementsEnabled = async () => {
 };
 
 // Public: fetch whether problem statements are enabled
-app.get("/api/problems/config", async (req, res) => {
+app.get(["/api/problems/config", "/api/config/problems-enabled"], async (req, res) => {
   try {
     const enabled = await getProblemStatementsEnabled();
     return res.status(200).json({
@@ -122,7 +122,7 @@ app.get("/api/problems/config", async (req, res) => {
 });
 
 // Admin: enable/disable problem statements (password protected)
-app.post("/api/admin/problems/config", async (req, res) => {
+app.post(["/api/admin/problems/config", "/api/config/problems-enabled"], async (req, res) => {
   try {
     const { password, enabled } = req.body || {};
 
@@ -873,7 +873,7 @@ app.get("/api/marks-board", async (req, res) => {
 });
 
 // POST endpoint to create a new round
-app.post("/api/marks/round", async (req, res) => {
+app.post(["/api/marks/round", "/api/rounds"], async (req, res) => {
   try {
     const { roundName, outOf } = req.body;
 
@@ -936,9 +936,10 @@ app.post("/api/marks/round", async (req, res) => {
 });
 
 // PUT endpoint to update round name and/or out of marks
-app.put("/api/marks/round", async (req, res) => {
+app.put(["/api/marks/round", "/api/rounds/:roundName", "/api/rounds"], async (req, res) => {
   try {
-    const { oldRoundName, newRoundName, outOf } = req.body;
+    const oldRoundName = req.params.roundName || req.body.oldRoundName || req.body.roundName;
+    const { newRoundName, outOf } = req.body;
 
     if (!oldRoundName || !oldRoundName.trim()) {
       return res.status(400).json({
@@ -2069,8 +2070,8 @@ app.get("/api/payment-status/:transactionId", async (req, res) => {
   }
 });
 
-// POST endpoint to verify payment (admin only - password protected)
-app.post("/api/verify-payment", async (req, res) => {
+// POST endpoint to verify/update payment status (admin only - password protected)
+app.post(["/api/verify-payment", "/api/update-payment-status"], async (req, res) => {
   try {
     const { password, transactionId, status } = req.body;
 
