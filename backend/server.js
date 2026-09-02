@@ -1702,15 +1702,20 @@ app.put("/api/register", async (req, res) => {
       });
     }
 
-    // Collect all registration numbers
-    const regNos = [teamLeader.regNo, teamMember1.regNo, teamMember2.regNo, teamMember3.regNo];
+    // Collect all registration/application numbers
+    const regNos = [
+      String(teamLeader?.regNo || "").trim().toUpperCase(),
+      String(teamMember1?.regNo || "").trim().toUpperCase(),
+      String(teamMember2?.regNo || "").trim().toUpperCase(),
+      String(teamMember3?.regNo || "").trim().toUpperCase(),
+    ];
 
     // Check for duplicates within the same team
     const uniqueRegNos = new Set(regNos);
     if (uniqueRegNos.size !== regNos.length) {
       return res.status(400).json({
         success: false,
-        message: "Duplicate registration numbers found within the team",
+        message: "Duplicate registration / application numbers found within the team",
       });
     }
 
@@ -1727,7 +1732,7 @@ app.put("/api/register", async (req, res) => {
     if (existingRegistrations.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "One or more registration numbers already exist in the system",
+        message: "One or more registration / application numbers already exist in the system",
       });
     }
 

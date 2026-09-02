@@ -10,8 +10,10 @@ const memberSchema = new mongoose.Schema(
       minlength: [2, "Name must be at least 2 characters"],
     },
     regNo: {
-      type: Number,
-      required: [true, "Registration number is required"],
+      type: String,
+      required: [true, "Registration / Application number is required"],
+      trim: true,
+      uppercase: true,
     },
     phoneNo: {
       type: String,

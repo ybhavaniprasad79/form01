@@ -189,11 +189,11 @@ const Home = () => {
     const { name, value } = e.target;
     let sanitizedValue = value;
 
-    // Numerical restriction for phone numbers and registration numbers
+    // Numerical restriction for phone numbers
     if (name === 'phoneNo' || name === 'wardenPhoneNo') {
       sanitizedValue = value.replace(/\D/g, '').slice(0, 10);
     } else if (name === 'regNo') {
-      sanitizedValue = value.replace(/\D/g, '');
+      sanitizedValue = value.toUpperCase();
     } else if (name === 'section') {
       sanitizedValue = value.toUpperCase();
     }
@@ -290,12 +290,7 @@ const Home = () => {
         return;
       }
       if (!regNo) {
-        setError(`Please enter registration number for ${member.name}`);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      if (!/^[0-9]+$/.test(regNo)) {
-        setError(`Registration number for ${member.name} must contain only digits`);
+        setError(`Please enter registration / application number for ${member.name}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -364,14 +359,14 @@ const Home = () => {
     }
 
     const regNos = [
-      formData.teamLeader.regNo.trim(),
-      formData.teamMember1.regNo.trim(),
-      formData.teamMember2.regNo.trim(),
-      formData.teamMember3.regNo.trim()
+      formData.teamLeader.regNo.trim().toUpperCase(),
+      formData.teamMember1.regNo.trim().toUpperCase(),
+      formData.teamMember2.regNo.trim().toUpperCase(),
+      formData.teamMember3.regNo.trim().toUpperCase()
     ];
     const uniqueRegNos = new Set(regNos);
     if (uniqueRegNos.size !== regNos.length) {
-      setError('Duplicate registration numbers found. Each team member must have a unique ID.');
+      setError('Duplicate registration / application numbers found. Each team member must have a unique ID.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -620,18 +615,18 @@ const Home = () => {
             />
           </div>
 
-          {/* Registration Number */}
+          {/* Registration / Application Number */}
           <div>
             <label className="block text-[10px] font-['Cinzel'] tracking-widest font-semibold text-gray-300 mb-1 sm:mb-1.5 uppercase flex items-center gap-1.5">
-              <Hash className="w-3 h-3 text-[#880A45]" /> REGISTRATION NUMBER
+              <Hash className="w-3 h-3 text-[#880A45]" /> REGISTRATION / APPLICATION NUMBER
             </label>
             <input
-              type="tel"
+              type="text"
               name="regNo"
               value={formData[memberType].regNo}
               onChange={(e) => handleChange(e, memberType)}
-              className="w-full h-10 sm:h-11 px-3 sm:px-4 bg-black/60 border border-white/15 rounded-xl text-white placeholder:text-gray-600 focus:border-[#880A45] focus:bg-black/80 outline-none text-xs font-medium font-mono transition"
-              placeholder="e.g. 99200000000"
+              className="w-full h-10 sm:h-11 px-3 sm:px-4 bg-black/60 border border-white/15 rounded-xl text-white placeholder:text-gray-600 focus:border-[#880A45] focus:bg-black/80 outline-none text-xs font-medium font-mono uppercase transition"
+              placeholder="e.g. 99200000000 or 2026KARE00000"
               required
             />
           </div>
