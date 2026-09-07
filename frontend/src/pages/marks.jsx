@@ -622,7 +622,7 @@ function Marks() {
                     onChange={(e) => setSelectedTheme(e.target.value)}
                     className="w-full h-11 bg-black/60 backdrop-blur-md border border-white/15 rounded-xl pl-10 pr-8 focus:border-[#880A45] outline-none font-['Cinzel'] font-bold text-xs text-white appearance-none cursor-pointer"
                   >
-                    <option value="ALL">ALL DESIGN BRIEFS ({teams.length})</option>
+                    <option value="ALL">ALL PROBLEM STATEMENTS ({teams.length})</option>
                     {themesList
                       .filter((t) => t !== "ALL")
                       .map((theme) => {
@@ -661,7 +661,7 @@ function Marks() {
                             : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                         }`}
                       >
-                        {theme === "ALL" ? "ALL BRIEFS" : theme}
+                        {theme === "ALL" ? "ALL STATEMENTS" : theme}
                       </button>
                     );
                   })}
@@ -676,7 +676,7 @@ function Marks() {
                   <thead>
                     <tr className="bg-black/70 text-gray-300 font-['Cinzel'] text-xs tracking-wider border-b border-white/15">
                       <th className="px-4 py-3.5 text-left border-r border-white/10">TEAM NAME</th>
-                      <th className="px-4 py-3.5 text-left border-r border-white/10">DESIGN BRIEF ASSIGNMENT</th>
+                      <th className="px-4 py-3.5 text-left border-r border-white/10">PROBLEM STATEMENT ASSIGNMENT</th>
                       <th className="px-4 py-3.5 text-center border-r border-white/10">
                         {selectedRound
                           ? `${selectedRound.toUpperCase()} (MAX: ${Number.isFinite(selectedRoundOutOf) ? selectedRoundOutOf : '-'})`
@@ -747,7 +747,7 @@ function Marks() {
                 </table>
                 {filteredTeams.length === 0 && (
                   <div className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
-                    NO TEAMS FOUND MATCHING "{searchQuery}" {selectedTheme !== "ALL" ? `AND BRIEF "${selectedTheme}"` : ""}
+                    NO TEAMS FOUND MATCHING "{searchQuery}" {selectedTheme !== "ALL" ? `AND STATEMENT "${selectedTheme}"` : ""}
                   </div>
                 )}
               </div>

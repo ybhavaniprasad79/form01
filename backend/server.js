@@ -485,8 +485,18 @@ app.get("/api/admin/teams/selected", async (req, res) => {
   }
 });
 
+// Helper to find a team by teamId (ObjectId) or teamName
+const findTeamByIdentifier = async (identifier) => {
+  if (!identifier) return null;
+  if (mongoose.Types.ObjectId.isValid(String(identifier))) {
+    const team = await TeamRegistration.findById(identifier);
+    if (team) return team;
+  }
+  return await TeamRegistration.findOne({ teamName: identifier });
+};
+
 // Admin: reset selected problem statement for a team (password protected)
-app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
+app.post(["/api/admin/team/:teamId/reset-problem", "/api/admin/teams/:teamId/reset-problem"], async (req, res) => {
   try {
     const { password } = req.body || {};
 
@@ -498,14 +508,7 @@ app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
     }
 
     const { teamId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid teamId",
-      });
-    }
-
-    const team = await TeamRegistration.findById(teamId);
+    const team = await findTeamByIdentifier(teamId);
     if (!team) {
       return res.status(404).json({
         success: false,
@@ -552,8 +555,53 @@ app.post("/api/admin/team/:teamId/reset-problem", async (req, res) => {
 });
 
 
-// Admin: reset (unlock) team project submission form (password protected)
-app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
+// Admin: reset (clear & unlock) all submission forms for a team (password protected)
+app.post(["/api/admin/team/:teamId/reset-submissions", "/api/admin/teams/:teamId/reset-submissions"], async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const { teamId } = req.params;
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    const team = await findTeamByIdentifier(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    // Reset submissions array to a single fresh empty slot
+    team.submissions = [{
+      canvaFigmaLink: "",
+      note: "",
+      isSubmitted: false,
+      submittedAt: null,
+    }];
+
+    await team.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Submissions reset successfully",
+      data: team,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: reset (clear & unlock) team project submission form slot (password protected)
+app.post(["/api/admin/team/:teamId/reset-form/:formIndex", "/api/admin/teams/:teamId/reset-form/:formIndex"], async (req, res) => {
   try {
     const { password } = req.body || {};
     const { teamId, formIndex } = req.params;
@@ -573,14 +621,7 @@ app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid teamId",
-      });
-    }
-
-    const team = await TeamRegistration.findById(teamId);
+    const team = await findTeamByIdentifier(teamId);
     if (!team) {
       return res.status(404).json({
         success: false,
@@ -596,6 +637,8 @@ app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
     }
 
     const submission = team.submissions[index];
+    submission.canvaFigmaLink = "";
+    submission.note = "";
     submission.isSubmitted = false;
     submission.submittedAt = null;
 
@@ -603,7 +646,7 @@ app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Form reset successfully (unlocked)",
+      message: "Form reset successfully",
       data: team,
     });
   } catch (error) {
@@ -616,7 +659,7 @@ app.post("/api/admin/team/:teamId/reset-form/:formIndex", async (req, res) => {
 });
 
 // Admin: add another submission form for team (password protected)
-app.post("/api/admin/team/:teamId/add-form", async (req, res) => {
+app.post(["/api/admin/team/:teamId/add-form", "/api/admin/teams/:teamId/add-form"], async (req, res) => {
   try {
     const { password } = req.body || {};
     const { teamId } = req.params;
@@ -628,14 +671,7 @@ app.post("/api/admin/team/:teamId/add-form", async (req, res) => {
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid teamId",
-      });
-    }
-
-    const team = await TeamRegistration.findById(teamId);
+    const team = await findTeamByIdentifier(teamId);
     if (!team) {
       return res.status(404).json({
         success: false,
@@ -671,7 +707,7 @@ app.post("/api/admin/team/:teamId/add-form", async (req, res) => {
 });
 
 // Admin: remove team project submission form (password protected)
-app.post("/api/admin/team/:teamId/remove-form/:formIndex", async (req, res) => {
+app.post(["/api/admin/team/:teamId/remove-form/:formIndex", "/api/admin/teams/:teamId/remove-form/:formIndex"], async (req, res) => {
   try {
     const { password } = req.body || {};
     const { teamId, formIndex } = req.params;
@@ -691,14 +727,7 @@ app.post("/api/admin/team/:teamId/remove-form/:formIndex", async (req, res) => {
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(String(teamId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid teamId",
-      });
-    }
-
-    const team = await TeamRegistration.findById(teamId);
+    const team = await findTeamByIdentifier(teamId);
     if (!team) {
       return res.status(404).json({
         success: false,

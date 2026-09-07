@@ -5,7 +5,6 @@ import { Crown, Check, Users, Gem, Scissors, AlertTriangle, Sparkles, RotateCw, 
 import FashionBackground from "../components/FashionBackground";
 
 const TEAM_KEY_STORAGE = "teamPanel.teamKey";
-const MAX_TEAMS_PER_PROBLEM = 10;
 
 const TeamPanel = () => {
   const [teamKey, setTeamKey] = useState("");
@@ -100,24 +99,41 @@ const TeamPanel = () => {
   }, [team?.submissions]);
 
   const refreshTeamData = async () => {
-    const key = String(team?.teamName || teamKey || "").trim();
+    const key = String(
+      team?.teamName || teamKey || localStorage.getItem(TEAM_KEY_STORAGE) || "",
+    ).trim();
     if (!key) return;
+
     setIsLoading(true);
+    setSubmissionError("");
+    setSubmissionSuccess("");
+    setProblemsError("");
+
     try {
       const [teamRes, probRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/team/${encodeURIComponent(key)}`),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/problems`)
+        fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/team/${encodeURIComponent(key)}`,
+        ),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/problems`),
       ]);
       const [teamData, probData] = await Promise.all([
         teamRes.json().catch(() => null),
-        probRes.json().catch(() => null)
+        probRes.json().catch(() => null),
       ]);
+
       if (teamData?.success && teamData.data) {
         setTeam(teamData.data);
-        const dbSelected = String(teamData.data.selectedProblemStatement || "").trim();
-        if (dbSelected) setSelectedProblemId(dbSelected);
+        const dbSelected = teamData.data.selectedProblemStatement
+          ? String(teamData.data.selectedProblemStatement).trim()
+          : null;
+        setSelectedProblemId(dbSelected);
       }
-      if (probData?.success && Array.isArray(probData.data)) {
+
+      if (probData?.disabled) {
+        setAreProblemsDisabled(true);
+        setProblems([]);
+      } else if (probData?.success && Array.isArray(probData.data)) {
+        setAreProblemsDisabled(false);
         const normalized = probData.data
           .map((p) => ({
             id: String(p._id || ""),
@@ -133,6 +149,7 @@ const TeamPanel = () => {
       }
     } catch (e) {
       console.error(e);
+      setProblemsError("Unable to connect to the server.");
     } finally {
       setIsLoading(false);
     }
@@ -161,12 +178,10 @@ const TeamPanel = () => {
         }
 
         setTeam(data.data);
-        const dbSelected = String(
-          data?.data?.selectedProblemStatement || "",
-        ).trim();
-        if (dbSelected) {
-          setSelectedProblemId(dbSelected);
-        }
+        const dbSelected = data?.data?.selectedProblemStatement
+          ? String(data.data.selectedProblemStatement).trim()
+          : null;
+        setSelectedProblemId(dbSelected);
         setView("dashboard");
       } catch {
         // keep user on access screen
@@ -302,12 +317,10 @@ const TeamPanel = () => {
       }
 
       setTeam(data.data);
-      const dbSelected = String(
-        data?.data?.selectedProblemStatement || "",
-      ).trim();
-      if (dbSelected) {
-        setSelectedProblemId(dbSelected);
-      }
+      const dbSelected = data?.data?.selectedProblemStatement
+        ? String(data.data.selectedProblemStatement).trim()
+        : null;
+      setSelectedProblemId(dbSelected);
       localStorage.setItem(TEAM_KEY_STORAGE, normalized);
       setView("dashboard");
     } catch {
@@ -526,19 +539,19 @@ const TeamPanel = () => {
               </div>
 
 
-              {/* ================= RIGHT COLUMN: Hackathon Collection Briefs (lg:col-span-8) ================= */}
+              {/* ================= RIGHT COLUMN: Hackathon Problem Statements (lg:col-span-8) ================= */}
               <div className="lg:col-span-8 flex flex-col text-left">
                 <section className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-7 relative flex-1 flex flex-col shadow-[0_12px_35px_rgba(0,0,0,0.85)]">
                   {/* Top Badge with [#880A45] to [#14216F] Gradient */}
                   <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
-                    {selectedProblemId ? "Locked Design Brief" : "Hackathon Collection Briefs"}
+                    {selectedProblemId ? "Locked Problem Statement" : "Hackathon Problem Statements"}
                   </div>
 
                   <div className="mt-2 mb-5">
                     <p className="text-xs text-gray-300 font-normal leading-relaxed">
                       {selectedProblemId
-                        ? "Your team has claimed a collection brief. Submit your Figma or Canva project URL below."
-                        : `Browse available design briefs below and claim your collection folder. Limit is ${MAX_TEAMS_PER_PROBLEM} teams per brief.`}
+                        ? "Your team has claimed a problem statement. Submit your Figma or Canva project URL below."
+                        : `Browse available problem statements below and claim your problem statement.`}
                     </p>
                   </div>
 
@@ -549,12 +562,12 @@ const TeamPanel = () => {
                     </div>
                   )}
 
-                  {/* Selected & Locked Brief Panel */}
+                  {/* Selected & Locked Problem Statement Panel */}
                   {selectedProblem ? (
                     <div className="space-y-6">
                       <div className="border border-white/15 rounded-2xl bg-black/60 p-6 relative shadow-inner">
                         <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-['Cinzel'] text-[10px] font-bold tracking-widest px-3 py-0.5 rounded-full shadow-sm">
-                          LOCKED COLLECTION BRIEF
+                          LOCKED PROBLEM STATEMENT
                         </div>
 
                         <div className="space-y-3 text-center">
@@ -589,7 +602,7 @@ const TeamPanel = () => {
                             onClick={() => setDetailsProblemId(selectedProblem.id)}
                             className="bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white font-['Cinzel'] text-xs font-bold tracking-wider border border-white/20 rounded-xl px-5 py-2 transition cursor-pointer shadow-md"
                           >
-                            VIEW FULL BRIEF MODAL
+                            VIEW FULL STATEMENT MODAL
                           </button>
                         </div>
                       </div>
@@ -681,24 +694,15 @@ const TeamPanel = () => {
                       </div>
                     </div>
                   ) : problems.length ? (
-                    /* Grid of Available Briefs */
+                    /* Grid of Available Problem Statements */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[580px] overflow-y-auto pr-1">
                       {visibleProblems.map((p) => {
-                        const problemLimit = p.limit || MAX_TEAMS_PER_PROBLEM;
-                        const slotsLeft = problemLimit - p.slotsTaken;
-
                         return (
                           <div
                             key={p.id}
                             className="bg-black/60 border border-white/15 rounded-2xl p-4 sm:p-5 flex flex-col justify-between text-left hover:border-[#880A45]/50 transition-all relative shadow-md"
                           >
                             <div>
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="font-['Cinzel'] text-[10px] font-bold bg-gradient-to-r from-[#880A45]/40 to-[#14216F]/40 text-pink-300 border border-[#880A45]/50 px-2.5 py-0.5 rounded-full">
-                                  {slotsLeft} / {problemLimit} SLOTS LEFT
-                                </span>
-                              </div>
-
                               <h3 className="font-['Montserrat'] text-base sm:text-lg font-bold text-white leading-tight mb-2">
                                 {p.title}
                               </h3>
@@ -722,7 +726,7 @@ const TeamPanel = () => {
                               onClick={() => setDetailsProblemId(p.id)}
                               className="w-full bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white border border-white/20 font-['Cinzel'] font-bold py-2 rounded-xl text-xs tracking-wider cursor-pointer transition-all uppercase shadow-sm"
                             >
-                              VIEW DESIGN BRIEF
+                              VIEW PROBLEM STATEMENT
                             </button>
                           </div>
                         );
@@ -734,11 +738,11 @@ const TeamPanel = () => {
                       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(45deg, #880a45 0, #880a45 1px, transparent 0, transparent 50%)", backgroundSize: "20px 20px" }} />
                       <div className="relative z-10 max-w-lg">
                         <h2 className="text-xl sm:text-2xl font-bold font-['Montserrat'] text-white uppercase tracking-wider mb-3">
-                          {areProblemsDisabled ? "Hackathon Briefs Archive Locked" : "No Hackathon Briefs Published"}
+                          {areProblemsDisabled ? "Hackathon Statements Archive Locked" : "No Problem Statements Published"}
                         </h2>
                         <p className="text-gray-400 font-mono text-xs leading-relaxed">
                           {areProblemsDisabled
-                            ? "Design brief selection is temporarily paused by event administration."
+                            ? "Problem statement selection is temporarily paused by event administration."
                             : "Please check back shortly as the jury releases new fashion design statements."}
                         </p>
                       </div>
@@ -752,7 +756,7 @@ const TeamPanel = () => {
         )}
       </div>
 
-      {/* Popup Modal for Brief Details & Locking */}
+      {/* Popup Modal for Problem Statement Details & Locking */}
       <AnimatePresence>
         {detailsProblem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -773,7 +777,7 @@ const TeamPanel = () => {
               <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                 <div>
                   <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold uppercase tracking-widest block mb-1">
-                    DESIGN BRIEF SPECIFICATION
+                    PROBLEM STATEMENT SPECIFICATION
                   </span>
                   <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight">
                     {detailsProblem.title}
@@ -855,7 +859,7 @@ const TeamPanel = () => {
 
                         if (!response.ok || !data?.success) {
                           setProblemsError(
-                            data?.message || "Unable to select design brief.",
+                            data?.message || "Unable to select problem statement.",
                           );
 
                           if (data?.code === "PROBLEM_FULL") {
@@ -884,7 +888,7 @@ const TeamPanel = () => {
                     }}
                     className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-6 py-2.5 shadow-md cursor-pointer hover:shadow-lg transition-all uppercase tracking-wider"
                   >
-                    LOCK THIS BRIEF »
+                    LOCK THIS STATEMENT »
                   </motion.button>
                 )}
               </div>

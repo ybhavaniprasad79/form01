@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Sparkles, AlertTriangle, FileText, Check, Plus, RotateCw, Trash2, Edit3, Users, Eye, Download, LogOut } from "lucide-react";
+import { Crown, Sparkles, AlertTriangle, FileText, Check, Plus, RotateCw, Trash2, Edit3, Users, Eye, Download, LogOut, Filter } from "lucide-react";
 import FashionBackground from "../components/FashionBackground";
 
 const VIEW_MODES = {
@@ -116,6 +116,7 @@ const AddProblems = () => {
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [teamsLoadError, setTeamsLoadError] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
+  const [teamStatusFilter, setTeamStatusFilter] = useState("all"); // 'all' | 'statement_selected' | 'statement_not_selected' | 'submitted' | 'not_submitted'
   const [studentProblemPopup, setStudentProblemPopup] = useState(null);
   const [manageSubmissionsPopup, setManageSubmissionsPopup] = useState(null);
 
@@ -183,7 +184,7 @@ const AddProblems = () => {
       }
 
       if (!problemsRes.ok || !problemsData?.success) {
-        setProblemsLoadError(problemsData?.message || "Failed to load design briefs.");
+        setProblemsLoadError(problemsData?.message || "Failed to load problem statements.");
         return;
       }
 
@@ -265,7 +266,7 @@ const AddProblems = () => {
 
   const handleDelete = async (problemId) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to permanently delete this hackathon design brief?",
+      "Are you sure you want to permanently delete this hackathon problem statement?",
     );
     if (!confirmDelete) return;
 
@@ -283,7 +284,7 @@ const AddProblems = () => {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to delete brief.");
+        alert(data?.message || "Failed to delete problem statement.");
         return;
       }
 
@@ -369,7 +370,7 @@ const AddProblems = () => {
 
   const handleResetProblem = async (teamId, teamName) => {
     const confirmReset = window.confirm(
-      `Are you sure you want to unlock the design brief for "${teamName}"?`,
+      `Are you sure you want to unlock the problem statement for "${teamName}"?`,
     );
     if (!confirmReset) return;
 
@@ -387,7 +388,7 @@ const AddProblems = () => {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to reset brief selection.");
+        alert(data?.message || "Failed to reset problem statement selection.");
         return;
       }
 
@@ -397,12 +398,45 @@ const AddProblems = () => {
     }
   };
 
+  const handleResetAllSubmissions = async (teamId, teamName) => {
+    const confirmReset = window.confirm(
+      `Are you sure you want to reset all project submissions for "${teamName}"? This will clear the submitted project links and reset their status.`,
+    );
+    if (!confirmReset) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(
+          teamId,
+        )}/reset-submissions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: password.trim() }),
+        },
+      );
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        alert(data?.message || "Failed to reset team submissions.");
+        return;
+      }
+
+      await loadSelectedTeams();
+      if (manageSubmissionsPopup && (manageSubmissionsPopup._id === teamId || manageSubmissionsPopup.teamName === teamName)) {
+        setManageSubmissionsPopup(data.data);
+      }
+    } catch {
+      alert("Unable to connect to the server.");
+    }
+  };
+
   const handleAddFormSlot = async () => {
     if (!manageSubmissionsPopup) return;
     try {
-      const teamName = manageSubmissionsPopup.teamName;
+      const targetId = manageSubmissionsPopup._id || manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/add-form`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(targetId)}/add-form`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -423,12 +457,12 @@ const AddProblems = () => {
 
   const handleResetForm = async (idx) => {
     if (!manageSubmissionsPopup) return;
-    const confirmReset = window.confirm(`Unlock Submission Slot #${idx + 1} for this team?`);
+    const confirmReset = window.confirm(`Are you sure you want to reset Submission Slot #${idx + 1} for this team? This will clear the submitted project link.`);
     if (!confirmReset) return;
     try {
-      const teamName = manageSubmissionsPopup.teamName;
+      const targetId = manageSubmissionsPopup._id || manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/reset-form/${idx}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(targetId)}/reset-form/${idx}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -437,7 +471,7 @@ const AddProblems = () => {
       );
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) {
-        alert(data?.message || "Failed to unlock submission.");
+        alert(data?.message || "Failed to reset submission.");
         return;
       }
       setManageSubmissionsPopup(data.data);
@@ -452,9 +486,9 @@ const AddProblems = () => {
     const confirmRemove = window.confirm(`Permanently remove Submission Slot #${idx + 1}?`);
     if (!confirmRemove) return;
     try {
-      const teamName = manageSubmissionsPopup.teamName;
+      const targetId = manageSubmissionsPopup._id || manageSubmissionsPopup.teamName;
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(teamName)}/remove-form/${idx}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/${encodeURIComponent(targetId)}/remove-form/${idx}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -500,7 +534,8 @@ const AddProblems = () => {
 
       const headers = [
         "Team Name",
-        "Selected Fashion Design Brief",
+        "Selected Problem Statement",
+        "Submission Status",
         "Submission Links",
         "Design Notes"
       ];
@@ -519,6 +554,15 @@ const AddProblems = () => {
           "Not Selected";
 
         const submissions = Array.isArray(t?.submissions) ? t.submissions : [];
+        const submittedCount = submissions.filter(
+          (s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim())
+        ).length;
+        const hasSubmitted = submittedCount > 0;
+        const statusText = hasSubmitted
+          ? submissions.length > 1
+            ? `Submitted (${submittedCount}/${submissions.length})`
+            : "Submitted"
+          : "Not Submitted";
 
         const linksArr = submissions
           .map((sub, i) => {
@@ -542,6 +586,7 @@ const AddProblems = () => {
         return [
           cleanVal(teamName),
           cleanVal(problemTitle),
+          cleanVal(statusText),
           cleanVal(submissionLink),
           cleanVal(submissionNote)
         ].join(",");
@@ -569,10 +614,54 @@ const AddProblems = () => {
     }
   };
 
+  const filterCounts = useMemo(() => {
+    let statementSelected = 0;
+    let statementNotSelected = 0;
+    let submitted = 0;
+    let notSubmitted = 0;
+
+    selectedTeams.forEach((t) => {
+      const hasStatement = Boolean(t?.selectedProblemStatement);
+      if (hasStatement) statementSelected++;
+      else statementNotSelected++;
+
+      const subs = Array.isArray(t?.submissions) ? t.submissions : [];
+      const isSub = subs.some((s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim()));
+      if (isSub) submitted++;
+      else notSubmitted++;
+    });
+
+    return {
+      all: selectedTeams.length,
+      statement_selected: statementSelected,
+      statement_not_selected: statementNotSelected,
+      submitted,
+      not_submitted: notSubmitted,
+    };
+  }, [selectedTeams]);
+
   const filteredTeams = useMemo(() => {
+    let list = selectedTeams;
+
+    if (teamStatusFilter === "statement_selected") {
+      list = list.filter((t) => Boolean(t?.selectedProblemStatement));
+    } else if (teamStatusFilter === "statement_not_selected") {
+      list = list.filter((t) => !t?.selectedProblemStatement);
+    } else if (teamStatusFilter === "submitted") {
+      list = list.filter((t) => {
+        const subs = Array.isArray(t?.submissions) ? t.submissions : [];
+        return subs.some((s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim()));
+      });
+    } else if (teamStatusFilter === "not_submitted") {
+      list = list.filter((t) => {
+        const subs = Array.isArray(t?.submissions) ? t.submissions : [];
+        return !subs.some((s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim()));
+      });
+    }
+
     const q = teamSearch.trim().toLowerCase();
-    if (!q) return selectedTeams;
-    return selectedTeams.filter((t) => {
+    if (!q) return list;
+    return list.filter((t) => {
       const name = String(t?.teamName || "").toLowerCase();
       const leader = String(t?.teamLeader?.name || "").toLowerCase();
       const problem = String(
@@ -582,7 +671,7 @@ const AddProblems = () => {
       ).toLowerCase();
       return name.includes(q) || leader.includes(q) || problem.includes(q);
     });
-  }, [selectedTeams, teamSearch]);
+  }, [selectedTeams, teamSearch, teamStatusFilter]);
 
   const canSave = Boolean(title.trim() && shortDescription.trim());
 
@@ -617,7 +706,7 @@ const AddProblems = () => {
         return;
       }
 
-      setSaveMessage("Design brief added successfully.");
+      setSaveMessage("Problem statement added successfully.");
       setTitle("");
       setThemePng("");
       setShortDescription("");
@@ -659,7 +748,7 @@ const AddProblems = () => {
                   ADMINISTRATIVE LOGIN
                 </h1>
                 <p className="text-xs text-gray-300 max-w-xs mx-auto leading-relaxed font-normal">
-                  Provide validation credentials to manage hackathon collections and design briefs.
+                  Provide validation credentials to manage hackathon collections and problem statements.
                 </p>
               </div>
 
@@ -717,7 +806,7 @@ const AddProblems = () => {
                   COLLECTIONS CONSOLE DECK
                 </h1>
                 <p className="bg-gradient-to-r from-pink-300 via-rose-200 to-indigo-300 bg-clip-text text-transparent font-['Cinzel'] text-xs tracking-widest font-bold uppercase">
-                  MANAGE HACKATHON BRIEFS & TEAM SELECTIONS
+                  MANAGE HACKATHON PROBLEM STATEMENTS & TEAM SELECTIONS
                 </p>
               </div>
 
@@ -730,7 +819,7 @@ const AddProblems = () => {
                       onClick={openCreate}
                       className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white transition-all shadow-md uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/50"
                     >
-                      <Plus size={14} /> ADD DESIGN BRIEF
+                      <Plus size={14} /> ADD PROBLEM STATEMENT
                     </button>
                     <button
                       type="button"
@@ -755,7 +844,7 @@ const AddProblems = () => {
                       onClick={showProblems}
                       className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white transition-all shadow-md uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border border-[#880A45]/50"
                     >
-                      <FileText size={14} /> DESIGN BRIEFS VAULT
+                      <FileText size={14} /> PROBLEM STATEMENTS VAULT
                     </button>
                     <button
                       type="button"
@@ -798,13 +887,13 @@ const AddProblems = () => {
                 {/* Enable toggle control widget */}
                 <div className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-6 shadow-[0_12px_35px_rgba(0,0,0,0.85)] relative text-left">
                   <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
-                    Brief Access Control
+                    Statement Access Control
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
                     <div>
                       <h3 className="text-lg sm:text-xl font-['Montserrat'] font-bold text-white uppercase">TEAM SELECTION PORTAL</h3>
-                      <p className="text-xs text-gray-300 font-normal">Toggle whether design briefs are publicly visible for teams to claim.</p>
+                      <p className="text-xs text-gray-300 font-normal">Toggle whether problem statements are publicly visible for teams to claim.</p>
                     </div>
 
                     <label className="inline-flex items-center gap-3 cursor-pointer">
@@ -843,7 +932,7 @@ const AddProblems = () => {
                   </div>
 
                   <h3 className="text-lg sm:text-xl font-['Montserrat'] font-bold text-white mb-5 mt-1 uppercase">
-                    PUBLISHED FASHION DESIGN BRIEFS
+                    PUBLISHED PROBLEM STATEMENTS
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -886,14 +975,14 @@ const AddProblems = () => {
                                 onClick={() => startEditing(p)}
                                 className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-xl py-2 shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition uppercase"
                               >
-                                <Edit3 size={12} /> EDIT BRIEF
+                                <Edit3 size={12} /> EDIT STATEMENT
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDelete(p._id)}
                                 className="flex-1 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 rounded-xl py-2 shadow-sm cursor-pointer flex items-center justify-center gap-1.5 transition uppercase"
                               >
-                                <Trash2 size={12} /> DELETE BRIEF
+                                <Trash2 size={12} /> DELETE STATEMENT
                               </button>
                             </div>
                           </div>
@@ -901,8 +990,8 @@ const AddProblems = () => {
                       })
                     ) : (
                       <div className="col-span-2 border border-dashed border-white/15 rounded-2xl p-8 text-center bg-black/40">
-                        <p className="font-['Montserrat'] font-bold text-base text-white uppercase">NO FASHION DESIGN BRIEFS LOGGED</p>
-                        <p className="text-xs text-gray-400 mt-1 font-mono">Click "ADD DESIGN BRIEF" above to register a new collection problem statement.</p>
+                        <p className="font-['Montserrat'] font-bold text-base text-white uppercase">NO PROBLEM STATEMENTS LOGGED</p>
+                        <p className="text-xs text-gray-400 mt-1 font-mono">Click "ADD PROBLEM STATEMENT" above to register a new collection problem statement.</p>
                       </div>
                     )}
                   </div>
@@ -925,13 +1014,17 @@ const AddProblems = () => {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => exportSubmissionsToCSV()}
+                      onClick={() => exportSubmissionsToCSV(filteredTeams)}
                       disabled={isExporting}
                       className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-4 py-2 font-['Cinzel'] text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-md hover:opacity-90 transition uppercase"
-                      title="Download all teams and submissions as CSV"
+                      title="Download displayed teams and submissions as CSV"
                     >
                       <Download size={14} className={isExporting ? "animate-spin" : ""} />
-                      {isExporting ? "GENERATING CSV..." : "EXPORT ALL TEAMS (CSV)"}
+                      {isExporting
+                        ? "GENERATING CSV..."
+                        : filteredTeams.length !== selectedTeams.length
+                          ? `EXPORT FILTERED (${filteredTeams.length})`
+                          : "EXPORT ALL TEAMS (CSV)"}
                     </button>
                     <div className="font-['Cinzel'] text-xs font-bold bg-black/60 border border-white/15 rounded-xl px-4 py-2 text-pink-300">
                       TOTAL TEAMS: {selectedTeams.length}
@@ -939,20 +1032,71 @@ const AddProblems = () => {
                   </div>
                 </div>
 
-                {/* Team Search filter */}
-                <div className="mb-5">
-                  <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase">
-                    SEARCH REGISTERED TEAMS
-                  </label>
-                  <input
-                    className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
-                    placeholder="Search by team title or lead designer..."
-                    value={teamSearch}
-                    onChange={(e) => setTeamSearch(e.target.value)}
-                    autoComplete="off"
-                  />
-                  <div className="mt-1.5 text-xs text-gray-400 font-mono">
-                    Showing {filteredTeams.length} of {selectedTeams.length} registered teams
+                {/* Team Search and Status Filter */}
+                <div className="mb-5 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase flex items-center gap-1.5">
+                      <Filter size={11} className="text-pink-400" /> SEARCH & FILTER TEAMS
+                    </label>
+                    <input
+                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white shadow-inner"
+                      placeholder="Search by team title, lead designer, or problem statement..."
+                      value={teamSearch}
+                      onChange={(e) => setTeamSearch(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    {[
+                      { id: "all", label: "ALL TEAMS", count: filterCounts.all },
+                      { id: "statement_selected", label: "SELECTED STATEMENT", count: filterCounts.statement_selected },
+                      { id: "statement_not_selected", label: "NOT SELECTED STATEMENT", count: filterCounts.statement_not_selected },
+                      { id: "submitted", label: "SUBMITTED", count: filterCounts.submitted },
+                      { id: "not_submitted", label: "NOT SUBMITTED", count: filterCounts.not_submitted },
+                    ].map((f) => {
+                      const active = teamStatusFilter === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setTeamStatusFilter(f.id)}
+                          className={`px-3 py-1.5 rounded-xl font-['Cinzel'] text-[10px] font-bold tracking-wider cursor-pointer transition-all flex items-center gap-1.5 uppercase ${
+                            active
+                              ? "bg-gradient-to-r from-[#880A45] to-[#14216F] text-white border border-[#880A45]/60 shadow-[0_0_15px_rgba(136,10,69,0.3)] scale-[1.02]"
+                              : "bg-black/60 hover:bg-white/10 text-gray-300 border border-white/15 hover:border-white/25"
+                          }`}
+                        >
+                          <span>{f.label}</span>
+                          <span
+                            className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                              active ? "bg-white/25 text-white font-bold" : "bg-white/10 text-gray-400"
+                            }`}
+                          >
+                            {f.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-400 font-mono">
+                    <div>
+                      Showing {filteredTeams.length} of {selectedTeams.length} registered teams
+                      {(teamStatusFilter !== "all" || teamSearch.trim()) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTeamStatusFilter("all");
+                            setTeamSearch("");
+                          }}
+                          className="ml-2 text-pink-400 hover:text-pink-300 underline font-['Cinzel'] text-[10px] uppercase cursor-pointer"
+                        >
+                          Reset Filters
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -963,76 +1107,137 @@ const AddProblems = () => {
                       <tr className="bg-black/70 text-gray-300 font-['Cinzel'] text-xs tracking-wider border-b border-white/15">
                         <th className="px-4 py-3 text-left border-r border-white/10">TEAM NAME</th>
                         <th className="px-4 py-3 text-left border-r border-white/10">TEAM LEADER</th>
-                        <th className="px-4 py-3 text-left border-r border-white/10">SELECTED DESIGN BRIEF</th>
-                        <th className="px-4 py-3 text-center border-r border-white/10">TIME LOCKED</th>
+                        <th className="px-4 py-3 text-left border-r border-white/10">SELECTED PROBLEM STATEMENT</th>
+                        <th className="px-4 py-3 text-center border-r border-white/10">SUBMISSION</th>
                         <th className="px-4 py-3 text-center">ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredTeams.length ? (
-                        filteredTeams.map((t) => {
-                          const problemTitle =
-                            t?.selectedProblemStatement?.title ||
-                            t?.selectedProblemStatement?.name ||
-                            "Not Selected";
-                          return (
-                            <tr
-                              key={t._id}
-                              className="border-b border-white/10 hover:bg-white/5 text-white transition-colors"
-                            >
-                              <td className="px-4 py-3.5 border-r border-white/10 font-['Montserrat'] font-bold text-sm text-white">{t.teamName}</td>
-                              <td className="px-4 py-3.5 border-r border-white/10 font-medium text-gray-200">{t?.teamLeader?.name || "-"}</td>
-                              <td className="px-4 py-3.5 border-r border-white/10 font-medium text-xs text-gray-300">{problemTitle}</td>
-                              <td className="px-4 py-3.5 border-r border-white/10 text-center text-[11px] text-gray-400 font-mono">
-                                {t?.selectedProblemSelectedAt
-                                  ? new Date(t.selectedProblemSelectedAt).toLocaleString()
-                                  : "-"}
-                              </td>
-                              <td className="px-4 py-3.5 text-center font-['Cinzel'] text-[10px] font-bold">
-                                <div className="flex flex-wrap items-center justify-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const problem = t?.selectedProblemStatement;
-                                      if (!problem || typeof problem !== "object") return;
-                                      setStudentProblemPopup({
-                                        teamName: t?.teamName || "",
-                                        leaderName: t?.teamLeader?.name || "",
-                                        selectedAt: t?.selectedProblemSelectedAt || null,
-                                        problem,
-                                      });
-                                    }}
-                                    className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition uppercase"
-                                  >
-                                    <Eye size={11} /> VIEW BRIEF
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleResetProblem(t._id, t.teamName)}
-                                    className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition uppercase"
-                                  >
-                                    <RotateCw size={11} /> RESET
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setManageSubmissionsPopup(t)}
-                                    className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-lg px-2.5 py-1 cursor-pointer inline-flex items-center gap-1 transition shadow-sm uppercase"
-                                  >
-                                    <FileText size={11} /> SUBMISSIONS ({t.submissions?.length || 0})
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      ) : (
+                         filteredTeams.map((t) => {
+                           const hasStatement = Boolean(t?.selectedProblemStatement);
+                           const problemTitle =
+                             t?.selectedProblemStatement?.title ||
+                             t?.selectedProblemStatement?.name ||
+                             "";
+                           const submissions = Array.isArray(t?.submissions) ? t.submissions : [];
+                           const submittedCount = submissions.filter(
+                             (s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim())
+                           ).length;
+                           const hasSubmitted = submittedCount > 0;
+
+                           return (
+                             <tr
+                               key={t._id}
+                               className="border-b border-white/10 hover:bg-white/5 text-white transition-colors"
+                             >
+                               <td className="px-4 py-3.5 border-r border-white/10 font-['Montserrat'] font-bold text-sm text-white">{t.teamName}</td>
+                               <td className="px-4 py-3.5 border-r border-white/10 font-medium text-gray-200">{t?.teamLeader?.name || "-"}</td>
+                               <td className="px-4 py-3.5 border-r border-white/10 font-medium text-xs text-gray-300">
+                                 <div className="flex flex-col items-start gap-1.5">
+                                   {hasStatement ? (
+                                     <>
+                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-['Cinzel'] font-bold tracking-wider bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 shadow-xs">
+                                         <Check size={10} className="text-emerald-400" /> SELECTED
+                                       </span>
+                                       <span className="text-gray-200 font-semibold text-xs leading-snug">
+                                         {problemTitle}
+                                       </span>
+                                     </>
+                                   ) : (
+                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[9px] font-['Cinzel'] font-bold tracking-wider bg-amber-950/70 text-amber-300 border border-amber-500/40 shadow-xs">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                                       NOT SELECTED
+                                     </span>
+                                   )}
+                                 </div>
+                               </td>
+                               <td className="px-4 py-3.5 border-r border-white/10 text-center">
+                                 <div className="flex flex-col items-center justify-center gap-1.5">
+                                   {hasSubmitted ? (
+                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold tracking-wider bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 shadow-xs">
+                                       <Check size={11} className="text-emerald-400" />
+                                       SUBMITTED
+                                       {submissions.length > 1 ? ` (${submittedCount}/${submissions.length})` : ""}
+                                     </span>
+                                   ) : (
+                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold tracking-wider bg-rose-950/60 text-rose-300 border border-rose-500/30 shadow-xs">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block"></span>
+                                       NOT SUBMITTED
+                                     </span>
+                                   )}
+                                   <button
+                                     type="button"
+                                     onClick={() => setManageSubmissionsPopup(t)}
+                                     className="bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white rounded-lg px-2.5 py-1 font-['Cinzel'] text-[10px] font-bold cursor-pointer inline-flex items-center gap-1 transition shadow-sm uppercase tracking-wider"
+                                     title="View or manage project submissions"
+                                   >
+                                     <FileText size={11} /> SUBMISSIONS ({submissions.length || 0})
+                                   </button>
+                                 </div>
+                               </td>
+                               <td className="px-4 py-3.5 text-center font-['Cinzel'] text-[10px] font-bold">
+                                 <div className="flex flex-wrap items-center justify-center gap-2">
+                                   <button
+                                     type="button"
+                                     disabled={!hasStatement}
+                                     onClick={() => {
+                                       const problem = t?.selectedProblemStatement;
+                                       if (!problem || typeof problem !== "object") return;
+                                       setStudentProblemPopup({
+                                         teamName: t?.teamName || "",
+                                         leaderName: t?.teamLeader?.name || "",
+                                         selectedAt: t?.selectedProblemSelectedAt || null,
+                                         problem,
+                                       });
+                                     }}
+                                     className={`border rounded-lg px-2.5 py-1 inline-flex items-center gap-1 transition uppercase ${
+                                       hasStatement
+                                         ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/15 cursor-pointer"
+                                         : "bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40"
+                                     }`}
+                                   >
+                                     <Eye size={11} /> VIEW STATEMENT
+                                   </button>
+                                   <button
+                                     type="button"
+                                     disabled={!hasStatement}
+                                     onClick={() => handleResetProblem(t._id, t.teamName)}
+                                     className={`border rounded-lg px-2.5 py-1 inline-flex items-center gap-1 transition uppercase ${
+                                       hasStatement
+                                         ? "bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-500/40 cursor-pointer"
+                                         : "bg-rose-950/30 text-rose-300/30 border-rose-500/10 cursor-not-allowed opacity-40"
+                                     }`}
+                                     title="Unlock and clear the problem statement selection for this team"
+                                   >
+                                     <RotateCw size={11} /> RESET STATEMENT
+                                   </button>
+                                   <button
+                                     type="button"
+                                     disabled={!hasSubmitted}
+                                     onClick={() => handleResetAllSubmissions(t._id, t.teamName)}
+                                     className={`border rounded-lg px-2.5 py-1 inline-flex items-center gap-1 transition uppercase ${
+                                       hasSubmitted
+                                         ? "bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-500/40 cursor-pointer"
+                                         : "bg-amber-950/20 text-amber-300/30 border-amber-500/10 cursor-not-allowed opacity-40"
+                                     }`}
+                                     title="Unlock submission forms to allow team to re-submit"
+                                   >
+                                     <RotateCw size={11} /> RESET SUBMISSION
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           );
+                         })
+                       ) : (
                         <tr>
                           <td colSpan={5} className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
                             {isLoadingTeams
                               ? "LOADING TEAM LISTS..."
                               : selectedTeams.length
                                 ? "NO TEAMS FOUND MATCHING CRITERIA"
-                                : "NO TEAMS HAVE LOCKED A BRIEF YET"}
+                                : "NO TEAMS HAVE LOCKED A PROBLEM STATEMENT YET"}
                           </td>
                         </tr>
                       )}
@@ -1069,7 +1274,7 @@ const AddProblems = () => {
                     TEAM ASSIGNMENT: {studentProblemPopup.teamName}
                   </span>
                   <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight">
-                    {studentProblemPopup.problem?.title || "Design Brief"}
+                    {studentProblemPopup.problem?.title || "Problem Statement"}
                   </h3>
                   {studentProblemPopup.leaderName && (
                     <p className="text-xs text-gray-400 mt-1 font-normal">Team Leader: {studentProblemPopup.leaderName}</p>
@@ -1136,10 +1341,10 @@ const AddProblems = () => {
               <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                 <div>
                   <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold uppercase tracking-widest block mb-1">
-                    HACKATHON BRIEFS MANAGEMENT
+                    PROBLEM STATEMENTS MANAGEMENT
                   </span>
                   <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight uppercase">
-                    {activeModal === "edit" ? "EDIT DESIGN BRIEF" : "CREATE NEW DESIGN BRIEF"}
+                    {activeModal === "edit" ? "EDIT PROBLEM STATEMENT" : "CREATE NEW PROBLEM STATEMENT"}
                   </h3>
                 </div>
                 <button
@@ -1155,7 +1360,7 @@ const AddProblems = () => {
                 <form onSubmit={handleSave} className="space-y-4 text-xs font-medium">
                   <div>
                     <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
-                      DESIGN BRIEF TITLE
+                      PROBLEM STATEMENT TITLE
                     </label>
                     <input
                       className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
@@ -1194,7 +1399,7 @@ const AddProblems = () => {
 
                   <div>
                     <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
-                      COLLECTION SUMMARY (SHOWN ON BRIEF CARDS)
+                      COLLECTION SUMMARY (SHOWN ON STATEMENT CARDS)
                     </label>
                     <textarea
                       rows={3}
@@ -1248,7 +1453,7 @@ const AddProblems = () => {
                         canSave ? "bg-gradient-to-r from-[#880A45] to-[#14216F] text-white shadow-md" : "bg-gray-800 text-gray-400 opacity-60 cursor-not-allowed"
                       }`}
                     >
-                      {isSaving ? "SAVING BRIEF..." : "✓ CREATE DESIGN BRIEF"}
+                      {isSaving ? "SAVING STATEMENT..." : "✓ CREATE PROBLEM STATEMENT"}
                     </motion.button>
                   </div>
                 </form>
@@ -1256,7 +1461,7 @@ const AddProblems = () => {
                 <form onSubmit={handleUpdate} className="space-y-4 text-xs font-medium">
                   <div>
                     <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
-                      DESIGN BRIEF TITLE
+                      PROBLEM STATEMENT TITLE
                     </label>
                     <input
                       className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white"
@@ -1294,7 +1499,7 @@ const AddProblems = () => {
 
                   <div>
                     <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-300 mb-1.5 uppercase">
-                      COLLECTION SUMMARY (SHOWN ON BRIEF CARDS)
+                      COLLECTION SUMMARY (SHOWN ON STATEMENT CARDS)
                     </label>
                     <textarea
                       rows={3}
@@ -1383,15 +1588,27 @@ const AddProblems = () => {
                 </button>
               </div>
 
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
                 <span className="text-xs text-gray-300 font-normal">Review links, designer moodboards, or append submission slots.</span>
-                <button
-                  type="button"
-                  onClick={handleAddFormSlot}
-                  className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-4 py-1.5 font-['Cinzel'] text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-md uppercase"
-                >
-                  <Plus size={12} /> ADD SUBMISSION SLOT
-                </button>
+                <div className="flex items-center gap-2">
+                  {manageSubmissionsPopup.submissions && manageSubmissionsPopup.submissions.some((s) => s.isSubmitted || s.canvaFigmaLink?.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => handleResetAllSubmissions(manageSubmissionsPopup._id || manageSubmissionsPopup.teamName, manageSubmissionsPopup.teamName)}
+                      className="bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-500/40 rounded-xl px-3 py-1.5 font-['Cinzel'] text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-sm uppercase"
+                      title="Clear and reset all submission forms for this team"
+                    >
+                      <RotateCw size={12} /> RESET ALL SUBMISSIONS
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddFormSlot}
+                    className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-4 py-1.5 font-['Cinzel'] text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-md uppercase"
+                  >
+                    <Plus size={12} /> ADD SUBMISSION SLOT
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
@@ -1455,7 +1672,7 @@ const AddProblems = () => {
                             onClick={() => handleResetForm(idx)}
                             className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/15 rounded-lg px-3 py-1 cursor-pointer transition uppercase"
                           >
-                            RESET (UNLOCK)
+                            RESET SUBMISSION
                           </button>
                           <button
                             type="button"
