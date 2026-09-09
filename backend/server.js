@@ -485,6 +485,495 @@ app.get("/api/admin/teams/selected", async (req, res) => {
   }
 });
 
+// Admin: Full team and student management list (password protected)
+app.get("/api/admin/teams-management", async (req, res) => {
+  try {
+    const password = req.query.password || req.headers["x-admin-password"];
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    const teams = await TeamRegistration.find()
+      .populate({
+        path: "selectedProblemStatement",
+        select: { title: 1, shortDescription: 1, fullDescription: 1, limit: 1, slotsTaken: 1 },
+      })
+      .sort({ submittedAt: -1, _id: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      totalTeams: teams.length,
+      data: teams,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error fetching teams for management",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: Update any details of a team and its students (password protected)
+app.put("/api/admin/teams/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      password,
+      teamName,
+      teamLeader,
+      teamMember1,
+      teamMember2,
+      teamMember3,
+      payment,
+      selectedProblemStatement,
+    } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    let team;
+    if (mongoose.Types.ObjectId.isValid(String(id))) {
+      team = await TeamRegistration.findById(id);
+    }
+    if (!team) {
+      team = await TeamRegistration.findOne({ teamName: id });
+    }
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    // Check team name uniqueness if updated
+    if (teamName && teamName.trim() && teamName.trim().toLowerCase() !== team.teamName.toLowerCase()) {
+      const existingTeam = await TeamRegistration.findOne({
+        _id: { $ne: team._id },
+        teamName: { $regex: new RegExp(`^${escapeRegex(teamName.trim())}$`, "i") },
+      });
+      if (existingTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Team name "${teamName.trim()}" already taken by another team`,
+        });
+      }
+      team.teamName = teamName.trim();
+    }
+
+    // Collect regNos to check internal and cross-team duplicates
+    const incomingLeader = teamLeader || team.teamLeader;
+    const incomingM1 = teamMember1 || team.teamMember1;
+    const incomingM2 = teamMember2 || team.teamMember2;
+    const incomingM3 = teamMember3 !== undefined ? teamMember3 : team.teamMember3;
+
+    const allMembers = [
+      { role: "Leader", data: incomingLeader },
+      { role: "Member 1", data: incomingM1 },
+      { role: "Member 2", data: incomingM2 },
+      { role: "Member 3", data: incomingM3 },
+    ];
+
+    const regNos = allMembers
+      .filter((m) => m.data && m.data.regNo && String(m.data.regNo).trim())
+      .map((m) => String(m.data.regNo).trim().toUpperCase());
+
+    const uniqueRegNos = new Set(regNos);
+    if (uniqueRegNos.size !== regNos.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate registration / application numbers found within the team members",
+      });
+    }
+
+    // Check cross-team duplicate regNos
+    if (regNos.length > 0) {
+      const duplicateTeam = await TeamRegistration.findOne({
+        _id: { $ne: team._id },
+        $or: [
+          { "teamLeader.regNo": { $in: regNos } },
+          { "teamMember1.regNo": { $in: regNos } },
+          { "teamMember2.regNo": { $in: regNos } },
+          { "teamMember3.regNo": { $in: regNos } },
+        ],
+      });
+      if (duplicateTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `One or more registration numbers already belong to team "${duplicateTeam.teamName}"`,
+        });
+      }
+    }
+
+    // Update members
+    if (teamLeader) team.teamLeader = { ...team.teamLeader, ...teamLeader };
+    if (teamMember1) team.teamMember1 = { ...team.teamMember1, ...teamMember1 };
+    if (teamMember2) team.teamMember2 = { ...team.teamMember2, ...teamMember2 };
+    if (teamMember3 !== undefined) {
+      team.teamMember3 = teamMember3 && teamMember3.name ? { ...team.teamMember3, ...teamMember3 } : teamMember3;
+    }
+
+    // Handle problem statement adjustment
+    if (selectedProblemStatement !== undefined) {
+      const currentProbId = team.selectedProblemStatement ? String(team.selectedProblemStatement) : null;
+      const targetProbId = selectedProblemStatement && String(selectedProblemStatement).trim() ? String(selectedProblemStatement).trim() : null;
+
+      if (currentProbId !== targetProbId) {
+        // Decrement previous problem statement
+        if (currentProbId && mongoose.Types.ObjectId.isValid(currentProbId)) {
+          await ProblemStatement.findByIdAndUpdate(currentProbId, { $inc: { slotsTaken: -1 } });
+          await ProblemStatement.updateOne({ _id: currentProbId, slotsTaken: { $lt: 0 } }, { $set: { slotsTaken: 0 } });
+        }
+        // Increment new problem statement
+        if (targetProbId && mongoose.Types.ObjectId.isValid(targetProbId)) {
+          await ProblemStatement.findByIdAndUpdate(targetProbId, { $inc: { slotsTaken: 1 } });
+          team.selectedProblemStatement = targetProbId;
+          team.selectedProblemSelectedAt = new Date();
+          if (!team.submissions || team.submissions.length === 0) {
+            team.submissions = [{ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null }];
+          }
+        } else {
+          team.selectedProblemStatement = null;
+          team.selectedProblemSelectedAt = null;
+          team.submissions = [];
+        }
+      }
+    }
+
+    // Handle payment updates
+    if (payment) {
+      if (payment.transactionId && payment.transactionId.trim()) {
+        const transId = payment.transactionId.trim();
+        // Check uniqueness across other teams
+        const dupTrans = await TeamRegistration.findOne({
+          _id: { $ne: team._id },
+          "payment.transactionId": { $regex: new RegExp(`^${escapeRegex(transId)}$`, "i") },
+        });
+        if (dupTrans) {
+          return res.status(400).json({
+            success: false,
+            message: `Transaction ID "${transId}" is already used by team "${dupTrans.teamName}"`,
+          });
+        }
+        team.payment.transactionId = transId;
+      }
+      if (payment.receiptUrl !== undefined) team.payment.receiptUrl = payment.receiptUrl;
+      if (payment.receiptFileName !== undefined) team.payment.receiptFileName = payment.receiptFileName;
+      if (payment.status && ["pending", "verified", "rejected"].includes(payment.status)) {
+        team.payment.status = payment.status;
+        if (payment.status === "verified" && !team.payment.verifiedAt) {
+          team.payment.verifiedAt = new Date();
+        } else if (payment.status !== "verified") {
+          team.payment.verifiedAt = null;
+        }
+      }
+    }
+
+    await team.save();
+
+    const populatedTeam = await TeamRegistration.findById(team._id)
+      .populate({
+        path: "selectedProblemStatement",
+        select: { title: 1, shortDescription: 1, fullDescription: 1, limit: 1, slotsTaken: 1 },
+      })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Team and student details updated successfully",
+      data: populatedTeam,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || "Validation error",
+        errors: messages,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Server error updating team",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: Quick update a single student/member in a team (password protected)
+app.patch("/api/admin/teams/:id/member/:memberKey", async (req, res) => {
+  try {
+    const { id, memberKey } = req.params;
+    const { password, memberData } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!["teamLeader", "teamMember1", "teamMember2", "teamMember3"].includes(memberKey)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member role key",
+      });
+    }
+
+    let team;
+    if (mongoose.Types.ObjectId.isValid(String(id))) {
+      team = await TeamRegistration.findById(id);
+    }
+    if (!team) {
+      team = await TeamRegistration.findOne({ teamName: id });
+    }
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    const regNo = memberData?.regNo ? String(memberData.regNo).trim().toUpperCase() : null;
+    if (regNo) {
+      // Check duplicate within other members of this team
+      const otherMembers = ["teamLeader", "teamMember1", "teamMember2", "teamMember3"]
+        .filter((k) => k !== memberKey && team[k] && team[k].regNo)
+        .map((k) => String(team[k].regNo).trim().toUpperCase());
+
+      if (otherMembers.includes(regNo)) {
+        return res.status(400).json({
+          success: false,
+          message: `Registration number "${regNo}" is already used by another member in this team`,
+        });
+      }
+
+      // Check duplicate across other teams
+      const duplicateTeam = await TeamRegistration.findOne({
+        _id: { $ne: team._id },
+        $or: [
+          { "teamLeader.regNo": regNo },
+          { "teamMember1.regNo": regNo },
+          { "teamMember2.regNo": regNo },
+          { "teamMember3.regNo": regNo },
+        ],
+      });
+      if (duplicateTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Registration number "${regNo}" already belongs to team "${duplicateTeam.teamName}"`,
+        });
+      }
+    }
+
+    team[memberKey] = { ...team[memberKey], ...memberData };
+    await team.save();
+
+    const populatedTeam = await TeamRegistration.findById(team._id)
+      .populate({
+        path: "selectedProblemStatement",
+        select: { title: 1, shortDescription: 1, fullDescription: 1, limit: 1, slotsTaken: 1 },
+      })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: `${memberKey} details updated successfully`,
+      data: populatedTeam,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error updating member details",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: Manually create a new team (password protected)
+app.post("/api/admin/teams", async (req, res) => {
+  try {
+    const {
+      password,
+      teamName,
+      teamLeader,
+      teamMember1,
+      teamMember2,
+      teamMember3,
+      payment,
+      selectedProblemStatement,
+    } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!teamName || !teamName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Team name is required",
+      });
+    }
+
+    const existingTeam = await TeamRegistration.findOne({
+      teamName: { $regex: new RegExp(`^${escapeRegex(teamName.trim())}$`, "i") },
+    });
+    if (existingTeam) {
+      return res.status(400).json({
+        success: false,
+        message: `Team name "${teamName.trim()}" already exists`,
+      });
+    }
+
+    const regNos = [
+      teamLeader?.regNo,
+      teamMember1?.regNo,
+      teamMember2?.regNo,
+      teamMember3?.regNo,
+    ]
+      .filter(Boolean)
+      .map((r) => String(r).trim().toUpperCase());
+
+    const uniqueRegNos = new Set(regNos);
+    if (uniqueRegNos.size !== regNos.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate registration numbers found in the team",
+      });
+    }
+
+    if (regNos.length > 0) {
+      const duplicate = await TeamRegistration.findOne({
+        $or: [
+          { "teamLeader.regNo": { $in: regNos } },
+          { "teamMember1.regNo": { $in: regNos } },
+          { "teamMember2.regNo": { $in: regNos } },
+          { "teamMember3.regNo": { $in: regNos } },
+        ],
+      });
+      if (duplicate) {
+        return res.status(400).json({
+          success: false,
+          message: `One or more registration numbers already belong to team "${duplicate.teamName}"`,
+        });
+      }
+    }
+
+    const newTeam = new TeamRegistration({
+      teamName: teamName.trim(),
+      teamLeader: teamLeader || {},
+      teamMember1: teamMember1 || {},
+      teamMember2: teamMember2 || {},
+      teamMember3: teamMember3 || {},
+      payment: {
+        transactionId: payment?.transactionId ? payment.transactionId.trim() : `MANUAL-${Date.now()}`,
+        receiptUrl: payment?.receiptUrl || "/payment.png",
+        receiptFileName: payment?.receiptFileName || "",
+        status: payment?.status || "verified",
+        verifiedAt: payment?.status === "verified" || !payment?.status ? new Date() : null,
+      },
+      selectedProblemStatement: selectedProblemStatement && mongoose.Types.ObjectId.isValid(selectedProblemStatement) ? selectedProblemStatement : null,
+      selectedProblemSelectedAt: selectedProblemStatement ? new Date() : null,
+      submissions: selectedProblemStatement ? [{ canvaFigmaLink: "", note: "", isSubmitted: false, submittedAt: null }] : [],
+    });
+
+    if (selectedProblemStatement && mongoose.Types.ObjectId.isValid(selectedProblemStatement)) {
+      await ProblemStatement.findByIdAndUpdate(selectedProblemStatement, { $inc: { slotsTaken: 1 } });
+    }
+
+    await newTeam.save();
+
+    const populated = await TeamRegistration.findById(newTeam._id)
+      .populate("selectedProblemStatement")
+      .lean();
+
+    return res.status(201).json({
+      success: true,
+      message: "Team created successfully",
+      data: populated,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || "Validation error",
+        errors: messages,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Server error creating team",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: Delete a team (password protected)
+app.delete("/api/admin/teams/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    let team;
+    if (mongoose.Types.ObjectId.isValid(String(id))) {
+      team = await TeamRegistration.findById(id);
+    }
+    if (!team) {
+      team = await TeamRegistration.findOne({ teamName: id });
+    }
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: "Team not found",
+      });
+    }
+
+    // Decrement slotsTaken on problem statement if selected
+    if (team.selectedProblemStatement) {
+      await ProblemStatement.findByIdAndUpdate(team.selectedProblemStatement, {
+        $inc: { slotsTaken: -1 },
+      });
+      await ProblemStatement.updateOne(
+        { _id: team.selectedProblemStatement, slotsTaken: { $lt: 0 } },
+        { $set: { slotsTaken: 0 } },
+      );
+    }
+
+    await TeamRegistration.findByIdAndDelete(team._id);
+
+    return res.status(200).json({
+      success: true,
+      message: `Team "${team.teamName}" deleted successfully`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error deleting team",
+      error: error.message,
+    });
+  }
+});
+
 // Helper to find a team by teamId (ObjectId) or teamName
 const findTeamByIdentifier = async (identifier) => {
   if (!identifier) return null;
@@ -846,7 +1335,14 @@ app.get("/api/marks-board", async (req, res) => {
   try {
     const teams = await TeamRegistration.find(
       {},
-      { teamName: 1, selectedProblemStatement: 1 }
+      {
+        teamName: 1,
+        selectedProblemStatement: 1,
+        teamLeader: 1,
+        teamMember1: 1,
+        teamMember2: 1,
+        teamMember3: 1,
+      }
     )
       .populate({
         path: "selectedProblemStatement",
@@ -859,17 +1355,20 @@ app.get("/api/marks-board", async (req, res) => {
     const problems = await ProblemStatement.find({}, { title: 1 }).sort({ title: 1 });
     const outOfByRound = {};
 
+    rounds.forEach((round) => {
+      outOfByRound[round.roundName] = round.outOf;
+    });
+
     const teamsWithMarks = teams.map((team) => {
       const roundMarks = {};
       let total = 0;
 
       rounds.forEach((round) => {
-        const teamMark = round.teamMarks.find(
+        const teamMark = round.teamMarks?.find(
           (tm) => tm.teamName === team.teamName,
         );
         const mark = teamMark ? teamMark.mark : 0;
         roundMarks[round.roundName] = mark;
-        outOfByRound[round.roundName] = round.outOf;
         total += mark;
       });
 
@@ -885,17 +1384,137 @@ app.get("/api/marks-board", async (req, res) => {
       };
     });
 
+    const individualStudents = [];
+    teams.forEach((team) => {
+      const theme = team.selectedProblemStatement?.title || "Unassigned";
+
+      const processMember = (m, role) => {
+        if (!m || !m.name || !String(m.name).trim()) return;
+        const regNo = String(m.regNo || "").trim().toUpperCase();
+        if (!regNo) return;
+
+        const roundMarks = {};
+        let total = 0;
+
+        rounds.forEach((round) => {
+          const sMark = round.individualMarks?.find(
+            (im) => String(im.regNo).trim().toUpperCase() === regNo
+          );
+          const mark = sMark ? sMark.mark : 0;
+          roundMarks[round.roundName] = mark;
+          total += mark;
+        });
+
+        individualStudents.push({
+          _id: `${team._id}-${regNo}`,
+          regNo,
+          studentName: m.name,
+          teamName: team.teamName,
+          theme,
+          role,
+          year: m.year || "1",
+          branch: m.branch || "",
+          section: m.section || "",
+          gender: m.gender || "",
+          residenceType: m.residenceType || "",
+          hostelName: m.hostelName || "",
+          roomNo: m.roomNo || "",
+          phoneNo: m.phoneNo || "",
+          roundMarks,
+          total,
+        });
+      };
+
+      processMember(team.teamLeader, "Team Leader");
+      processMember(team.teamMember1, "Member 1");
+      processMember(team.teamMember2, "Member 2");
+      processMember(team.teamMember3, "Member 3");
+    });
+
     res.status(200).json({
       success: true,
       rounds: rounds.map((r) => r.roundName),
       outOfByRound,
       problemStatements: problems.map((p) => p.title),
       data: teamsWithMarks,
+      individualStudents,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch marks board",
+      error: error.message,
+    });
+  }
+});
+
+// PATCH endpoint to update individual student marks in a round
+app.patch("/api/individual-marks", async (req, res) => {
+  try {
+    const { regNo, studentName, teamName, roundName, mark } = req.body;
+
+    if (!regNo || !roundName || mark === undefined || mark === null) {
+      return res.status(400).json({
+        success: false,
+        message: "regNo, roundName and mark are required",
+      });
+    }
+
+    const numericMark = Number(mark);
+    if (!Number.isFinite(numericMark)) {
+      return res.status(400).json({
+        success: false,
+        message: "Mark must be a valid number",
+      });
+    }
+
+    const round = await RoundMarks.findOne({ roundName: roundName.trim() });
+    if (!round) {
+      return res.status(404).json({
+        success: false,
+        message: "Round not found",
+      });
+    }
+
+    if (numericMark < 0 || numericMark > round.outOf) {
+      return res.status(400).json({
+        success: false,
+        message: `Mark must be between 0 and ${round.outOf}`,
+      });
+    }
+
+    const normalizedRegNo = String(regNo).trim().toUpperCase();
+    if (!round.individualMarks) {
+      round.individualMarks = [];
+    }
+
+    const studentMarkIndex = round.individualMarks.findIndex(
+      (im) => String(im.regNo).trim().toUpperCase() === normalizedRegNo
+    );
+
+    if (studentMarkIndex === -1) {
+      round.individualMarks.push({
+        regNo: normalizedRegNo,
+        studentName: studentName || "",
+        teamName: teamName || "",
+        mark: numericMark,
+      });
+    } else {
+      round.individualMarks[studentMarkIndex].mark = numericMark;
+      if (studentName) round.individualMarks[studentMarkIndex].studentName = studentName;
+      if (teamName) round.individualMarks[studentMarkIndex].teamName = teamName;
+    }
+
+    await round.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Individual mark updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update individual mark",
       error: error.message,
     });
   }

@@ -6,6 +6,7 @@ import Download from "./pages/Download";
 import TeamPanel from "./pages/teampanel";
 import AddProblems from "./pages/addproblems";
 import Marks from "./pages/marks";
+import TeamAndStudentManagement from "./pages/teamandstudentmanagement";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
@@ -18,7 +19,8 @@ function App() {
           <Route path="/download" element={<Download />} />
           <Route path="/teampanel" element={<TeamPanel />} />
           <Route path="/admin/problems" element={<AddProblems />} />
-          <Route path="/marks" element={<Marks />} />
+          <Route path="/admin/teamandstudentmanagement" element={<TeamAndStudentManagement />} />
+          <Route path="/admin/teamandividualmarks" element={<Marks />} />
         </Routes>
       </Router>
     </>

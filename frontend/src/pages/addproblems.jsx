@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Sparkles, AlertTriangle, FileText, Check, Plus, RotateCw, Trash2, Edit3, Users, Eye, Download, LogOut, Filter } from "lucide-react";
 import FashionBackground from "../components/FashionBackground";
+import { Link } from "react-router-dom";
 
 const VIEW_MODES = {
   problems: "problems",
@@ -856,6 +857,12 @@ const AddProblems = () => {
                     </button>
                   </>
                 )}
+                <Link
+                  to="/admin/teamandstudentmanagement"
+                  className="px-4 sm:px-5 py-2 rounded-xl bg-pink-600/30 hover:bg-pink-600/50 text-pink-200 border border-pink-500/40 transition-colors uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users size={12} /> STUDENT & TEAM MGMT
+                </Link>
                 <button
                   type="button"
                   onClick={handleLogout}

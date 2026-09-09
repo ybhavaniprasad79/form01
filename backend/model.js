@@ -258,6 +258,26 @@ const roundMarksSchema = new mongoose.Schema({
       },
     },
   ],
+  individualMarks: [
+    {
+      regNo: {
+        type: String,
+        required: true,
+      },
+      studentName: {
+        type: String,
+        default: "",
+      },
+      teamName: {
+        type: String,
+        default: "",
+      },
+      mark: {
+        type: Number,
+        default: 0,
+      },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
