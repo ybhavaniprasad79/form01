@@ -185,6 +185,29 @@ const appSettingsSchema = new mongoose.Schema({
 
 const AppSettings = mongoose.model("AppSettings", appSettingsSchema);
 
+// Tracks for grouping problem statements (e.g. Title and Focus Area)
+const trackSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: [true, "Track title is required"],
+      trim: true,
+      minlength: [2, "Track title must be at least 2 characters"],
+      maxlength: [150, "Track title must not exceed 150 characters"],
+    },
+    focus: {
+      type: String,
+      required: [true, "Track focus is required"],
+      trim: true,
+      minlength: [2, "Track focus must be at least 2 characters"],
+      maxlength: [500, "Track focus must not exceed 500 characters"],
+    },
+  },
+  { timestamps: true },
+);
+
+const Track = mongoose.model("Track", trackSchema);
+
 // Problem statements for Team Dashboard
 const problemStatementSchema = new mongoose.Schema(
   {
@@ -193,7 +216,22 @@ const problemStatementSchema = new mongoose.Schema(
       required: [true, "Title is required"],
       trim: true,
       minlength: [3, "Title must be at least 3 characters"],
-      maxlength: [120, "Title must not exceed 120 characters"],
+      maxlength: [150, "Title must not exceed 150 characters"],
+    },
+    track: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Track",
+      default: null,
+    },
+    trackTitle: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    trackFocus: {
+      type: String,
+      default: "",
+      trim: true,
     },
     themePng: {
       type: String,
@@ -204,14 +242,14 @@ const problemStatementSchema = new mongoose.Schema(
       type: String,
       required: [true, "Short description is required"],
       trim: true,
-      minlength: [10, "Short description must be at least 10 characters"],
-      maxlength: [600, "Short description must not exceed 600 characters"],
+      minlength: [5, "Short description must be at least 5 characters"],
+      maxlength: [1000, "Short description must not exceed 1000 characters"],
     },
     fullDescription: {
       type: String,
       default: "",
       trim: true,
-      maxlength: [5000, "Full description must not exceed 5000 characters"],
+      maxlength: [10000, "Full description must not exceed 10000 characters"],
     },
     slotsTaken: {
       type: Number,
@@ -290,5 +328,6 @@ module.exports = {
   TeamRegistration,
   AppSettings,
   ProblemStatement,
+  Track,
   RoundMarks,
 };

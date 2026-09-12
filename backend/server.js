@@ -10,6 +10,7 @@ const {
   TeamRegistration,
   AppSettings,
   ProblemStatement,
+  Track,
   RoundMarks,
 } = require("./model");
 const { cloudinary, upload } = require("./cloudinary");
@@ -65,6 +66,9 @@ app.get("/api/admin/problems", async (req, res) => {
       {},
       {
         title: 1,
+        track: 1,
+        trackTitle: 1,
+        trackFocus: 1,
         themePng: 1,
         shortDescription: 1,
         fullDescription: 1,
@@ -74,6 +78,7 @@ app.get("/api/admin/problems", async (req, res) => {
         updatedAt: 1,
       },
     )
+      .populate("track")
       .sort({ createdAt: 1 })
       .lean();
 
@@ -81,6 +86,190 @@ app.get("/api/admin/problems", async (req, res) => {
       success: true,
       total: problems.length,
       data: problems,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// =========================================================================
+// TRACKS MANAGEMENT ENDPOINTS (Title & Focus Area)
+// =========================================================================
+
+// Public: fetch all tracks
+app.get("/api/tracks", async (req, res) => {
+  try {
+    const tracks = await Track.find().sort({ createdAt: 1 }).lean();
+    return res.status(200).json({
+      success: true,
+      total: tracks.length,
+      data: tracks,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: create a new track (title and focus)
+app.post("/api/tracks", async (req, res) => {
+  try {
+    const { password, title, focus } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Track title is required",
+      });
+    }
+
+    if (!focus || !String(focus).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Track focus is required",
+      });
+    }
+
+    const track = await Track.create({
+      title: String(title).trim(),
+      focus: String(focus).trim(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Track created successfully",
+      data: track,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: update track (title and focus)
+app.put("/api/tracks/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password, title, focus } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid track id",
+      });
+    }
+
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Track title is required",
+      });
+    }
+
+    if (!focus || !String(focus).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Track focus is required",
+      });
+    }
+
+    const trimmedTitle = String(title).trim();
+    const trimmedFocus = String(focus).trim();
+
+    const updatedTrack = await Track.findByIdAndUpdate(
+      id,
+      { title: trimmedTitle, focus: trimmedFocus },
+      { new: true, runValidators: true },
+    ).lean();
+
+    if (!updatedTrack) {
+      return res.status(404).json({
+        success: false,
+        message: "Track not found",
+      });
+    }
+
+    // Sync denormalized track info to all problem statements referencing this track
+    await ProblemStatement.updateMany(
+      { track: id },
+      { $set: { trackTitle: trimmedTitle, trackFocus: trimmedFocus } },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Track updated successfully",
+      data: updatedTrack,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Admin: delete track
+app.delete("/api/tracks/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body || {};
+
+    if (password !== process.env.adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid track id",
+      });
+    }
+
+    const deleted = await Track.findByIdAndDelete(id).lean();
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Track not found",
+      });
+    }
+
+    // Unset track on any problem statement referencing this track
+    await ProblemStatement.updateMany(
+      { track: id },
+      { $set: { track: null, trackTitle: "", trackFocus: "" } },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Track deleted successfully",
     });
   } catch (error) {
     return res.status(500).json({
@@ -171,6 +360,9 @@ app.get("/api/problems", async (req, res) => {
       {},
       {
         title: 1,
+        track: 1,
+        trackTitle: 1,
+        trackFocus: 1,
         themePng: 1,
         shortDescription: 1,
         fullDescription: 1,
@@ -180,6 +372,7 @@ app.get("/api/problems", async (req, res) => {
         updatedAt: 1,
       },
     )
+      .populate("track")
       .sort({ createdAt: 1 })
       .lean();
 
@@ -202,10 +395,14 @@ app.post("/api/problems", async (req, res) => {
   try {
     const {
       password,
+      trackId,
+      track,
       title,
       themePng,
+      imgUrl,
       shortDescription,
       fullDescription,
+      longDescription,
       limit,
     } = req.body || {};
 
@@ -230,32 +427,37 @@ app.post("/api/problems", async (req, res) => {
       });
     }
 
-    if (!shortDescription || !String(shortDescription).trim()) {
+    const sDesc = String(shortDescription || "").trim();
+    if (!sDesc) {
       return res.status(400).json({
         success: false,
         message: "Short description is required",
       });
     }
 
-    if (String(shortDescription).trim().length < 10) {
-      return res.status(400).json({
-        success: false,
-        message: "Short description must be at least 10 characters",
-      });
+    const chosenTrackId = trackId || track || null;
+    let trackDoc = null;
+    if (chosenTrackId && mongoose.Types.ObjectId.isValid(String(chosenTrackId))) {
+      trackDoc = await Track.findById(chosenTrackId).lean();
     }
 
     const created = await ProblemStatement.create({
       title: String(title).trim(),
-      themePng: String(themePng || "").trim(),
-      shortDescription: String(shortDescription).trim(),
-      fullDescription: String(fullDescription || "").trim(),
-      limit: typeof limit === "number" ? limit : 7,
+      track: trackDoc ? trackDoc._id : null,
+      trackTitle: trackDoc ? trackDoc.title : "",
+      trackFocus: trackDoc ? trackDoc.focus : "",
+      themePng: String(themePng !== undefined ? themePng : (imgUrl || "")).trim(),
+      shortDescription: sDesc,
+      fullDescription: String(fullDescription !== undefined ? fullDescription : (longDescription || "")).trim(),
+      limit: typeof limit === "number" && limit > 0 ? limit : 7,
     });
+
+    const populated = await ProblemStatement.findById(created._id).populate("track").lean();
 
     res.status(201).json({
       success: true,
       message: "Problem statement created",
-      data: created,
+      data: populated,
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -281,10 +483,14 @@ app.put("/api/problems/:id", async (req, res) => {
     const { id } = req.params;
     const {
       password,
+      trackId,
+      track,
       title,
       themePng,
+      imgUrl,
       shortDescription,
       fullDescription,
+      longDescription,
       limit,
     } = req.body || {};
 
@@ -309,24 +515,41 @@ app.put("/api/problems/:id", async (req, res) => {
       });
     }
 
-    if (!shortDescription || !String(shortDescription).trim()) {
+    const sDesc = String(shortDescription || "").trim();
+    if (!sDesc) {
       return res.status(400).json({
         success: false,
         message: "Short description is required",
       });
     }
 
+    const updateFields = {
+      title: String(title).trim(),
+      themePng: String(themePng !== undefined ? themePng : (imgUrl || "")).trim(),
+      shortDescription: sDesc,
+      fullDescription: String(fullDescription !== undefined ? fullDescription : (longDescription || "")).trim(),
+      limit: typeof limit === "number" && limit > 0 ? limit : 7,
+    };
+
+    const chosenTrackId = trackId !== undefined ? trackId : (track !== undefined ? track : undefined);
+    if (chosenTrackId !== undefined) {
+      if (chosenTrackId && mongoose.Types.ObjectId.isValid(String(chosenTrackId))) {
+        const trackDoc = await Track.findById(chosenTrackId).lean();
+        updateFields.track = trackDoc ? trackDoc._id : null;
+        updateFields.trackTitle = trackDoc ? trackDoc.title : "";
+        updateFields.trackFocus = trackDoc ? trackDoc.focus : "";
+      } else {
+        updateFields.track = null;
+        updateFields.trackTitle = "";
+        updateFields.trackFocus = "";
+      }
+    }
+
     const updated = await ProblemStatement.findByIdAndUpdate(
       id,
-      {
-        title: String(title).trim(),
-        themePng: String(themePng || "").trim(),
-        shortDescription: String(shortDescription).trim(),
-        fullDescription: String(fullDescription || "").trim(),
-        limit: typeof limit === "number" ? limit : 7,
-      },
+      updateFields,
       { new: true, runValidators: true },
-    ).lean();
+    ).populate("track").lean();
 
     if (!updated) {
       return res.status(404).json({
@@ -466,7 +689,7 @@ app.get("/api/admin/teams/selected", async (req, res) => {
     )
       .populate({
         path: "selectedProblemStatement",
-        select: { title: 1, shortDescription: 1, fullDescription: 1 },
+        select: { title: 1, shortDescription: 1, fullDescription: 1, track: 1, trackTitle: 1, trackFocus: 1, themePng: 1 },
       })
       .sort({ selectedProblemSelectedAt: -1, submittedAt: -1 })
       .lean();

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Check, Users, Gem, Scissors, AlertTriangle, Sparkles, RotateCw, LogOut, ExternalLink, FileText } from "lucide-react";
+import { Crown, Check, Users, Gem, Scissors, AlertTriangle, Sparkles, RotateCw, LogOut, ExternalLink, FileText, Layers, Target, ArrowLeft, ChevronRight, Compass } from "lucide-react";
 import FashionBackground from "../components/FashionBackground";
 
 const TEAM_KEY_STORAGE = "teamPanel.teamKey";
@@ -18,6 +18,8 @@ const TeamPanel = () => {
   const [areProblemsDisabled, setAreProblemsDisabled] = useState(false);
   const [selectedProblemId, setSelectedProblemId] = useState(null);
   const [detailsProblemId, setDetailsProblemId] = useState(null);
+  const [activeTrackId, setActiveTrackId] = useState(null);
+  const [isSelectingProblem, setIsSelectingProblem] = useState(false);
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(false);
   const [problemsError, setProblemsError] = useState("");
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -143,6 +145,9 @@ const TeamPanel = () => {
             fullDescription: p.fullDescription || "",
             slotsTaken: Number(p.slotsTaken || 0),
             limit: Number(p.limit || 7),
+            track: p.track || null,
+            trackTitle: p.trackTitle || p.track?.title || "",
+            trackFocus: p.trackFocus || p.track?.focus || "",
           }))
           .filter((p) => p.id && p.title && p.shortDescription);
         setProblems(normalized);
@@ -224,6 +229,9 @@ const TeamPanel = () => {
             fullDescription: p.fullDescription || "",
             slotsTaken: Number(p.slotsTaken || 0),
             limit: Number(p.limit || 7),
+            track: p.track || null,
+            trackTitle: p.trackTitle || p.track?.title || "",
+            trackFocus: p.trackFocus || p.track?.focus || "",
           }))
           .filter((p) => p.id && p.title && p.shortDescription);
 
@@ -264,6 +272,110 @@ const TeamPanel = () => {
     if (selectedProblemId) return problems;
     return problems.filter((p) => (p.slotsTaken || 0) < (p.limit || MAX_TEAMS_PER_PROBLEM));
   }, [problems, selectedProblemId]);
+
+  const groupedVisibleProblems = useMemo(() => {
+    const groups = [];
+    const trackMap = new Map();
+    const unassigned = [];
+
+    visibleProblems.forEach((p) => {
+      const trackKey = p.track?._id || (typeof p.track === "string" ? p.track : "") || p.trackTitle;
+      const trackTitle = p.trackTitle || p.track?.title || "";
+      const trackFocus = p.trackFocus || p.track?.focus || "";
+
+      if (trackKey || trackTitle) {
+        const key = trackKey || trackTitle;
+        if (!trackMap.has(key)) {
+          const group = {
+            id: key,
+            title: trackTitle || "Track",
+            focus: trackFocus || "",
+            problems: [],
+          };
+          trackMap.set(key, group);
+          groups.push(group);
+        }
+        trackMap.get(key).problems.push(p);
+      } else {
+        unassigned.push(p);
+      }
+    });
+
+    return { groups, unassigned };
+  }, [visibleProblems]);
+
+  const activeTrackGroup = useMemo(() => {
+    if (!activeTrackId) return null;
+    if (activeTrackId === "__unassigned__") {
+      return {
+        id: "__unassigned__",
+        title: "General Problem Statements",
+        focus: "General hackathon problem statements open for all participants",
+        problems: groupedVisibleProblems.unassigned,
+      };
+    }
+    return groupedVisibleProblems.groups.find((g) => g.id === activeTrackId) || null;
+  }, [activeTrackId, groupedVisibleProblems]);
+
+  const handleSelectProblem = async (problemId) => {
+    if (!problemId) return;
+    setProblemsError("");
+    setIsSelectingProblem(true);
+
+    try {
+      const teamName =
+        String(team?.teamName || "").trim() ||
+        String(teamKey || "").trim();
+      if (!teamName) {
+        setProblemsError("Team not available. Please try again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/team/${encodeURIComponent(teamName)}/select-problem`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            problemId,
+          }),
+        },
+      );
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        setProblemsError(
+          data?.message || "Unable to select problem statement.",
+        );
+
+        if (data?.code === "PROBLEM_FULL") {
+          setProblems((prev) =>
+            prev.map((p) =>
+              p.id === problemId
+                ? { ...p, slotsTaken: MAX_TEAMS_PER_PROBLEM }
+                : p,
+            ),
+          );
+          setDetailsProblemId(null);
+        }
+        return;
+      }
+
+      setSelectedProblemId(problemId);
+      setTeam((t) =>
+        t ? { ...t, selectedProblemStatement: problemId } : t,
+      );
+      setIsSelectedExpanded(false);
+      setDetailsProblemId(null);
+      setActiveTrackId(null);
+    } catch {
+      setProblemsError("Unable to connect to the server.");
+    } finally {
+      setIsSelectingProblem(false);
+    }
+  };
 
   const members = useMemo(() => {
     if (!team) return [];
@@ -544,14 +656,20 @@ const TeamPanel = () => {
                 <section className="bg-[#0B0616]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 sm:p-7 relative flex-1 flex flex-col shadow-[0_12px_35px_rgba(0,0,0,0.85)]">
                   {/* Top Badge with [#880A45] to [#14216F] Gradient */}
                   <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#880A45] to-[#14216F] text-white px-3.5 py-0.5 rounded-lg text-[10px] font-['Cinzel'] font-bold uppercase tracking-widest border border-white/20 shadow-[0_0_15px_rgba(136,10,69,0.4)]">
-                    {selectedProblemId ? "Locked Problem Statement" : "Hackathon Problem Statements"}
+                    {selectedProblemId
+                      ? "Locked Problem Statement"
+                      : activeTrackId
+                      ? `Track: ${activeTrackGroup?.title || "Statements"}`
+                      : "Hackathon Tracks"}
                   </div>
 
                   <div className="mt-2 mb-5">
                     <p className="text-xs text-gray-300 font-normal leading-relaxed">
                       {selectedProblemId
                         ? "Your team has claimed a problem statement. Submit your Figma or Canva project URL below."
-                        : `Browse available problem statements below and claim your problem statement.`}
+                        : activeTrackId
+                        ? `Viewing statements for "${activeTrackGroup?.title}". Click "Select Statement" or "View Details" to lock your team's topic.`
+                        : "Select a Hackathon Track below to view and choose from its available problem statements."}
                     </p>
                   </div>
 
@@ -571,6 +689,16 @@ const TeamPanel = () => {
                         </div>
 
                         <div className="space-y-3 text-center">
+                          {selectedProblem.trackTitle && (
+                            <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-pink-950/70 border border-pink-500/30 text-pink-200 text-xs font-['Cinzel'] tracking-wide">
+                              <span className="font-bold uppercase">TRACK: {selectedProblem.trackTitle}</span>
+                              {selectedProblem.trackFocus && (
+                                <span className="text-gray-300 text-[11px] font-normal font-sans">
+                                  • Focus: {selectedProblem.trackFocus}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <h3 className="font-['Montserrat'] text-xl sm:text-2xl font-bold text-white uppercase">
                             {selectedProblem.title}
                           </h3>
@@ -694,44 +822,182 @@ const TeamPanel = () => {
                       </div>
                     </div>
                   ) : problems.length ? (
-                    /* Grid of Available Problem Statements */
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[580px] overflow-y-auto pr-1">
-                      {visibleProblems.map((p) => {
-                        return (
-                          <div
-                            key={p.id}
-                            className="bg-black/60 border border-white/15 rounded-2xl p-4 sm:p-5 flex flex-col justify-between text-left hover:border-[#880A45]/50 transition-all relative shadow-md"
-                          >
-                            <div>
-                              <h3 className="font-['Montserrat'] text-base sm:text-lg font-bold text-white leading-tight mb-2">
-                                {p.title}
-                              </h3>
-
-                              {p.themePng && (
-                                <div
-                                  onClick={(e) => { e.stopPropagation(); setZoomedImage(p.themePng); }}
-                                  className="w-full h-32 border border-white/10 rounded-xl overflow-hidden my-2 bg-black/80 cursor-pointer hover:opacity-90 transition-all p-1"
-                                >
-                                  <img src={p.themePng} alt={p.title} className="w-full h-full object-cover rounded-lg" />
+                    !activeTrackId ? (
+                      /* 1. Track Overview View: SHOW ONLY TRACKS INITIALLY */
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[580px] overflow-y-auto pr-1">
+                          {groupedVisibleProblems.groups.map((group) => (
+                            <div
+                              key={group.id}
+                              onClick={() => setActiveTrackId(group.id)}
+                              className="bg-black/60 border border-white/15 hover:border-pink-500/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between text-left transition-all duration-300 relative shadow-lg hover:shadow-[0_0_30px_rgba(136,10,69,0.35)] cursor-pointer group hover:-translate-y-0.5"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-950/70 border border-pink-500/30 text-pink-300 font-['Cinzel'] text-[10px] font-bold uppercase tracking-wider">
+                                    <Layers size={12} /> HACKATHON TRACK
+                                  </span>
+                                  <span className="text-[10px] font-['Cinzel'] font-bold text-gray-400 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 uppercase">
+                                    {group.problems.length} {group.problems.length === 1 ? "STATEMENT" : "STATEMENTS"}
+                                  </span>
                                 </div>
-                              )}
 
-                              <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed mb-4 font-normal">
-                                {p.shortDescription}
-                              </p>
+                                <h3 className="font-['Montserrat'] text-base sm:text-lg font-bold text-white group-hover:text-pink-200 transition-colors leading-snug mb-3">
+                                  {group.title}
+                                </h3>
+
+                                {group.focus && (
+                                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 mb-4">
+                                    <span className="text-pink-400 font-bold uppercase text-[9px] font-['Cinzel'] tracking-widest block mb-1">
+                                      🎯 Focus Area & Scope
+                                    </span>
+                                    <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed">
+                                      {group.focus}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-['Cinzel'] font-bold text-pink-300 group-hover:text-pink-200 uppercase tracking-wider">
+                                <span>EXPLORE STATEMENTS</span>
+                                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                              </div>
                             </div>
+                          ))}
 
+                          {/* Unassigned / General statements track */}
+                          {groupedVisibleProblems.unassigned.length > 0 && (
+                            <div
+                              onClick={() => setActiveTrackId("__unassigned__")}
+                              className="bg-black/60 border border-white/15 hover:border-pink-500/60 rounded-2xl p-5 sm:p-6 flex flex-col justify-between text-left transition-all duration-300 relative shadow-lg hover:shadow-[0_0_30px_rgba(136,10,69,0.35)] cursor-pointer group hover:-translate-y-0.5"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-gray-300 font-['Cinzel'] text-[10px] font-bold uppercase tracking-wider">
+                                    <Compass size={12} /> GENERAL TRACK
+                                  </span>
+                                  <span className="text-[10px] font-['Cinzel'] font-bold text-gray-400 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 uppercase">
+                                    {groupedVisibleProblems.unassigned.length} STATEMENTS
+                                  </span>
+                                </div>
+
+                                <h3 className="font-['Montserrat'] text-base sm:text-lg font-bold text-white group-hover:text-pink-200 transition-colors leading-snug mb-3">
+                                  General Problem Statements
+                                </h3>
+
+                                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 mb-4">
+                                  <span className="text-pink-400 font-bold uppercase text-[9px] font-['Cinzel'] tracking-widest block mb-1">
+                                    🎯 Focus Area & Scope
+                                  </span>
+                                  <p className="text-xs text-gray-300 leading-relaxed">
+                                    General hackathon problem statements open to all competing fashion design teams.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-['Cinzel'] font-bold text-pink-300 group-hover:text-pink-200 uppercase tracking-wider">
+                                <span>EXPLORE STATEMENTS</span>
+                                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* 2. Track Detail View: SHOW PROBLEM STATEMENTS IN SELECTED TRACK WITH OPTION TO SELECT */
+                      <div className="space-y-4">
+                        {/* Top Back Bar with Track Info */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-black/80 border border-white/15 shadow-inner">
+                          <div className="flex items-start sm:items-center gap-3">
                             <button
                               type="button"
-                              onClick={() => setDetailsProblemId(p.id)}
-                              className="w-full bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white border border-white/20 font-['Cinzel'] font-bold py-2 rounded-xl text-xs tracking-wider cursor-pointer transition-all uppercase shadow-sm"
+                              onClick={() => setActiveTrackId(null)}
+                              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-['Cinzel'] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition shrink-0 cursor-pointer shadow-sm"
                             >
-                              VIEW PROBLEM STATEMENT
+                              <ArrowLeft size={14} /> ALL TRACKS
                             </button>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-['Cinzel'] font-bold text-pink-400 uppercase tracking-widest">
+                                  TRACK:
+                                </span>
+                                <h3 className="text-sm sm:text-base font-['Montserrat'] font-bold text-white uppercase">
+                                  {activeTrackGroup?.title}
+                                </h3>
+                              </div>
+                              {activeTrackGroup?.focus && (
+                                <p className="text-xs text-gray-300 line-clamp-1 mt-0.5 font-normal">
+                                  🎯 <span className="font-semibold text-pink-300 font-['Cinzel'] text-[10px] uppercase">Focus:</span> {activeTrackGroup.focus}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <span className="self-start sm:self-center text-[10px] font-['Cinzel'] font-bold text-pink-300 px-3 py-1 rounded-full bg-pink-950/80 border border-pink-500/30 uppercase tracking-wider whitespace-nowrap">
+                            {activeTrackGroup?.problems.length || 0} {(activeTrackGroup?.problems.length || 0) === 1 ? "STATEMENT" : "STATEMENTS"}
+                          </span>
+                        </div>
+
+                        {/* Problem Statements in this track */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-1">
+                          {activeTrackGroup?.problems.map((p) => {
+                            const isFull = (p.slotsTaken || 0) >= (p.limit || MAX_TEAMS_PER_PROBLEM);
+                            return (
+                              <div
+                                key={p.id}
+                                className="bg-black/60 border border-white/15 rounded-2xl p-4 sm:p-5 flex flex-col justify-between text-left hover:border-[#880A45]/60 transition-all relative shadow-md group"
+                              >
+                                <div>
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <span className="text-[10px] font-['Cinzel'] font-bold text-gray-400">
+                                      SLOTS: <span className={isFull ? "text-rose-400" : "text-emerald-400"}>{p.slotsTaken || 0} / {p.limit || 7} TAKEN</span>
+                                    </span>
+                                  </div>
+
+                                  <h4 className="font-['Montserrat'] text-sm sm:text-base font-bold text-white leading-snug mb-2 group-hover:text-pink-200 transition-colors">
+                                    {p.title}
+                                  </h4>
+
+                                  {p.themePng && (
+                                    <div
+                                      onClick={(e) => { e.stopPropagation(); setZoomedImage(p.themePng); }}
+                                      className="w-full h-32 border border-white/10 rounded-xl overflow-hidden my-2 bg-black/80 cursor-pointer hover:opacity-90 transition-all p-1"
+                                    >
+                                      <img src={p.themePng} alt={p.title} className="w-full h-full object-cover rounded-lg" />
+                                    </div>
+                                  )}
+
+                                  <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed mb-4 font-normal">
+                                    {p.shortDescription}
+                                  </p>
+                                </div>
+
+                                <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setDetailsProblemId(p.id)}
+                                    className="flex-1 bg-white/10 hover:bg-white/15 text-white border border-white/15 font-['Cinzel'] font-bold py-2 px-3 rounded-xl text-xs tracking-wider cursor-pointer transition uppercase text-center"
+                                  >
+                                    VIEW DETAILS
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isFull || isSelectingProblem}
+                                    onClick={() => handleSelectProblem(p.id)}
+                                    className={`flex-1 font-['Cinzel'] font-bold py-2 px-3 rounded-xl text-xs tracking-wider transition uppercase text-center shadow-md ${
+                                      isFull
+                                        ? "bg-gray-800 text-gray-500 border border-gray-700 cursor-not-allowed"
+                                        : "bg-gradient-to-r from-[#880A45] to-[#14216F] hover:opacity-90 text-white border border-white/20 cursor-pointer hover:shadow-lg"
+                                    }`}
+                                  >
+                                    {isFull ? "SLOTS FULL" : isSelectingProblem ? "LOCKING..." : "SELECT STATEMENT »"}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
                   ) : (
                     /* Empty State with [#880A45] to [#14216F] Accents */
                     <div className="flex-1 border-2 border-dashed border-[#880A45]/30 rounded-2xl flex flex-col items-center justify-center p-8 sm:p-12 bg-black/40 relative overflow-hidden text-center min-h-[300px]">
@@ -782,6 +1048,16 @@ const TeamPanel = () => {
                   <h3 className="text-xl sm:text-2xl font-['Montserrat'] font-bold text-white leading-tight">
                     {detailsProblem.title}
                   </h3>
+                  {detailsProblem.trackTitle && (
+                    <div className="mt-2 inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-xl bg-pink-950/70 border border-pink-500/30 text-pink-200 text-xs font-['Cinzel']">
+                      <span className="font-bold uppercase tracking-wide">TRACK: {detailsProblem.trackTitle}</span>
+                      {detailsProblem.trackFocus && (
+                        <span className="text-gray-300 text-xs font-normal font-sans">
+                          • Focus: {detailsProblem.trackFocus}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -831,64 +1107,11 @@ const TeamPanel = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="button"
-                    onClick={async () => {
-                      setProblemsError("");
-
-                      try {
-                        const teamName =
-                          String(team?.teamName || "").trim() ||
-                          String(teamKey || "").trim();
-                        if (!teamName) {
-                          setProblemsError("Team not available. Please try again.");
-                          return;
-                        }
-
-                        const response = await fetch(
-                          `${import.meta.env.VITE_BACKEND_URL}/api/team/${encodeURIComponent(teamName)}/select-problem`,
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              problemId: detailsProblem.id,
-                            }),
-                          },
-                        );
-                        const data = await response.json().catch(() => null);
-
-                        if (!response.ok || !data?.success) {
-                          setProblemsError(
-                            data?.message || "Unable to select problem statement.",
-                          );
-
-                          if (data?.code === "PROBLEM_FULL") {
-                            const fullId = detailsProblem.id;
-                            setProblems((prev) =>
-                              prev.map((p) =>
-                                p.id === fullId
-                                  ? { ...p, slotsTaken: MAX_TEAMS_PER_PROBLEM }
-                                  : p,
-                              ),
-                            );
-                            setDetailsProblemId(null);
-                          }
-                          return;
-                        }
-
-                        setSelectedProblemId(detailsProblem.id);
-                        setTeam((t) =>
-                          t ? { ...t, selectedProblemStatement: detailsProblem.id } : t,
-                        );
-                        setIsSelectedExpanded(false);
-                        setDetailsProblemId(null);
-                      } catch {
-                        setProblemsError("Unable to connect to the server.");
-                      }
-                    }}
-                    className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-6 py-2.5 shadow-md cursor-pointer hover:shadow-lg transition-all uppercase tracking-wider"
+                    disabled={isSelectingProblem}
+                    onClick={() => handleSelectProblem(detailsProblem.id)}
+                    className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white rounded-xl px-6 py-2.5 shadow-md cursor-pointer hover:shadow-lg transition-all uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    LOCK THIS STATEMENT »
+                    {isSelectingProblem ? "LOCKING..." : "LOCK THIS STATEMENT »"}
                   </motion.button>
                 )}
               </div>
