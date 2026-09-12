@@ -51,12 +51,12 @@ const TeamPanel = () => {
     const note = (sub.note || "").trim();
 
     if (!link) {
-      setSubmissionError("Canva / Figma design project URL is required.");
+      setSubmissionError("GitHub or deployed project URL is required.");
       return;
     }
 
     const confirmSubmit = window.confirm(
-      "Are you sure you want to submit your design link? Once submitted, it cannot be edited."
+      "Are you sure you want to submit your project link? Once submitted, it cannot be edited."
     );
     if (!confirmSubmit) return;
 
@@ -80,11 +80,11 @@ const TeamPanel = () => {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.success) {
-        setSubmissionError(data?.message || "Failed to submit design project.");
+        setSubmissionError(data?.message || "Failed to submit project.");
         return;
       }
 
-      setSubmissionSuccess(`Design submission #${idx + 1} logged successfully!`);
+      setSubmissionSuccess(`Submission #${idx + 1} logged successfully!`);
       setTeam(data.data);
     } catch {
       setSubmissionError("Unable to connect to the server.");
@@ -666,7 +666,7 @@ const TeamPanel = () => {
                   <div className="mt-2 mb-5">
                     <p className="text-xs text-gray-300 font-normal leading-relaxed">
                       {selectedProblemId
-                        ? "Your team has claimed a problem statement. Submit your Figma or Canva project URL below."
+                        ? "Your team has claimed a problem statement. Submit your GitHub or deployed project URL below."
                         : activeTrackId
                         ? `Viewing statements for "${activeTrackGroup?.title}". Click "Select Statement" or "View Details" to lock your team's topic.`
                         : "Select a Hackathon Track below to view and choose from its available problem statements."}
@@ -739,7 +739,7 @@ const TeamPanel = () => {
                       <div className="bg-black/60 border border-white/15 rounded-2xl p-5 sm:p-6 relative text-left shadow-inner">
                         <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
                           <span className="font-['Cinzel'] font-bold text-xs text-white uppercase tracking-wider">
-                            FASHION DESIGN PROJECT SUBMISSION
+                            PROJECT SUBMISSION
                           </span>
                         </div>
 
@@ -776,28 +776,28 @@ const TeamPanel = () => {
                             <div className="space-y-3.5">
                               <div>
                                 <label className="block text-[10px] font-['Cinzel'] tracking-widest font-semibold text-gray-300 mb-1 uppercase">
-                                  CANVA / FIGMA PROJECT URL
+                                  GITHUB OR DEPLOYED PROJECT URL
                                 </label>
                                 <input
                                   type="text"
                                   disabled={sub.isSubmitted}
                                   className="w-full h-10 px-3 bg-black/60 border border-white/15 rounded-xl text-white text-xs outline-none focus:border-[#880A45] disabled:opacity-50 disabled:cursor-not-allowed"
                                   value={sub.canvaFigmaLink || ""}
-                                  placeholder="e.g. https://www.figma.com/design/... or https://www.canva.com/design/..."
+                                  placeholder="e.g. https://github.com/your-username/your-repo or https://your-app.vercel.app"
                                   onChange={(e) => handleSubmissionChange(idx, "canvaFigmaLink", e.target.value)}
                                 />
                               </div>
 
                               <div>
                                 <label className="block text-[10px] font-['Cinzel'] tracking-widest font-semibold text-gray-300 mb-1 uppercase">
-                                  DESIGN REMARKS / MOODBOARD NOTES
+                                  PROJECT REMARKS / SUBMISSION NOTES
                                 </label>
                                 <textarea
                                   rows={3}
                                   disabled={sub.isSubmitted}
                                   className="w-full p-3 bg-black/60 border border-white/15 rounded-xl text-white text-xs outline-none focus:border-[#880A45] disabled:opacity-50 disabled:cursor-not-allowed resize-none"
                                   value={sub.note || ""}
-                                  placeholder="Describe your collection concept, fabric choices, and tech integration..."
+                                  placeholder="Describe your project, key features, tech stack, or deployment details..."
                                   onChange={(e) => handleSubmissionChange(idx, "note", e.target.value)}
                                 />
                               </div>
@@ -812,7 +812,7 @@ const TeamPanel = () => {
                                     onClick={() => handleSubmitSubmission(idx)}
                                     className="bg-gradient-to-r from-[#880A45] to-[#14216F] text-white font-['Cinzel'] font-bold py-2.5 px-6 rounded-xl text-xs tracking-wider shadow-md cursor-pointer uppercase hover:shadow-lg transition-all"
                                   >
-                                    {isSubmittingForm ? "SUBMITTING..." : "SUBMIT DESIGN PROJECT »"}
+                                    {isSubmittingForm ? "SUBMITTING..." : "SUBMIT PROJECT »"}
                                   </motion.button>
                                 </div>
                               )}
