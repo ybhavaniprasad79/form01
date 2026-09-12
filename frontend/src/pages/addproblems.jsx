@@ -144,8 +144,44 @@ const AddProblems = () => {
   const [teamsLoadError, setTeamsLoadError] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamStatusFilter, setTeamStatusFilter] = useState("all"); // 'all' | 'statement_selected' | 'statement_not_selected' | 'submitted' | 'not_submitted'
+  const [teamTrackFilter, setTeamTrackFilter] = useState("all"); // 'all' | trackId | 'unassigned'
   const [studentProblemPopup, setStudentProblemPopup] = useState(null);
   const [manageSubmissionsPopup, setManageSubmissionsPopup] = useState(null);
+
+  const getTeamTrack = (team) => {
+    const prob = team?.selectedProblemStatement;
+    if (!prob) return null;
+
+    let title = "";
+    let focus = "";
+
+    if (prob.track && typeof prob.track === "object") {
+      title = prob.track.title || "";
+      focus = prob.track.focus || "";
+    }
+    if (!title && prob.trackTitle) {
+      title = prob.trackTitle;
+    }
+    if (!focus && prob.trackFocus) {
+      focus = prob.trackFocus;
+    }
+
+    const trackId = typeof prob.track === "string" ? prob.track : prob.track?._id;
+    if ((!title || !focus) && trackId && tracks?.length) {
+      const matched = tracks.find((tr) => String(tr._id) === String(trackId));
+      if (matched) {
+        if (!title) title = matched.title || "";
+        if (!focus) focus = matched.focus || "";
+      }
+    }
+
+    return {
+      id: trackId || "",
+      title: title || (prob ? "General / Unassigned" : "Not Selected"),
+      focus: focus || "",
+      isAssigned: Boolean(title && title !== "General / Unassigned"),
+    };
+  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -234,14 +270,25 @@ const AddProblems = () => {
     setTeamsLoadError("");
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
-          password.trim(),
-        )}`,
-      );
-      const data = await response.json().catch(() => null);
+      const [teamsRes, tracksRes] = await Promise.all([
+        fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
+            password.trim(),
+          )}`,
+        ),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/tracks`),
+      ]);
 
-      if (!response.ok || !data?.success) {
+      const [data, tracksData] = await Promise.all([
+        teamsRes.json().catch(() => null),
+        tracksRes.json().catch(() => null),
+      ]);
+
+      if (tracksRes.ok && tracksData?.success && Array.isArray(tracksData?.data)) {
+        setTracks(tracksData.data);
+      }
+
+      if (!teamsRes.ok || !data?.success) {
         setTeamsLoadError(data?.message || "Failed to load team lists.");
         return;
       }
@@ -651,12 +698,21 @@ const AddProblems = () => {
       let teamsToExport = Array.isArray(targetTeams) && targetTeams.length > 0 ? targetTeams : selectedTeams;
 
       if (!teamsToExport || teamsToExport.length === 0) {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
-            password.trim(),
-          )}`,
-        );
-        const data = await response.json().catch(() => null);
+        const [response, tracksRes] = await Promise.all([
+          fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/admin/teams/selected?password=${encodeURIComponent(
+              password.trim(),
+            )}`,
+          ),
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/tracks`),
+        ]);
+        const [data, tracksData] = await Promise.all([
+          response.json().catch(() => null),
+          tracksRes.json().catch(() => null),
+        ]);
+        if (tracksRes.ok && tracksData?.success && Array.isArray(tracksData?.data)) {
+          setTracks(tracksData.data);
+        }
         if (response.ok && data?.success && Array.isArray(data?.data)) {
           teamsToExport = data.data;
           setSelectedTeams(data.data);
@@ -670,6 +726,7 @@ const AddProblems = () => {
 
       const headers = [
         "Team Name",
+        "Track",
         "Selected Problem Statement",
         "Submission Status",
         "Submission Links",
@@ -684,6 +741,8 @@ const AddProblems = () => {
 
       const rows = teamsToExport.map((t) => {
         const teamName = t?.teamName || "-";
+        const trackInfo = getTeamTrack(t);
+        const trackTitle = trackInfo ? trackInfo.title : "Not Selected";
         const problemTitle =
           t?.selectedProblemStatement?.title ||
           t?.selectedProblemStatement?.name ||
@@ -721,6 +780,7 @@ const AddProblems = () => {
 
         return [
           cleanVal(teamName),
+          cleanVal(trackTitle),
           cleanVal(problemTitle),
           cleanVal(statusText),
           cleanVal(submissionLink),
@@ -795,6 +855,16 @@ const AddProblems = () => {
       });
     }
 
+    if (teamTrackFilter !== "all") {
+      list = list.filter((t) => {
+        const tr = getTeamTrack(t);
+        if (teamTrackFilter === "unassigned") {
+          return !tr || !tr.isAssigned;
+        }
+        return tr && (String(tr.id) === String(teamTrackFilter) || tr.title === teamTrackFilter);
+      });
+    }
+
     const q = teamSearch.trim().toLowerCase();
     if (!q) return list;
     return list.filter((t) => {
@@ -805,9 +875,12 @@ const AddProblems = () => {
         t?.selectedProblemStatement?.name ||
         "",
       ).toLowerCase();
-      return name.includes(q) || leader.includes(q) || problem.includes(q);
+      const tr = getTeamTrack(t);
+      const trackName = String(tr?.title || "").toLowerCase();
+      const trackFocus = String(tr?.focus || "").toLowerCase();
+      return name.includes(q) || leader.includes(q) || problem.includes(q) || trackName.includes(q) || trackFocus.includes(q);
     });
-  }, [selectedTeams, teamSearch, teamStatusFilter]);
+  }, [selectedTeams, teamSearch, teamStatusFilter, teamTrackFilter, tracks]);
 
   const canSave = Boolean(title.trim() && shortDescription.trim());
 
@@ -1476,17 +1549,39 @@ const AddProblems = () => {
 
                 {/* Team Search and Status Filter */}
                 <div className="mb-5 space-y-3">
-                  <div>
-                    <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase flex items-center gap-1.5">
-                      <Filter size={11} className="text-pink-400" /> SEARCH & FILTER TEAMS
-                    </label>
-                    <input
-                      className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white shadow-inner"
-                      placeholder="Search by team title, lead designer, or problem statement..."
-                      value={teamSearch}
-                      onChange={(e) => setTeamSearch(e.target.value)}
-                      autoComplete="off"
-                    />
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase flex items-center gap-1.5">
+                        <Filter size={11} className="text-pink-400" /> SEARCH & FILTER TEAMS
+                      </label>
+                      <input
+                        className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-4 focus:border-[#880A45] outline-none font-medium text-xs text-white shadow-inner"
+                        placeholder="Search by team title, lead designer, track, or problem statement..."
+                        value={teamSearch}
+                        onChange={(e) => setTeamSearch(e.target.value)}
+                        autoComplete="off"
+                      />
+                    </div>
+                    {tracks.length > 0 && (
+                      <div className="w-full sm:w-64">
+                        <label className="block text-[10px] font-['Cinzel'] font-semibold tracking-widest text-gray-400 mb-1.5 uppercase flex items-center gap-1.5">
+                          <Layers size={11} className="text-indigo-400" /> FILTER BY TRACK
+                        </label>
+                        <select
+                          value={teamTrackFilter}
+                          onChange={(e) => setTeamTrackFilter(e.target.value)}
+                          className="w-full h-11 bg-black/60 border border-white/15 rounded-xl px-3 focus:border-[#880A45] outline-none font-medium text-xs text-white cursor-pointer"
+                        >
+                          <option value="all" className="bg-[#0B0616] text-white">ALL TRACKS ({tracks.length})</option>
+                          {tracks.map((tr) => (
+                            <option key={tr._id} value={tr._id} className="bg-[#0B0616] text-white">
+                              {tr.title}
+                            </option>
+                          ))}
+                          <option value="unassigned" className="bg-[#0B0616] text-gray-400">GENERAL / UNASSIGNED</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Filter Pills */}
@@ -1526,11 +1621,12 @@ const AddProblems = () => {
                   <div className="flex items-center justify-between text-xs text-gray-400 font-mono">
                     <div>
                       Showing {filteredTeams.length} of {selectedTeams.length} registered teams
-                      {(teamStatusFilter !== "all" || teamSearch.trim()) && (
+                      {(teamStatusFilter !== "all" || teamTrackFilter !== "all" || teamSearch.trim()) && (
                         <button
                           type="button"
                           onClick={() => {
                             setTeamStatusFilter("all");
+                            setTeamTrackFilter("all");
                             setTeamSearch("");
                           }}
                           className="ml-2 text-pink-400 hover:text-pink-300 underline font-['Cinzel'] text-[10px] uppercase cursor-pointer"
@@ -1549,6 +1645,7 @@ const AddProblems = () => {
                       <tr className="bg-black/70 text-gray-300 font-['Cinzel'] text-xs tracking-wider border-b border-white/15">
                         <th className="px-4 py-3 text-left border-r border-white/10">TEAM NAME</th>
                         <th className="px-4 py-3 text-left border-r border-white/10">TEAM LEADER</th>
+                        <th className="px-4 py-3 text-left border-r border-white/10">TRACK</th>
                         <th className="px-4 py-3 text-left border-r border-white/10">SELECTED PROBLEM STATEMENT</th>
                         <th className="px-4 py-3 text-center border-r border-white/10">SUBMISSION</th>
                         <th className="px-4 py-3 text-center">ACTIONS</th>
@@ -1562,6 +1659,7 @@ const AddProblems = () => {
                              t?.selectedProblemStatement?.title ||
                              t?.selectedProblemStatement?.name ||
                              "";
+                           const trackInfo = getTeamTrack(t);
                            const submissions = Array.isArray(t?.submissions) ? t.submissions : [];
                            const submittedCount = submissions.filter(
                              (s) => Boolean(s?.isSubmitted) || Boolean((s?.canvaFigmaLink || "").trim())
@@ -1575,6 +1673,29 @@ const AddProblems = () => {
                              >
                                <td className="px-4 py-3.5 border-r border-white/10 font-['Montserrat'] font-bold text-sm text-white">{t.teamName}</td>
                                <td className="px-4 py-3.5 border-r border-white/10 font-medium text-gray-200">{t?.teamLeader?.name || "-"}</td>
+                               <td className="px-4 py-3.5 border-r border-white/10 font-medium text-xs text-gray-300">
+                                 {hasStatement ? (
+                                   trackInfo && trackInfo.isAssigned ? (
+                                     <div className="flex flex-col items-start gap-1">
+                                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-['Cinzel'] font-bold tracking-wider bg-gradient-to-r from-[#14216F]/80 to-[#2A3FB0]/70 text-indigo-100 border border-[#2A3FB0]/60 shadow-xs">
+                                         <Layers size={11} className="text-indigo-300 shrink-0" />
+                                         <span>{trackInfo.title}</span>
+                                       </span>
+                                       {trackInfo.focus && (
+                                         <span className="text-[10px] text-pink-300/80 line-clamp-1 max-w-[220px]" title={trackInfo.focus}>
+                                           <span className="font-semibold uppercase tracking-wider text-[9px] text-gray-400">Focus:</span> {trackInfo.focus}
+                                         </span>
+                                       )}
+                                     </div>
+                                   ) : (
+                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-['Cinzel'] font-bold tracking-wider bg-white/5 text-gray-400 border border-white/10">
+                                       GENERAL
+                                     </span>
+                                   )
+                                 ) : (
+                                   <span className="text-gray-500 text-[11px] italic font-mono">-</span>
+                                 )}
+                               </td>
                                <td className="px-4 py-3.5 border-r border-white/10 font-medium text-xs text-gray-300">
                                  <div className="flex flex-col items-start gap-1.5">
                                    {hasStatement ? (
@@ -1631,6 +1752,7 @@ const AddProblems = () => {
                                          leaderName: t?.teamLeader?.name || "",
                                          selectedAt: t?.selectedProblemSelectedAt || null,
                                          problem,
+                                         track: trackInfo,
                                        });
                                      }}
                                      className={`border rounded-lg px-2.5 py-1 inline-flex items-center gap-1 transition uppercase ${
@@ -1674,7 +1796,7 @@ const AddProblems = () => {
                          })
                        ) : (
                         <tr>
-                          <td colSpan={5} className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
+                          <td colSpan={6} className="p-8 text-center text-gray-400 font-['Cinzel'] text-xs font-semibold tracking-wider uppercase">
                             {isLoadingTeams
                               ? "LOADING TEAM LISTS..."
                               : selectedTeams.length
@@ -1721,6 +1843,12 @@ const AddProblems = () => {
                   {studentProblemPopup.leaderName && (
                     <p className="text-xs text-gray-400 mt-1 font-normal">Team Leader: {studentProblemPopup.leaderName}</p>
                   )}
+                  {studentProblemPopup.track && studentProblemPopup.track.isAssigned && (
+                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-['Cinzel'] font-bold bg-[#14216F]/80 text-indigo-200 border border-[#2A3FB0]/50">
+                      <Layers size={12} className="text-indigo-300" />
+                      <span>TRACK: {studentProblemPopup.track.title}</span>
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -1732,6 +1860,14 @@ const AddProblems = () => {
               </div>
 
               <div className="space-y-4 text-xs text-gray-300 leading-relaxed font-normal">
+                {studentProblemPopup.track?.focus && (
+                  <div className="bg-[#14216F]/20 border border-[#2A3FB0]/40 p-4 rounded-xl">
+                    <span className="font-['Cinzel'] text-[10px] text-indigo-300 font-bold block mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                      <Target size={12} className="text-indigo-400" /> TRACK FOCUS AREA
+                    </span>
+                    <p className="text-gray-200">{studentProblemPopup.track.focus}</p>
+                  </div>
+                )}
                 <div className="bg-black/60 border border-white/10 p-4 rounded-xl">
                   <span className="font-['Cinzel'] text-[10px] text-pink-300 font-bold block mb-1 uppercase tracking-wider">
                     COLLECTION SUMMARY

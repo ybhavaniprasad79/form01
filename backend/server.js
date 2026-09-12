@@ -690,6 +690,7 @@ app.get("/api/admin/teams/selected", async (req, res) => {
       .populate({
         path: "selectedProblemStatement",
         select: { title: 1, shortDescription: 1, fullDescription: 1, track: 1, trackTitle: 1, trackFocus: 1, themePng: 1 },
+        populate: { path: "track", select: { title: 1, focus: 1 } },
       })
       .sort({ selectedProblemSelectedAt: -1, submittedAt: -1 })
       .lean();
