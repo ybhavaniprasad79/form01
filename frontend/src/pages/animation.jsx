@@ -96,7 +96,7 @@ const Animation = () => {
   const slotsRemaining = Math.max(0, maxTeams - teamCount);
 
   return (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] text-white relative overflow-x-hidden">
       {/* Interactive Pitch Black Tech Background with Grid */}
       <FashionBackground />
 

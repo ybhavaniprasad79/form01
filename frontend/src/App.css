@@ -32,8 +32,13 @@ body {
 
 /* Selection highlight */
 ::selection {
-  background: rgba(212, 175, 55, 0.25);
-  color: #0D0D11;
+  background: #880A45;
+  color: #FFFFFF;
+}
+
+::-moz-selection {
+  background: #880A45;
+  color: #FFFFFF;
 }
 
 /* Intro Video & Asset Transitions */

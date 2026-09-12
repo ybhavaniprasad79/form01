@@ -342,7 +342,7 @@ const TeamPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-16 text-[#fdf3f7] relative overflow-x-hidden">
       {/* Interactive Pitch Black Tech Background with Grid */}
       <FashionBackground />
 

@@ -806,7 +806,7 @@ const Home = () => {
   );
 
   const renderRegistrationSuccess = () => (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none text-white relative overflow-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] text-white relative overflow-hidden">
       {/* Interactive Pitch Black Tech Background with Grid */}
       <FashionBackground />
 
@@ -963,7 +963,7 @@ const Home = () => {
   );
 
   const renderRegistrationClosed = () => (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none text-white relative overflow-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] text-white relative overflow-hidden">
       <FashionBackground />
       <Navbar />
 
@@ -1025,7 +1025,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-20 text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-20 text-white relative overflow-x-hidden">
       {/* Interactive Pitch Black Tech Background with Grid */}
       <FashionBackground />
 

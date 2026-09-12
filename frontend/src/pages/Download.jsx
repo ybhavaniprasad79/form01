@@ -518,7 +518,7 @@ const Download = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-16 text-[#fdf3f7] relative overflow-x-hidden">
       {/* Pitch Black Fashion Tech Background */}
       <FashionBackground />
 

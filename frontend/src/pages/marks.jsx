@@ -510,7 +510,7 @@ function Marks({ defaultMode }) {
   // Auth View
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-16 text-[#fdf3f7] relative overflow-x-hidden">
         <FashionBackground />
         <Navbar />
         <div className="flex-grow flex items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 relative z-10">
@@ -585,7 +585,7 @@ function Marks({ defaultMode }) {
   // Loading View
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] justify-center items-center relative overflow-hidden">
+      <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-16 text-[#fdf3f7] justify-center items-center relative overflow-hidden">
         <FashionBackground />
         <p className="relative z-10 font-['Cinzel'] text-base sm:text-xl text-gray-200 tracking-widest font-bold drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
           SYNCHRONIZING HACKATHON SCOREBOARDS...
@@ -595,7 +595,7 @@ function Marks({ defaultMode }) {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] select-none pb-16 text-[#fdf3f7] relative overflow-x-hidden">
+    <div className="min-h-screen bg-black flex flex-col font-['Plus_Jakarta_Sans'] pb-16 text-[#fdf3f7] relative overflow-x-hidden">
       <FashionBackground />
       <Navbar />
 

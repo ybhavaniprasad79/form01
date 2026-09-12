@@ -149,3 +149,14 @@ input[type=number] {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 }
+
+/* Luxury Selection Highlight */
+::selection {
+  background: #880A45 !important;
+  color: #FFFFFF !important;
+}
+
+::-moz-selection {
+  background: #880A45 !important;
+  color: #FFFFFF !important;
+}

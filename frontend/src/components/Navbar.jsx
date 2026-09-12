@@ -6,7 +6,7 @@ const Navbar = () => {
   const currentPath = location.pathname;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 md:px-12 py-2.5 sm:py-3 shadow-[0_4px_30px_rgba(0,0,0,0.9)] select-none">
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 md:px-12 py-2.5 sm:py-3 shadow-[0_4px_30px_rgba(0,0,0,0.9)]">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Left: Brand Logos */}
